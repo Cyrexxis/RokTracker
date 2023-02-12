@@ -95,7 +95,7 @@ def stopHandler(signum, frame):
         console.print("Scan aborted.")
         exit(1)
 
-def governor_scan(device, port: int, tap_position: int, inactive_players: int):
+def governor_scan(device, port: int, tap_position: int, inactive_players: int, track_inactives: bool):
     # set up the scan variables
     gov_name = ""
     gov_id = 0
@@ -130,11 +130,12 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int):
         # Probably tapped governor is inactive and needs to be skipped
         if 'MoreInfo' not in check_more_info :
             inactive_players += 1
-            image_check_inactive = cv2.imread('check_more_info.png')
-            roiInactive = (0, tap_position - 100, 1400, 200)
-            image_inactive_raw = image_check_inactive[int(roiInactive[1]):int(roiInactive[1]+roiInactive[3]), int(roiInactive[0]):int(roiInactive[0]+roiInactive[2])]
-            image_inactive = Image.fromarray(image_inactive_raw, mode="RGB")
-            image_inactive.save(f'Inactive {inactive_players:03}.png')
+            if track_inactives:
+                image_check_inactive = cv2.imread('check_more_info.png')
+                roiInactive = (0, tap_position - 100, 1400, 200)
+                image_inactive_raw = image_check_inactive[int(roiInactive[1]):int(roiInactive[1]+roiInactive[3]), int(roiInactive[0]):int(roiInactive[0]+roiInactive[2])]
+                image_inactive = Image.fromarray(image_inactive_raw, mode="RGB")
+                image_inactive.save(f'Inactive {inactive_players:03}.png')
             secure_adb_shell(f'input swipe 690 605 690 540', device, port)
             secure_adb_shell(f'input tap 690 ' + str(tap_position), device, port)
             count += 1
@@ -342,7 +343,7 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int):
         "inactives": inactive_players
     }
 
-def scan(port: int, kingdom: str, amount: int, resume: bool):
+def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bool):
     #Initialize the connection to adb
     device = start_adb(port)
 
@@ -417,7 +418,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
             else:
                 k = i
 
-        governor = governor_scan(device, port, Y[k], inactive_players)
+        governor = governor_scan(device, port, Y[k], inactive_players, track_inactives)
         inactive_players = governor["inactives"]
 
         now = datetime.datetime.now()
@@ -482,7 +483,8 @@ def main():
     kingdom = Prompt.ask("Kingdom name (used for file name)", default="KD")
     scan_amount = IntPrompt.ask("People to scan", default=600)
     resume_scan = Confirm.ask("Resume scan", default=False)
-    scan(port, kingdom, scan_amount, resume_scan)
+    track_inactives = Confirm.ask("Track inactives (via screenshot)", default=False)
+    scan(port, kingdom, scan_amount, resume_scan, track_inactives)
 
     exit(1)
 
