@@ -17,8 +17,11 @@ import random
 import cv2
 import pytesseract
 import signal
+import re
+import logging
 
 console = Console()
+logging.basicConfig(filename='try_without_digits_model.log', encoding='utf-8', level=logging.DEBUG)
 
 def get_bluestacks_port():
     # try to read port from bluestacks config
@@ -107,6 +110,7 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
     gov_kills_tier3 = 0
     gov_kills_tier4 = 0
     gov_kills_tier5 = 0
+    gov_ranged_points = 0
     gov_rss_assistance = 0
     gov_helps = 0
 
@@ -164,23 +168,39 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
     #Power and Killpoints
     roi = (642, 230, 260, 38)
     im_gov_id = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_id_gray = cv2.cvtColor(im_gov_id, cv2.COLOR_BGR2GRAY)
+    im_gov_id_gray = cv2.bitwise_not(im_gov_id_gray)
+    (thresh, im_gov_id_bw) = cv2.threshold(im_gov_id_gray, 120, 255, cv2.THRESH_BINARY)
+
     image = cv2.imread('gov_info.png')
-    image = cv2.GaussianBlur(image, (5, 5), 0)
     roi = (890, 364, 170, 44)
     im_gov_power = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_power_gray = cv2.cvtColor(im_gov_power, cv2.COLOR_BGR2GRAY)
+    im_gov_power_gray = cv2.bitwise_not(im_gov_power_gray)
+    (thresh, im_gov_power_bw) = cv2.threshold(im_gov_power_gray, 100, 255, cv2.THRESH_BINARY)
+
     roi = (1114, 364, 222, 44)
     im_gov_killpoints = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_killpoints_gray = cv2.cvtColor(im_gov_killpoints, cv2.COLOR_BGR2GRAY)
+    im_gov_killpoints_gray = cv2.bitwise_not(im_gov_killpoints_gray)
+    (thresh, im_gov_killpoints_bw) = cv2.threshold(im_gov_killpoints_gray, 100, 255, cv2.THRESH_BINARY)
+
     gov_name = tk.Tk().clipboard_get()
     roi = (645, 362, 260, 40) #alliance tag
     im_alliance_tag = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
     
     #kills tier
     secure_adb_shell(f'input tap 1118 350', device, port)
-    
+
     #1st image data
-    gov_id = read_ocr(im_gov_id)
-    gov_power = read_ocr(im_gov_power)
-    gov_killpoints = read_ocr(im_gov_killpoints)
+    gov_id = pytesseract.image_to_string(im_gov_id_bw,config="--psm 7")
+    gov_id = int(re.sub("[^0-9]", "", gov_id))
+
+    gov_power = pytesseract.image_to_string(im_gov_power_bw,config="--psm 7")
+    gov_power = int(re.sub("[^0-9]", "", gov_power))
+
+    gov_killpoints = pytesseract.image_to_string(im_gov_killpoints_bw,config="--psm 7")
+    gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
 
     time.sleep(2 + random.random())
     image = secure_adb_screencap(device, port)
@@ -188,30 +208,56 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
                 f.write(image)  # type: ignore
     image2 = cv2.imread('kills_tier.png')
     
-    roi = (862, 461, 215, 38) #tier 1
+    roi = (862, 461, 150, 38) #tier 1
     im_kills_tier1 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-    roi = (862, 505, 215, 38) #tier 2
+    roi = (862, 505, 150, 38) #tier 2
     im_kills_tier2 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-    roi = (862, 549, 215, 38) #tier 3
+    roi = (862, 549, 150, 38) #tier 3
     im_kills_tier3 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-    roi = (862, 593, 215, 38) #tier 4
+    roi = (862, 593, 150, 38) #tier 4
     im_kills_tier4 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
-    roi = (862, 638, 215, 38) #tier 5
+    roi = (862, 638, 150, 38) #tier 5
     im_kills_tier5 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
+    roi = (1274, 740, 146, 38) #ranged points
+    im_ranged_points = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_ranged_points_gray = cv2.cvtColor(im_ranged_points, cv2.COLOR_BGR2GRAY)
+    (thresh, im_ranged_points_bw) = cv2.threshold(im_ranged_points_gray, 150, 255, cv2.THRESH_BINARY)
+
+    roi = (1380, 740, 40, 38) #ranged points try 2
+    im_ranged_points2 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_ranged_points2_gray = cv2.cvtColor(im_ranged_points2, cv2.COLOR_BGR2GRAY)
+    (thresh, im_ranged_points2_bw) = cv2.threshold(im_ranged_points2_gray, 150, 255, cv2.THRESH_BINARY)
 
     #More info tab
     secure_adb_shell(f'input tap 387 664', device, port)
     
     #2nd image data
-    gov_kills_tier1 = pytesseract.image_to_string(im_kills_tier1,config="-c tessedit_char_whitelist=0123456789")
-    gov_kills_tier2 = pytesseract.image_to_string(im_kills_tier2,config="-c tessedit_char_whitelist=0123456789")
-    gov_kills_tier3 = pytesseract.image_to_string(im_kills_tier3,config="-c tessedit_char_whitelist=0123456789")
-    gov_kills_tier4 = pytesseract.image_to_string(im_kills_tier4,config="-c tessedit_char_whitelist=0123456789")
-    gov_kills_tier5 = pytesseract.image_to_string(im_kills_tier5,config="-c tessedit_char_whitelist=0123456789")
+    gov_kills_tier1 = pytesseract.image_to_string(im_kills_tier1,config="--psm 7")
+    gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
+
+    gov_kills_tier2 = pytesseract.image_to_string(im_kills_tier2,config="--psm 7")
+    gov_kills_tier2 = re.sub("[^0-9]", "", gov_kills_tier2)
+
+    gov_kills_tier3 = pytesseract.image_to_string(im_kills_tier3,config="--psm 7")
+    gov_kills_tier3 = re.sub("[^0-9]", "", gov_kills_tier3)
+
+    gov_kills_tier4 = pytesseract.image_to_string(im_kills_tier4,config="--psm 7")
+    gov_kills_tier4 = re.sub("[^0-9]", "", gov_kills_tier4)
+
+    gov_kills_tier5 = pytesseract.image_to_string(im_kills_tier5,config="--psm 7")
+    gov_kills_tier5 = re.sub("[^0-9]", "", gov_kills_tier5)
+
+    gov_ranged_points = pytesseract.image_to_string(im_ranged_points_bw,config="--psm 7")
+    gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
+
+    gov_ranged_points2 = pytesseract.image_to_string(im_ranged_points2_bw,config="--psm 7")
+    gov_ranged_points2 = re.sub("[^0-9]", "", gov_ranged_points2)
+
     time.sleep(1 + random.random())
     image = secure_adb_screencap(device, port)
     with open(('more_info.png'), 'wb') as f:
@@ -299,6 +345,11 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
         gov_kills_tier4 = 'Unknown'
     if gov_kills_tier5 == '' :
         gov_kills_tier5 = 'Unknown'
+    if gov_ranged_points == '':
+        if gov_ranged_points2 == '':
+            gov_ranged_points = "Unknown"
+        else:
+            gov_ranged_points = gov_ranged_points2
     if gov_rss_assistance == '' :
         if gov_rss_assistance2 =='':
             if gov_rss_assistance3 =='':
@@ -336,6 +387,7 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
         "kills_t5": gov_kills_tier5,
         "kills_t45": gov_kills_tier45,
         "kills_total": gov_kills_total,
+        "ranged_points": gov_ranged_points,
         "dead": gov_dead,
         "rss_assistance": gov_rss_assistance,
         "helps": gov_helps,
@@ -371,6 +423,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     sheet1["M1"] = "Resource Assistance"
     sheet1["N1"] = "Helps"
     sheet1["O1"] = "Alliance"
+    sheet1["P1"] = "Ranged Points"
 
     sheet1["A1"].font = font
     sheet1["B1"].font = font
@@ -387,6 +440,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     sheet1["M1"].font = font
     sheet1["N1"].font = font
     sheet1["O1"].font = font
+    sheet1["P1"].font = font
 
     #Counter for fails
     inactive_players = 0
@@ -441,6 +495,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         table.add_row("Governor T5 Kills", str(governor["kills_t5"]).rstrip())
         table.add_row("Governor T4+5 Kills", str(governor["kills_t45"]))
         table.add_row("Governor Total Kills", str(governor["kills_total"]))
+        table.add_row("Governor Ranged Points", str(governor["ranged_points"]).rstrip())
         table.add_row("Governor RSS Assistance", str(governor["rss_assistance"]))
         table.add_row("Governor Helps", str(governor["helps"]))
         table.add_row("Governor Alliance", governor["alliance"].rstrip())
@@ -463,6 +518,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         sheet1["M" + str(i+2-j)] = to_int_check(governor["rss_assistance"])
         sheet1["N" + str(i+2-j)] = to_int_check(governor["helps"])
         sheet1["O" + str(i+2-j)] = governor["alliance"].rstrip()
+        sheet1["P" + str(i+2-j)] = to_int_check(governor["ranged_points"])
 
         if resume :
             file_name_prefix = 'NEXT'
