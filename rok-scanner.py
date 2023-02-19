@@ -98,6 +98,9 @@ def stopHandler(signum, frame):
         console.print("Scan aborted.")
         exit(1)
 
+def cropToRegion(image, roi):
+     return image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
 def governor_scan(device, port: int, tap_position: int, inactive_players: int, track_inactives: bool):
     # set up the scan variables
     gov_name = ""
@@ -128,7 +131,7 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
         
         image_check = cv2.imread('check_more_info.png',cv2.IMREAD_GRAYSCALE)
         roi = (313, 727, 137, 29)	#Checking for more info
-        im_check_more_info = image_check[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+        im_check_more_info = cropToRegion(image_check, roi)
         check_more_info = pytesseract.image_to_string(im_check_more_info,config="-c tessedit_char_whitelist=MoreInfo")
 
         # Probably tapped governor is inactive and needs to be skipped
@@ -137,9 +140,8 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
             if track_inactives:
                 image_check_inactive = cv2.imread('check_more_info.png')
                 roiInactive = (0, tap_position - 100, 1400, 200)
-                image_inactive_raw = image_check_inactive[int(roiInactive[1]):int(roiInactive[1]+roiInactive[3]), int(roiInactive[0]):int(roiInactive[0]+roiInactive[2])]
-                image_inactive = Image.fromarray(image_inactive_raw, mode="RGB")
-                image_inactive.save(f'Inactive {inactive_players:03}.png')
+                image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
+                cv2.imwrite(f'Inactive {inactive_players:03}.png', image_inactive_raw)
             secure_adb_shell(f'input swipe 690 605 690 540', device, port)
             secure_adb_shell(f'input tap 690 ' + str(tap_position), device, port)
             count += 1
@@ -167,27 +169,27 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
 
     #Power and Killpoints
     roi = (642, 230, 260, 38)
-    im_gov_id = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_id = cropToRegion(image, roi)
     im_gov_id_gray = cv2.cvtColor(im_gov_id, cv2.COLOR_BGR2GRAY)
     im_gov_id_gray = cv2.bitwise_not(im_gov_id_gray)
     (thresh, im_gov_id_bw) = cv2.threshold(im_gov_id_gray, 120, 255, cv2.THRESH_BINARY)
 
     image = cv2.imread('gov_info.png')
     roi = (890, 364, 170, 44)
-    im_gov_power = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_power = cropToRegion(image, roi)
     im_gov_power_gray = cv2.cvtColor(im_gov_power, cv2.COLOR_BGR2GRAY)
     im_gov_power_gray = cv2.bitwise_not(im_gov_power_gray)
     (thresh, im_gov_power_bw) = cv2.threshold(im_gov_power_gray, 100, 255, cv2.THRESH_BINARY)
 
     roi = (1114, 364, 222, 44)
-    im_gov_killpoints = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_killpoints = cropToRegion(image, roi)
     im_gov_killpoints_gray = cv2.cvtColor(im_gov_killpoints, cv2.COLOR_BGR2GRAY)
     im_gov_killpoints_gray = cv2.bitwise_not(im_gov_killpoints_gray)
     (thresh, im_gov_killpoints_bw) = cv2.threshold(im_gov_killpoints_gray, 100, 255, cv2.THRESH_BINARY)
 
     gov_name = tk.Tk().clipboard_get()
     roi = (645, 362, 260, 40) #alliance tag
-    im_alliance_tag = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_alliance_tag = cropToRegion(image, roi)
     
     #kills tier
     secure_adb_shell(f'input tap 1118 350', device, port)
@@ -210,27 +212,27 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
     image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
     
     roi = (862, 461, 150, 38) #tier 1
-    im_kills_tier1 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_kills_tier1 = cropToRegion(image2, roi)
 
     roi = (862, 505, 150, 38) #tier 2
-    im_kills_tier2 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_kills_tier2 = cropToRegion(image2, roi)
 
     roi = (862, 549, 150, 38) #tier 3
-    im_kills_tier3 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_kills_tier3 = cropToRegion(image2, roi)
 
     roi = (862, 593, 150, 38) #tier 4
-    im_kills_tier4 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_kills_tier4 = cropToRegion(image2, roi)
 
     roi = (862, 638, 150, 38) #tier 5
-    im_kills_tier5 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_kills_tier5 = cropToRegion(image2, roi)
 
     roi = (1274, 740, 146, 38) #ranged points
-    im_ranged_points = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_ranged_points = cropToRegion(image2, roi)
     im_ranged_points_gray = cv2.cvtColor(im_ranged_points, cv2.COLOR_BGR2GRAY)
     (thresh, im_ranged_points_bw) = cv2.threshold(im_ranged_points_gray, 150, 255, cv2.THRESH_BINARY)
 
     roi = (1380, 740, 40, 38) #ranged points try 2
-    im_ranged_points2 = image2[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_ranged_points2 = cropToRegion(image2, roi)
     im_ranged_points2_gray = cv2.cvtColor(im_ranged_points2, cv2.COLOR_BGR2GRAY)
     (thresh, im_ranged_points2_bw) = cv2.threshold(im_ranged_points2_gray, 150, 255, cv2.THRESH_BINARY)
 
@@ -266,30 +268,30 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
     image3 = cv2.imread('more_info.png')
 
     roi = (1130, 443, 183, 40) #dead
-    im_dead = image3[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_dead = cropToRegion(image3, roi)
     roi = (1130, 668, 183, 40) #rss assistance
-    im_rss_assistance = image3[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_rss_assistance = cropToRegion(image3, roi)
     roi = (1130, 735, 183, 40) #alliance helps
-    im_helps = image3[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_helps = cropToRegion(image3, roi)
     
     #2nd check for deads with more filters to avoid some errors
     roi = (1130, 443, 183, 40) #dead
     thresh = 127
     thresh_image = cv2.threshold(image3, thresh, 255, cv2.THRESH_BINARY)[1]
-    im_dead2 = thresh_image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_dead2 = cropToRegion(thresh_image, roi)
     roi = (1130, 668, 183, 40) #rss assistance
-    im_rss_assistance2 = thresh_image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_rss_assistance2 = cropToRegion(thresh_image, roi)
     roi = (1130, 735, 183, 40) #alliance helps
-    im_helps2 = thresh_image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_helps2 = cropToRegion(thresh_image, roi)
     
     #3rd check for deads with more filters to avoid some errors
     roi = (1130, 443, 183, 40) #dead
     blur_img = cv2.GaussianBlur(image3, (3, 3), 0)
-    im_dead3 = blur_img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_dead3 = cropToRegion(blur_img, roi)
     roi = (1130, 668, 183, 40) #rss assistance
-    im_rss_assistance3 = blur_img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_rss_assistance3 = cropToRegion(blur_img, roi)
     roi = (1130, 735, 183, 40) #alliance helps
-    im_helps3 = blur_img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_helps3 = cropToRegion(blur_img, roi)
 
     #3rd image data
     gov_dead = read_ocr(im_dead)
@@ -319,7 +321,7 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
     erosion_img = cv2.erode(dilated_img, erosion_element)
 
     alliance_image_dilated = Image.fromarray(erosion_img)
-    alliance_image_dilated.save("alliance-eroted.jpeg")
+    alliance_image_dilated.save("alliance-eroded.jpeg")
     #threshold_img = cv2.threshold(gray, 180, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     alliance_tag = pytesseract.image_to_string(erosion_img, config='--psm 13 --oem 1')
 
