@@ -7,6 +7,7 @@ from ppadb.client import Client
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpImage
+from pathlib import Path
 import configparser
 import subprocess
 import datetime
@@ -15,7 +16,7 @@ import random
 import cv2
 import pytesseract
 import signal
-import os
+import re
 
 console = Console()
 
@@ -114,13 +115,18 @@ def governor_scan(device, port: int, gov_number: int):
     cv2.imwrite("tmp/gov_name" + str(gov_number) + ".png", im_gov_name_bw)
 
     image = cv2.imread('currentState.png')
-    #image = cv2.GaussianBlur(image, (5, 5), 0)
     roi = (1117, 265, 250, 33)
     im_gov_score = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+    im_gov_score_gray = cv2.cvtColor(im_gov_score, cv2.COLOR_BGR2GRAY)
+    im_gov_score_gray = cv2.bitwise_not(im_gov_score_gray)
+    (thresh, im_gov_score_bw) = cv2.threshold(im_gov_score_gray, 90, 255, cv2.THRESH_BINARY)
+    #image = cv2.GaussianBlur(image, (5, 5), 0)
     
     #gov_name = pytesseract.image_to_string(im_gov_name,config="--oem 1 -l ara+chi_sim+chi_tra+deu+ell+grc+hat+hrv+heb+hin+ind+jpn+kor+lao+mal+mon+rus+san+swa+tha+tur+vie")
     gov_name = pytesseract.image_to_string(im_gov_name_bw, config="--oem 1 --psm 7 -l ara+chi_sim+eng+jpn+kor+rus+tha+vie")
-    gov_score = pytesseract.image_to_string(im_gov_score, config="--oem 1 -c tessedit_char_whitelist=0123456789")
+    gov_score = pytesseract.image_to_string(im_gov_score_bw, config="--oem 1 --psm 7")
+    
+    gov_score = int(re.sub("[^0-9]", "", gov_score))
 
     #Just to check the progress, printing in cmd the result for each governor
     if gov_score == '':
@@ -155,7 +161,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
 
     stop = False
 
-    os.mkdir("tmp")
+    Path('./tmp').mkdir(parents=True, exist_ok=True)
 
     for i in range(0,amount):
         if stop:
@@ -189,7 +195,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
             file_name_prefix = 'TOP'
         wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
 
-        secure_adb_shell(f'input swipe 690 605 690 501 4000', device, port)
+        secure_adb_shell(f'input swipe 690 605 690 505 4000', device, port)
         time.sleep(1 + random.random())
     if resume :
         file_name_prefix = 'NEXT'
@@ -202,7 +208,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
 def main():
     signal.signal(signal.SIGINT, stopHandler)
     port = IntPrompt.ask("Adb port of device", default=get_bluestacks_port())
-    kingdom = Prompt.ask("Kingdom name", default="2414")
+    kingdom = Prompt.ask("Alliance name", default="Alliance")
     scan_amount = IntPrompt.ask("People to scan", default=600)
     resume_scan = Confirm.ask("Resume scan", default=False)
     scan(port, kingdom, scan_amount, resume_scan)
