@@ -60,7 +60,7 @@ This script runs completely in the command line. When you run it, it will ask al
 There are two ways of starting the script. First option is to simply run the powershell script. That script automatically creates and loads a venv in the venv folder, installs all dependencies and starts the actual scanner script (Make sure to have your python 3.11 selected as default version by checking the output of `python --version`):
 
 ```powershell
-.\scanner.ps1
+.\rok-scanner.ps1
 ```
 
 The other way is to manually do all that:
@@ -69,7 +69,7 @@ The other way is to manually do all that:
 python -m venv ./venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python scanner.py
+python rok-scanner.py
 ```
 
 Options on startup:
