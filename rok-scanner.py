@@ -19,9 +19,10 @@ import pytesseract
 import signal
 import re
 import logging
+import math
 
 console = Console()
-logging.basicConfig(filename='try_without_digits_model.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename='rok-scanner.log', encoding='utf-8', level=logging.DEBUG)
 
 def get_bluestacks_port():
     # try to read port from bluestacks config
@@ -504,6 +505,17 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         table.add_row("Governor Alliance", governor["alliance"].rstrip())
 
         console.print(table)
+
+        expectedKp = math.floor(to_int_check(governor["kills_t1"]) * 0.2) \
+                        + (to_int_check(governor["kills_t2"]) * 2) \
+                        + (to_int_check(governor["kills_t3"]) * 4) \
+                        + (to_int_check(governor["kills_t4"]) * 10) \
+                        + (to_int_check(governor["kills_t5"]) * 20)
+        killsOk = expectedKp == to_int_check(governor["killpoints"])
+        console.print('Kills check out: ', killsOk)
+
+        if(not killsOk):
+             logging.log(logging.WARNING, f'''Kills for {governor["name"]} ({to_int_check(governor["id"])}) don't check out, manually need to look at them!''')
 
         #Write results in excel file
         sheet1["A" + str(i+2-j)] = to_int_check(governor["id"])

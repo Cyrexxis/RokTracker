@@ -10,7 +10,8 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 2. Python 3.11.0 Installation [https://www.python.org/downloads/release/python-3110/](https://www.python.org/downloads/release/python-3110/)
 3. Tesseract-OCR Installation [https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0.20211201.exe](https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0.20211201.exe)
 4. Adb Platform Tools Download and Extract(See Important Notes) [https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip](https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip)
-5. Windows 10-Tested, Windows 7 or Windows 11 could be fine.
+5. On Windows "Microsoft Build Tools für C++" might be required for some of the python packages [https://visualstudio.microsoft.com/de/visual-cpp-build-tools/](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/)
+6. Windows 10-Tested, Windows 7 or Windows 11 could be fine.
 
 # Bluestacks 5 Settings
 
@@ -29,7 +30,7 @@ Everything (maybe not the performance, adjust that to your PC) should be like th
 3. Make sure the tesseract executable is on the PATH variable of your machine
 
 4. Platform tools folder should be extracted as a folder inside the Tracker's folder. Like the following image
-   
+
    ![](images/platform-tools-pos.png)
 
 5. In order to get only your kingdoms ranks, the character that is currently logged in game must be in HOME KINGDOM, else you will get all the players in your KvK including players from different kingdoms.
