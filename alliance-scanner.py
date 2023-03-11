@@ -70,6 +70,13 @@ def secure_adb_shell(command_to_execute: str, device, port: int):
         else:
             return
 
+def adb_send_events(event_file, device, port):
+    macroFile = open(event_file, 'r')
+    lines = macroFile.readlines()
+
+    for line in lines:
+            secure_adb_shell(line.strip(), device, port)
+
 def secure_adb_screencap(device, port: int):
     result = None
     for i in range(3):
@@ -95,6 +102,27 @@ def stopHandler(signum, frame):
         console.print("Scan aborted.")
         exit(1)
 
+def cropToRegion(image, roi):
+     return image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+
+def cropToTextWithBorder(img, border_size):
+    coords = cv2.findNonZero(cv2.bitwise_not(img))
+    x, y, w, h = cv2.boundingRect(coords)
+
+    roi = img[y:y+h, x:x+w]
+    bordered = cv2.copyMakeBorder(roi, top=border_size, bottom=border_size, left=border_size, right=border_size, borderType=cv2.BORDER_CONSTANT, value=255)
+    
+    return bordered
+
+def preprocessImage(image, scale_factor, threshold, border_size, invert = False):
+    im_big = cv2.resize(image, (0, 0), fx=scale_factor, fy=scale_factor)
+    im_gray = cv2.cvtColor(im_big, cv2.COLOR_BGR2GRAY)
+    if invert:
+        im_gray = cv2.bitwise_not(im_gray)
+    (thresh, im_bw) = cv2.threshold(im_gray, threshold, 255, cv2.THRESH_BINARY)
+    im_bw = cropToTextWithBorder(im_bw, border_size)
+    return im_bw
+
 def governor_scan(device, port: int, gov_number: int):
     # set up the scan variables
     gov_name = ""
@@ -108,23 +136,19 @@ def governor_scan(device, port: int, gov_number: int):
 
     #Power and Killpoints
     roi = (334, 260, 293, 33)
-    im_gov_name = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-    im_gov_name_gray = cv2.cvtColor(im_gov_name, cv2.COLOR_BGR2GRAY)
-    im_gov_name_gray = cv2.bitwise_not(im_gov_name_gray)
-    (thresh, im_gov_name_bw) = cv2.threshold(im_gov_name_gray, 90, 255, cv2.THRESH_BINARY)
-    cv2.imwrite("tmp/gov_name" + str(gov_number) + ".png", im_gov_name_bw)
+    im_gov_name = cropToRegion(image, roi)
+    im_gov_name_bw = preprocessImage(im_gov_name, 3, 90, 12, True)
+    im_gov_name_bw_small = preprocessImage(im_gov_name, 1, 90, 4, True)
+    cv2.imwrite("tmp/gov_name" + str(gov_number) + ".png", im_gov_name_bw_small)
 
     image = cv2.imread('currentState.png')
     roi = (1117, 265, 250, 33)
-    im_gov_score = image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-    im_gov_score_gray = cv2.cvtColor(im_gov_score, cv2.COLOR_BGR2GRAY)
-    im_gov_score_gray = cv2.bitwise_not(im_gov_score_gray)
-    (thresh, im_gov_score_bw) = cv2.threshold(im_gov_score_gray, 90, 255, cv2.THRESH_BINARY)
-    #image = cv2.GaussianBlur(image, (5, 5), 0)
+    im_gov_score = cropToRegion(image, roi)
+    im_gov_score_bw = preprocessImage(im_gov_score, 3, 90, 12, True)
     
     #gov_name = pytesseract.image_to_string(im_gov_name,config="--oem 1 -l ara+chi_sim+chi_tra+deu+ell+grc+hat+hrv+heb+hin+ind+jpn+kor+lao+mal+mon+rus+san+swa+tha+tur+vie")
     gov_name = pytesseract.image_to_string(im_gov_name_bw, config="--oem 1 --psm 7 -l ara+chi_sim+eng+jpn+kor+rus+tha+vie")
-    gov_score = pytesseract.image_to_string(im_gov_score_bw, config="--oem 1 --psm 7")
+    gov_score = pytesseract.image_to_string(im_gov_score_bw, config="--oem 1 --psm 8")
     
     gov_score = int(re.sub("[^0-9]", "", gov_score))
 
@@ -185,6 +209,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
 
         sheet1.row_dimensions[i+2].height = 24.75
         #Write results in excel file
+        image = OpImage("tmp/gov_name" + str(i) + ".png")
         sheet1.add_image(OpImage("tmp/gov_name" + str(i) + ".png"), "A" + str(i+2))
         sheet1["B" + str(i+2)] = governor["name"]
         sheet1["C" + str(i+2)] = to_int_check(governor["score"])
@@ -195,7 +220,8 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
             file_name_prefix = 'TOP'
         wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
 
-        secure_adb_shell(f'input swipe 690 605 690 505 4000', device, port)
+        adb_send_events('./inputs/alliance_1_person_scroll.txt', device, port)
+        
         time.sleep(1 + random.random())
     if resume :
         file_name_prefix = 'NEXT'
