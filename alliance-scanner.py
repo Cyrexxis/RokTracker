@@ -8,6 +8,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpImage
 from pathlib import Path
+from InquirerPy import inquirer
+from InquirerPy.validator import NumberValidator
 import configparser
 import subprocess
 import datetime
@@ -18,7 +20,27 @@ import pytesseract
 import signal
 import re
 
+# this is needed due to not yet published fix from InquirerPy
+#pyright: reportPrivateImportUsage=false
+
 console = Console()
+
+mode_data = {
+     "Alliance": {
+        "name": (334, 260, 293, 33),
+        "score": (1117, 265, 250, 33),
+        "threshold": 90,
+        "invert": True,
+        "script": "./inputs/alliance_1_person_scroll.txt"
+     },
+     "Honor": {
+        "name": (774, 330, 257, 33),
+        "score": (1183, 330, 178, 33),
+        "threshold": 150,
+        "invert": False,
+        "script": "./inputs/honor_1_person_scroll.txt"
+     }
+}
 
 def get_bluestacks_port():
     # try to read port from bluestacks config
@@ -123,7 +145,7 @@ def preprocessImage(image, scale_factor, threshold, border_size, invert = False)
     im_bw = cropToTextWithBorder(im_bw, border_size)
     return im_bw
 
-def governor_scan(device, port: int, gov_number: int):
+def governor_scan(mode:str, device, port: int, gov_number: int):
     # set up the scan variables
     gov_name = ""
     gov_score = 0
@@ -135,19 +157,17 @@ def governor_scan(device, port: int, gov_number: int):
     image = cv2.imread('currentState.png')
 
     #Power and Killpoints
-    roi = (334, 260, 293, 33)
-    im_gov_name = cropToRegion(image, roi)
-    im_gov_name_bw = preprocessImage(im_gov_name, 3, 90, 12, True)
-    im_gov_name_bw_small = preprocessImage(im_gov_name, 1, 90, 4, True)
+    im_gov_name = cropToRegion(image, mode_data[mode]["name"])
+    im_gov_name_bw = preprocessImage(im_gov_name, 3, mode_data[mode]["threshold"], 12, mode_data[mode]["invert"])
+    im_gov_name_bw_small = preprocessImage(im_gov_name, 1, mode_data[mode]["threshold"], 4, mode_data[mode]["invert"])
     cv2.imwrite("tmp/gov_name" + str(gov_number) + ".png", im_gov_name_bw_small)
 
     image = cv2.imread('currentState.png')
-    roi = (1117, 265, 250, 33)
-    im_gov_score = cropToRegion(image, roi)
-    im_gov_score_bw = preprocessImage(im_gov_score, 3, 90, 12, True)
+    im_gov_score = cropToRegion(image, mode_data[mode]["score"])
+    im_gov_score_bw = preprocessImage(im_gov_score, 3, mode_data[mode]["threshold"], 12, mode_data[mode]["invert"])
     
     #gov_name = pytesseract.image_to_string(im_gov_name,config="--oem 1 -l ara+chi_sim+chi_tra+deu+ell+grc+hat+hrv+heb+hin+ind+jpn+kor+lao+mal+mon+rus+san+swa+tha+tur+vie")
-    gov_name = pytesseract.image_to_string(im_gov_name_bw, config="--oem 1 --psm 7 -l ara+chi_sim+eng+jpn+kor+rus+tha+vie")
+    gov_name = pytesseract.image_to_string(im_gov_name_bw, config="--oem 1 --psm 7 -l eng")
     gov_score = pytesseract.image_to_string(im_gov_score_bw, config="--oem 1 --psm 8")
     
     gov_score = int(re.sub("[^0-9]", "", gov_score))
@@ -161,7 +181,7 @@ def governor_scan(device, port: int, gov_number: int):
         "score": gov_score
     }
 
-def scan(port: int, kingdom: str, amount: int, resume: bool):
+def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
     #Initialize the connection to adb
     device = start_adb(port)
 
@@ -192,7 +212,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
             console.print("Scan Terminated! Saving the current progress...")
             break
 
-        governor = governor_scan(device, port, i)
+        governor = governor_scan(mode, device, port, i)
 
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
@@ -220,7 +240,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
             file_name_prefix = 'TOP'
         wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
 
-        adb_send_events('./inputs/alliance_1_person_scroll.txt', device, port)
+        adb_send_events(mode_data[mode]["script"], device, port)
         
         time.sleep(1 + random.random())
     if resume :
@@ -233,11 +253,14 @@ def scan(port: int, kingdom: str, amount: int, resume: bool):
 
 def main():
     signal.signal(signal.SIGINT, stopHandler)
-    port = IntPrompt.ask("Adb port of device", default=get_bluestacks_port())
-    kingdom = Prompt.ask("Alliance name", default="Alliance")
-    scan_amount = IntPrompt.ask("People to scan", default=600)
-    resume_scan = Confirm.ask("Resume scan", default=False)
-    scan(port, kingdom, scan_amount, resume_scan)
+
+    port = inquirer.text(message=f"Adb port of your device:", default=str(get_bluestacks_port()), validate=NumberValidator()).execute()
+    kingdom = inquirer.text(message="Alliance name:", default="Alliance").execute()
+    mode = inquirer.select(message="What do you want to scan:", choices=["Alliance", "Honor"], default="Alliance").execute()
+    scan_amount = inquirer.text(message="People to scan:", default="150", validate=NumberValidator()).execute()
+    resume_scan = inquirer.confirm(message="Resume scan:", default=False).execute()
+
+    scan(int(port), kingdom, mode, int(scan_amount), resume_scan)
 
     exit(1)
 
