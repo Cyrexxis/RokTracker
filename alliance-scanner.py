@@ -83,21 +83,24 @@ def start_adb(port: int):
 	return devices[0]
 
 def secure_adb_shell(command_to_execute: str, device, port: int):
+    result = ""
     for i in range(3):
         try:
-            device.shell(command_to_execute)
+            result = device.shell(command_to_execute)
         except:
             console.print("[red]ADB crashed[/red]")
             device = start_adb(port)
         else:
-            return
+            return result
 
-def adb_send_events(event_file, device, port):
+def adb_send_events(input_device_name, event_file, device, port):
+    idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", device, port)
+    idn = str(idn).strip()
     macroFile = open(event_file, 'r')
     lines = macroFile.readlines()
 
     for line in lines:
-            secure_adb_shell(line.strip(), device, port)
+            secure_adb_shell(f'''sendevent {idn} {line.strip()}''', device, port)
 
 def secure_adb_screencap(device, port: int):
     result = None
@@ -240,7 +243,7 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
             file_name_prefix = 'TOP'
         wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
 
-        adb_send_events(mode_data[mode]["script"], device, port)
+        adb_send_events("Touch", mode_data[mode]["script"], device, port)
         
         time.sleep(1 + random.random())
     if resume :

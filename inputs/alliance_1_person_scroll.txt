@@ -1,34 +1,34 @@
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 20000
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 19500
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 19000
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 18000
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 15332
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 15332
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 15332
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 3 53 13000
-sendevent /dev/input/event1 3 54 15332
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
-sendevent /dev/input/event1 0 2 0
-sendevent /dev/input/event1 0 0 0
+3 53 13000
+3 54 20000
+0 2 0
+0 0 0
+3 53 13000
+3 54 19500
+0 2 0
+0 0 0
+3 53 13000
+3 54 19000
+0 2 0
+0 0 0
+3 53 13000
+3 54 18000
+0 2 0
+0 0 0
+3 53 13000
+3 54 15332
+0 2 0
+0 0 0
+3 53 13000
+3 54 15332
+0 2 0
+0 0 0
+3 53 13000
+3 54 15332
+0 2 0
+0 0 0
+3 53 13000
+3 54 15332
+0 2 0
+0 0 0
+0 2 0
+0 0 0
