@@ -7,6 +7,7 @@ from rich.markup import escape
 from ppadb.client import Client
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from pathlib import Path
 import tkinter as tk
 import configparser
 import subprocess
@@ -19,9 +20,15 @@ import signal
 import re
 import logging
 import math
+import shutil
+import string
 
 console = Console()
 logging.basicConfig(filename='rok-scanner.log', encoding='utf-8', format='%(asctime)s %(module)s %(levelname)s %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+
+run_id = ""
+start_date = ""
+new_scroll = True
 
 def get_bluestacks_port():
     # try to read port from bluestacks config
@@ -64,14 +71,15 @@ def start_adb(port: int):
 	return devices[0]
 
 def secure_adb_shell(command_to_execute: str, device, port: int):
+    result = ""
     for i in range(3):
         try:
-            device.shell(command_to_execute)
+            result = device.shell(command_to_execute)
         except:
             console.print("[red]ADB crashed[/red]")
             device = start_adb(port)
         else:
-            return
+            return result
 
 def secure_adb_screencap(device, port: int):
     result = None
@@ -85,12 +93,25 @@ def secure_adb_screencap(device, port: int):
             return result
     return result
 
+def adb_send_events(input_device_name, event_file, device, port):
+    idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", device, port)
+    idn = str(idn).strip()
+    macroFile = open(event_file, 'r')
+    lines = macroFile.readlines()
+
+    for line in lines:
+            secure_adb_shell(f'''sendevent {idn} {line.strip()}''', device, port)
+
 def to_int_check(element):
 	try:
 		return int(element)
 	except ValueError:
 		#return element
 		return int(0)
+
+def generate_random_id(length):
+     alphabet = string.ascii_lowercase + string.digits
+     return ''.join(random.choices(alphabet, k=length))
 
 def stopHandler(signum, frame):
     stop = Confirm.ask("Do you really want to exit?")
@@ -159,8 +180,11 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
                 image_check_inactive = cv2.imread('check_more_info.png')
                 roiInactive = (0, tap_position - 100, 1400, 200)
                 image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
-                cv2.imwrite(f'Inactive {inactive_players:03}.png', image_inactive_raw)
-            secure_adb_shell(f'input swipe 690 605 690 540', device, port)
+                cv2.imwrite(f'./inactives/{start_date}/{run_id}/inactive {inactive_players:03}.png', image_inactive_raw)
+            if new_scroll:
+                adb_send_events("Touch", "./inputs/kingdom_1_person_scroll.txt", device, port)
+            else:
+                secure_adb_shell(f'input swipe 690 605 690 540', device, port)
             secure_adb_shell(f'input tap 690 ' + str(tap_position), device, port)
             count += 1
             time.sleep(2 + random.random())
@@ -367,6 +391,11 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     #Initialize the connection to adb
     device = start_adb(port)
 
+    if(track_inactives):
+         Path(f"./inactives/{start_date}/{run_id}").mkdir(parents=True, exist_ok=True)
+
+    review_path = f"./manual_review/{start_date}/{run_id}"
+
     ######Excel Formatting
     wb = Workbook()
     sheet1 = wb.active
@@ -482,7 +511,10 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         console.print('Kills check out: ', killsOk)
 
         if(not killsOk):
-             logging.log(logging.WARNING, f'''Kills for {governor["name"]} ({to_int_check(governor["id"])}) don't check out, manually need to look at them!''')
+            Path(review_path).mkdir(parents=True, exist_ok=True)
+            shutil.copy(Path("./gov_info.png"), Path(f'''{review_path}/{governor["id"]}-profile.png'''))
+            shutil.copy(Path("./kills_tier.png"), Path(f'''{review_path}/{governor["id"]}-kills.png'''))
+            logging.log(logging.WARNING, f'''Kills for {governor["name"]} ({to_int_check(governor["id"])}) don't check out, manually need to look at them!''')
 
         #Write results in excel file
         sheet1["A" + str(i+2-j)] = to_int_check(governor["id"])
@@ -507,24 +539,32 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
             file_name_prefix = 'NEXT'
         else:
             file_name_prefix = 'TOP'
-        wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
+        wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom + f'-[{run_id}]' + '.xlsx')
     if resume :
         file_name_prefix = 'NEXT'
     else:
         file_name_prefix = 'TOP'
-    wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
+    wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom + f'-[{run_id}]' + '.xlsx')
     return
 
 
 def main():
     signal.signal(signal.SIGINT, stopHandler)
+    global run_id
+    global start_date
+    global new_scroll
+    run_id = generate_random_id(8)
+    start_date = datetime.date.today()
+    console.print(f"The UUID of this scan is [green]{run_id}[/green]", highlight=False) 
+
     port = IntPrompt.ask("Adb port of device", default=get_bluestacks_port())
     kingdom = Prompt.ask("Kingdom name (used for file name)", default="KD")
     scan_amount = IntPrompt.ask("People to scan", default=600)
     resume_scan = Confirm.ask("Resume scan", default=False)
+    new_scroll = Confirm.ask("Use the new scrolling method (more accurate, but might not work)", default=True)
     track_inactives = Confirm.ask("Track inactives (via screenshot)", default=False)
-    scan(port, kingdom, scan_amount, resume_scan, track_inactives)
 
+    scan(port, kingdom, scan_amount, resume_scan, track_inactives)
     exit(1)
 
 if __name__ == "__main__":
