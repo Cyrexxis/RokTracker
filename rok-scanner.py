@@ -113,6 +113,25 @@ def generate_random_id(length):
      alphabet = string.ascii_lowercase + string.digits
      return ''.join(random.choices(alphabet, k=length))
 
+def get_gov_position(current_position, skips):
+    #Positions for next governor to check
+    Y =[285, 390, 490, 590, 605, 705, 805]
+
+    # skips only are relevant in the first 4 governors
+    if current_position + skips < 4:
+         return Y[current_position + skips]
+    else:
+        if current_position < 998:
+            return Y[4]
+        elif current_position == 998:
+            return Y[5]
+        elif current_position == 999:
+            return Y[6]
+        else:
+            console.log("Reached final governor on the screen. Scan complete.")
+            logging.log(logging.INFO, "Reached final governor on the screen. Scan complete.")
+            exit(0)
+
 def stopHandler(signum, frame):
     stop = Confirm.ask("Do you really want to exit?")
     if stop:
@@ -140,7 +159,7 @@ def preprocessImage(image, threshold, border_size, invert = False):
     im_bw = cropToTextWithBorder(im_bw, border_size)
     return im_bw
 
-def governor_scan(device, port: int, tap_position: int, inactive_players: int, track_inactives: bool):
+def governor_scan(device, port: int, current_player: int, inactive_players: int, track_inactives: bool):
     # set up the scan variables
     gov_name = ""
     gov_id = 0
@@ -157,7 +176,7 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
     gov_helps = 0
 
     #Open governor
-    secure_adb_shell(f'input tap 690 ' + str(tap_position), device, port)
+    secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), device, port)
     time.sleep(2 + random.random())
 
     gov_info = False
@@ -178,14 +197,14 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
             inactive_players += 1
             if track_inactives:
                 image_check_inactive = cv2.imread('check_more_info.png')
-                roiInactive = (0, tap_position - 100, 1400, 200)
+                roiInactive = (0, get_gov_position(current_player, inactive_players - 1) - 100, 1400, 200)
                 image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
                 cv2.imwrite(f'./inactives/{start_date}/{run_id}/inactive {inactive_players:03}.png', image_inactive_raw)
             if new_scroll:
                 adb_send_events("Touch", "./inputs/kingdom_1_person_scroll.txt", device, port)
             else:
                 secure_adb_shell(f'input swipe 690 605 690 540', device, port)
-            secure_adb_shell(f'input tap 690 ' + str(tap_position), device, port)
+            secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), device, port)
             count += 1
             time.sleep(2 + random.random())
             if count == 10:
@@ -199,9 +218,19 @@ def governor_scan(device, port: int, tap_position: int, inactive_players: int, t
             break
         
     #nickname copy
-    secure_adb_shell(f'input tap 690 283', device, port)
-    time.sleep(0.2)
-    gov_name = tk.Tk().clipboard_get()
+
+    copy_try = 0
+    while copy_try < 3:
+        try:
+            secure_adb_shell(f'input tap 690 283', device, port)
+            time.sleep(0.2)
+            gov_name = tk.Tk().clipboard_get()
+            break
+        except:
+             console.log("Name copy failed, retying")
+             logging.log(logging.INFO, "Name copy failed, retying")
+             copy_try = copy_try + 1
+    
     time.sleep(2 + random.random())
 
     image = secure_adb_screencap(device, port)
@@ -456,31 +485,67 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     #MUST have the tab opened to the 1st governor(Power or Killpoints)
 
     stop = False
+    last_two = False
+    next_gov_to_scan = -1
 
     for i in range(j,amount):
         if stop:
             console.print("Scan Terminated! Saving the current progress...")
             break
-        if i == 998:
-            k = 5
-        if i == 999:
-            k = 6
-        else:
-            if i > 4:
-                k = 4
-            else:
-                k = i
 
-        governor = governor_scan(device, port, Y[k], inactive_players, track_inactives)
+        next_gov_to_scan = max(next_gov_to_scan + 1, i)
+        governor = governor_scan(device, port, next_gov_to_scan, inactive_players, track_inactives)
         inactive_players = governor["inactives"]
+
+        if sheet1["A" + str(i+1-j)].value == to_int_check(governor["id"]):
+            roi = (196, 698, 52, 27)
+            image = secure_adb_screencap(device, port)
+            with open(('currentState.png'), 'wb') as f:
+                        f.write(image)  # type: ignore
+            image = cv2.imread('currentState.png')
+
+            im_ranking = cropToRegion(image, roi)
+            im_ranking_bw = preprocessImage(im_ranking, 90, 12, True)
+            ranking = pytesseract.image_to_string(im_ranking_bw,config="--oem 1 --psm 8")
+            ranking = re.sub("[^0-9]", "", ranking)
+
+            if(ranking == "" or to_int_check(ranking) != 999):
+                console.log(f"Duplicate governor detected, but current rank is {ranking}, trying a second time.")
+                logging.log(logging.INFO, f"Duplicate governor detected, but current rank is {ranking}, trying a second time.")
+
+                # repeat scan with next governor
+                governor = governor_scan(device, port, next_gov_to_scan, inactive_players, track_inactives)
+                inactive_players = governor["inactives"]
+            else:
+                if not last_two:
+                    last_two = True
+                    next_gov_to_scan = 998
+                    console.log("Duplicate governor detected, switching to scanning of last two governors.")
+                    logging.log(logging.INFO, "Duplicate governor detected, switching to scanning of last two governors.")
+                    
+                    # repeat scan with next governor
+                    governor = governor_scan(device, port, next_gov_to_scan, inactive_players, track_inactives)
+                    inactive_players = governor["inactives"]
+                else:
+                    console.log("Reached final governor on the screen. Scan complete.")
+                    logging.log(logging.INFO, "Reached final governor on the screen. Scan complete.")
+                    exit(0)
+
 
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
 
+        expectedKp = math.floor(to_int_check(governor["kills_t1"]) * 0.2) \
+                        + (to_int_check(governor["kills_t2"]) * 2) \
+                        + (to_int_check(governor["kills_t3"]) * 4) \
+                        + (to_int_check(governor["kills_t4"]) * 10) \
+                        + (to_int_check(governor["kills_t5"]) * 20)
+        killsOk = expectedKp == to_int_check(governor["killpoints"])
+
         # nice output for console
         table = Table(title='[' + current_time + ']\n' + "Latest Scan Result\nGovernor " + str(i + 1) + ' of ' + str(amount), show_header=True, show_footer=True)
-        table.add_column("Entry", "Approx time remaining\nSkipped", style="magenta")
-        table.add_column("Value", str(datetime.timedelta(seconds=(amount - i) * 19)) + "\n" + str(inactive_players), style="cyan")
+        table.add_column("Entry", "Approx time remaining\nSkipped\nKills check out", style="magenta")
+        table.add_column("Value", str(datetime.timedelta(seconds=(amount - i) * 19)) + "\n" + str(inactive_players) + "\n" + str(killsOk), style="cyan")
 
         table.add_row("Governor ID", str(governor["id"]))
         table.add_row("Governor Name", governor["name"])
@@ -501,14 +566,6 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         table.add_row("Governor Alliance", escape(governor["alliance"].rstrip()))
 
         console.print(table)
-
-        expectedKp = math.floor(to_int_check(governor["kills_t1"]) * 0.2) \
-                        + (to_int_check(governor["kills_t2"]) * 2) \
-                        + (to_int_check(governor["kills_t3"]) * 4) \
-                        + (to_int_check(governor["kills_t4"]) * 10) \
-                        + (to_int_check(governor["kills_t5"]) * 20)
-        killsOk = expectedKp == to_int_check(governor["killpoints"])
-        console.print('Kills check out: ', killsOk)
 
         if(not killsOk):
             Path(review_path).mkdir(parents=True, exist_ok=True)
@@ -545,6 +602,8 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     else:
         file_name_prefix = 'TOP'
     wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom + f'-[{run_id}]' + '.xlsx')
+    console.log("Reached the target amount of people. Scan complete.")
+    logging.log(logging.INFO, "Reached the target amount of people. Scan complete.")
     return
 
 
