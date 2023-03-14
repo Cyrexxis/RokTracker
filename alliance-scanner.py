@@ -24,6 +24,8 @@ import re
 #pyright: reportPrivateImportUsage=false
 
 console = Console()
+scan_index = 0
+reached_bottom = False
 
 mode_data = {
      "Alliance": {
@@ -31,14 +33,38 @@ mode_data = {
         "score": (1117, 265, 250, 33),
         "threshold": 90,
         "invert": True,
-        "script": "./inputs/alliance_1_person_scroll.txt"
+        "script": "./inputs/alliance_1_person_scroll.txt",
+        "name_pos": [(334, 260, 293, 33),
+                     (334, 283, 293, 33),
+                     (334, 383, 293, 33),
+                     (334, 483, 293, 33),
+                     (334, 595, 293, 33),
+                     (334, 685, 293, 33),
+                     (334, 785, 293, 33)],
+        "score_pos": [(1117, 265, 250, 33),
+                      (1117, 288, 250, 33),
+                      (1117, 388, 250, 33),
+                      (1117, 488, 250, 33),
+                      (1117, 590, 250, 33),
+                      (1117, 690, 250, 33),
+                      (1117, 790, 250, 33)]
      },
      "Honor": {
         "name": (774, 330, 257, 33),
         "score": (1183, 330, 178, 33),
         "threshold": 150,
         "invert": False,
-        "script": "./inputs/honor_1_person_scroll.txt"
+        "script": "./inputs/honor_1_person_scroll.txt",
+        "name_pos": [(774, 330, 257, 33),
+                     (774, 424, 257, 33),
+                     (774, 524, 257, 33),
+                     (774, 624, 257, 33),
+                     (774, 724, 257, 33)],
+        "score_pos": [(1183, 330, 178, 33),
+                      (1183, 424, 178, 33),
+                      (1183, 524, 178, 33),
+                      (1183, 624, 178, 33),
+                      (1183, 724, 178, 33)]
      }
 }
 
@@ -150,9 +176,19 @@ def preprocessImage(image, scale_factor, threshold, border_size, invert = False)
 
 def governor_scan(mode:str, device, port: int, gov_number: int):
     # set up the scan variables
+    global scan_index
+    global reached_bottom
     gov_name = ""
     gov_score = 0
+    tries = 0
+    max_tries = 3
     
+    if reached_bottom:
+         scan_index = scan_index + 1
+         if scan_index >= len(mode_data[mode]["name_pos"]):
+              console.log("Last governor scanned, scan completed.")
+              exit(0)
+
     # Take screenshot to process
     image = secure_adb_screencap(device, port)
     with open(('currentState.png'), 'wb') as f:
@@ -160,20 +196,33 @@ def governor_scan(mode:str, device, port: int, gov_number: int):
     image = cv2.imread('currentState.png')
 
     #Power and Killpoints
-    im_gov_name = cropToRegion(image, mode_data[mode]["name"])
-    im_gov_name_bw = preprocessImage(im_gov_name, 3, mode_data[mode]["threshold"], 12, mode_data[mode]["invert"])
-    im_gov_name_bw_small = preprocessImage(im_gov_name, 1, mode_data[mode]["threshold"], 4, mode_data[mode]["invert"])
-    cv2.imwrite("tmp/gov_name" + str(gov_number) + ".png", im_gov_name_bw_small)
+    while tries < max_tries:
+        # needed for detection in alliance mode
+        try:
+            im_gov_name = cropToRegion(image, mode_data[mode]["name_pos"][scan_index])
+            im_gov_name_bw = preprocessImage(im_gov_name, 3, mode_data[mode]["threshold"], 12, mode_data[mode]["invert"])
+            im_gov_name_bw_small = preprocessImage(im_gov_name, 1, mode_data[mode]["threshold"], 4, mode_data[mode]["invert"])
+            cv2.imwrite("tmp/gov_name" + str(gov_number) + ".png", im_gov_name_bw_small)
 
-    image = cv2.imread('currentState.png')
-    im_gov_score = cropToRegion(image, mode_data[mode]["score"])
-    im_gov_score_bw = preprocessImage(im_gov_score, 3, mode_data[mode]["threshold"], 12, mode_data[mode]["invert"])
-    
-    #gov_name = pytesseract.image_to_string(im_gov_name,config="--oem 1 -l ara+chi_sim+chi_tra+deu+ell+grc+hat+hrv+heb+hin+ind+jpn+kor+lao+mal+mon+rus+san+swa+tha+tur+vie")
-    gov_name = pytesseract.image_to_string(im_gov_name_bw, config="--oem 1 --psm 7 -l eng")
-    gov_score = pytesseract.image_to_string(im_gov_score_bw, config="--oem 1 --psm 8")
-    
-    gov_score = int(re.sub("[^0-9]", "", gov_score))
+            image = cv2.imread('currentState.png')
+            im_gov_score = cropToRegion(image, mode_data[mode]["score_pos"][scan_index])
+            im_gov_score_bw = preprocessImage(im_gov_score, 3, mode_data[mode]["threshold"], 12, mode_data[mode]["invert"])
+            
+            #gov_name = pytesseract.image_to_string(im_gov_name,config="--oem 1 -l ara+chi_sim+chi_tra+deu+ell+grc+hat+hrv+heb+hin+ind+jpn+kor+lao+mal+mon+rus+san+swa+tha+tur+vie")
+            gov_name = pytesseract.image_to_string(im_gov_name_bw, config="--oem 1 --psm 7 -l eng")
+            gov_score = pytesseract.image_to_string(im_gov_score_bw, config="--oem 1 --psm 8")
+            
+            gov_score = int(re.sub("[^0-9]", "", gov_score))
+            break
+        except:
+            if not reached_bottom:
+                tries = tries + 1
+                scan_index = scan_index + 1
+                reached_bottom = True
+                console.log("Didn't find score, assuming bottom is reached. Starting scan of last 6 governors.")
+            else:
+                console.log("Aborting scan, because an error occurred.")
+                exit(0)
 
     #Just to check the progress, printing in cmd the result for each governor
     if gov_score == '':
@@ -237,13 +286,20 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
         sheet1["B" + str(i+2)] = governor["name"]
         sheet1["C" + str(i+2)] = to_int_check(governor["score"])
 
+        # needed for detection of end in honor mode
+        if sheet1["B" + str(i+1)].value == governor["name"] and sheet1["C" + str(i+1)].value == to_int_check(governor["score"]):
+             global reached_bottom
+             reached_bottom = True
+             console.log("Duplicate governor, switching to scan of last governors")
+
         if resume :
             file_name_prefix = 'NEXT'
         else:
             file_name_prefix = 'TOP'
         wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
 
-        adb_send_events("Touch", mode_data[mode]["script"], device, port)
+        if not reached_bottom:
+            adb_send_events("Touch", mode_data[mode]["script"], device, port)
         
         time.sleep(1 + random.random())
     if resume :
