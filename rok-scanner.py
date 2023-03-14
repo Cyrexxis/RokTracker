@@ -1,17 +1,15 @@
+from console import console
 from rich.prompt import Prompt
 from rich.prompt import IntPrompt
 from rich.prompt import Confirm
-from rich.console import Console
 from rich.table import Table
 from rich.markup import escape
-from PIL.Image import Image, new as NewImage
-from com.dtmilano.android.adb.adbclient import AdbClient
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
+from adbutils import *
 import tkinter as tk
 import configparser
-import subprocess
 import datetime
 import time
 import random
@@ -24,12 +22,12 @@ import math
 import shutil
 import string
 
-console = Console()
 logging.basicConfig(filename='rok-scanner.log', encoding='utf-8', format='%(asctime)s %(module)s %(levelname)s %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 
 run_id = ""
 start_date = ""
 new_scroll = True
+scan_abort = False
 
 def get_bluestacks_port():
     # try to read port from bluestacks config
@@ -49,56 +47,6 @@ def get_bluestacks_port():
         console.print("[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]")
         return 5555
     return 5555
-
-def start_adb(port: int):
-    console.print("Killing ADB server...")
-    process = subprocess.run(['.\\platform-tools\\adb.exe', 'kill-server'], 
-                         stdout=subprocess.PIPE, 
-                         universal_newlines=True)
-    console.print(process.stdout)
-    console.print("Starting adb server and connecting to adb device...")
-    process = subprocess.run(['.\\platform-tools\\adb.exe', 'connect',  'localhost:' + str(port)], 
-                         stdout=subprocess.PIPE, 
-                         universal_newlines=True)
-    console.print(process.stdout)
-    try:
-        adb_client = AdbClient(serialno=".*", hostname='localhost', port=5037)
-    except:
-         console.log("No device connected, aborting.")
-         exit(0)
-    return adb_client
-
-def secure_adb_shell(command_to_execute: str, device, port: int):
-    result = ""
-    for i in range(3):
-        try:
-            result = device.shell(command_to_execute)
-        except:
-            console.print("[red]ADB crashed[/red]")
-            device = start_adb(port)
-        else:
-            return result
-
-def secure_adb_screencap(device, port: int) -> Image:
-    result = NewImage(mode="RGB", size=(1,1))
-    for i in range(3):
-        try:
-            result = device.takeSnapshot(reconnect=True)
-        except:
-            console.print("[red]ADB crashed[/red]")
-            device = start_adb(port)
-        else:
-            return result
-    return result
-
-def adb_send_events(input_device_name, event_file, device, port):
-    idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", device, port)
-    idn = str(idn).strip()
-    macroFile = open(event_file, 'r')
-    lines = macroFile.readlines()
-
-    for line in lines:
-            secure_adb_shell(f'''sendevent {idn} {line.strip()}''', device, port)
 
 def to_int_check(element):
 	try:
@@ -131,10 +79,11 @@ def get_gov_position(current_position, skips):
             exit(0)
 
 def stopHandler(signum, frame):
+    global scan_abort
     stop = Confirm.ask("Do you really want to exit?")
     if stop:
-        console.print("Scan aborted.")
-        exit(1)
+        console.print("Scan will aborted after next governor.")
+        scan_abort = True
 
 def cropToRegion(image, roi):
      return image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
@@ -479,7 +428,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     next_gov_to_scan = -1
 
     for i in range(j,amount):
-        if stop:
+        if scan_abort:
             console.print("Scan Terminated! Saving the current progress...")
             break
 
@@ -592,6 +541,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
     wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom + f'-[{run_id}]' + '.xlsx')
     console.log("Reached the target amount of people. Scan complete.")
     logging.log(logging.INFO, "Reached the target amount of people. Scan complete.")
+    kill_adb() # make sure to clean up adb server
     return
 
 

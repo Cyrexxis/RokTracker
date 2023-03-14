@@ -1,10 +1,8 @@
-from rich.prompt import Prompt
-from rich.prompt import IntPrompt
+from console import console
+from adbutils import *
 from rich.prompt import Confirm
 from rich.console import Console
 from rich.table import Table
-from PIL.Image import Image, new as NewImage
-from com.dtmilano.android.adb.adbclient import AdbClient
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpImage
@@ -12,7 +10,6 @@ from pathlib import Path
 from InquirerPy import inquirer
 from InquirerPy.validator import NumberValidator
 import configparser
-import subprocess
 import datetime
 import time
 import random
@@ -27,6 +24,7 @@ import re
 console = Console()
 scan_index = 0
 reached_bottom = False
+abort_scan = False
 
 mode_data = {
      "Alliance": {
@@ -88,56 +86,6 @@ def get_bluestacks_port():
         return 5555
     return 5555
 
-def start_adb(port: int):
-    console.print("Killing ADB server...")
-    process = subprocess.run(['.\\platform-tools\\adb.exe', 'kill-server'], 
-                         stdout=subprocess.PIPE, 
-                         universal_newlines=True)
-    console.print(process.stdout)
-    console.print("Starting adb server and connecting to adb device...")
-    process = subprocess.run(['.\\platform-tools\\adb.exe', 'connect',  'localhost:' + str(port)], 
-                         stdout=subprocess.PIPE, 
-                         universal_newlines=True)
-    console.print(process.stdout)
-    try:
-        adb_client = AdbClient(serialno=".*", hostname='localhost', port=5037)
-    except:
-         console.log("No device connected, aborting.")
-         exit(0)
-    return adb_client
-
-def secure_adb_shell(command_to_execute: str, device, port: int):
-    result = ""
-    for i in range(3):
-        try:
-            result = device.shell(command_to_execute)
-        except:
-            console.print("[red]ADB crashed[/red]")
-            device = start_adb(port)
-        else:
-            return result
-
-def secure_adb_screencap(device, port: int) -> Image:
-    result = NewImage(mode="RGB", size=(1,1))
-    for i in range(3):
-        try:
-            result = device.takeSnapshot(reconnect=True)
-        except:
-            console.print("[red]ADB crashed[/red]")
-            device = start_adb(port)
-        else:
-            return result
-    return result
-
-def adb_send_events(input_device_name, event_file, device, port):
-    idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", device, port)
-    idn = str(idn).strip()
-    macroFile = open(event_file, 'r')
-    lines = macroFile.readlines()
-
-    for line in lines:
-            secure_adb_shell(f'''sendevent {idn} {line.strip()}''', device, port)
-
 def to_int_check(element):
 	try:
 		return int(element)
@@ -146,10 +94,11 @@ def to_int_check(element):
 		return int(0)
 
 def stopHandler(signum, frame):
+    global abort_scan
     stop = Confirm.ask("Do you really want to exit?")
     if stop:
-        console.print("Scan aborted.")
-        exit(1)
+        console.print("Scan will aborted after next governor.")
+        abort_scan = True
 
 def cropToRegion(image, roi):
      return image[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
@@ -256,7 +205,7 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
     Path('./tmp').mkdir(parents=True, exist_ok=True)
 
     for i in range(0,amount):
-        if stop:
+        if abort_scan:
             console.print("Scan Terminated! Saving the current progress...")
             break
 
@@ -306,6 +255,7 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
     else:
         file_name_prefix = 'TOP'
     wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
+    kill_adb() # make sure to clean up adb server
     return
 
 
