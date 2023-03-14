@@ -3,7 +3,8 @@ from rich.prompt import IntPrompt
 from rich.prompt import Confirm
 from rich.console import Console
 from rich.table import Table
-from ppadb.client import Client
+from PIL.Image import Image, new as NewImage
+from com.dtmilano.android.adb.adbclient import AdbClient
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpImage
@@ -88,25 +89,22 @@ def get_bluestacks_port():
     return 5555
 
 def start_adb(port: int):
-	console.print("Killing ADB server...")
-	process = subprocess.run(['.\\platform-tools\\adb.exe', 'kill-server'], 
+    console.print("Killing ADB server...")
+    process = subprocess.run(['.\\platform-tools\\adb.exe', 'kill-server'], 
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
-	console.print(process.stdout)
-	console.print("Starting adb server and connecting to adb device...")
-	process = subprocess.run(['.\\platform-tools\\adb.exe', 'connect',  'localhost:' + str(port)], 
+    console.print(process.stdout)
+    console.print("Starting adb server and connecting to adb device...")
+    process = subprocess.run(['.\\platform-tools\\adb.exe', 'connect',  'localhost:' + str(port)], 
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
-	console.print(process.stdout)
-	adb = Client(host='localhost', port=5037)
-	devices = adb.devices()
-
-	if len(devices) == 0:
-		console.print('no device attached')
-		quit()
-
-	#Probably a good idea to have only 1 device while running this
-	return devices[0]
+    console.print(process.stdout)
+    try:
+        adb_client = AdbClient(serialno=".*", hostname='localhost', port=5037)
+    except:
+         console.log("No device connected, aborting.")
+         exit(0)
+    return adb_client
 
 def secure_adb_shell(command_to_execute: str, device, port: int):
     result = ""
@@ -119,6 +117,18 @@ def secure_adb_shell(command_to_execute: str, device, port: int):
         else:
             return result
 
+def secure_adb_screencap(device, port: int) -> Image:
+    result = NewImage(mode="RGB", size=(1,1))
+    for i in range(3):
+        try:
+            result = device.takeSnapshot(reconnect=True)
+        except:
+            console.print("[red]ADB crashed[/red]")
+            device = start_adb(port)
+        else:
+            return result
+    return result
+
 def adb_send_events(input_device_name, event_file, device, port):
     idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", device, port)
     idn = str(idn).strip()
@@ -127,18 +137,6 @@ def adb_send_events(input_device_name, event_file, device, port):
 
     for line in lines:
             secure_adb_shell(f'''sendevent {idn} {line.strip()}''', device, port)
-
-def secure_adb_screencap(device, port: int):
-    result = None
-    for i in range(3):
-        try:
-            result = device.screencap()
-        except:
-            console.print("[red]ADB crashed[/red]")
-            device = start_adb(port)
-        else:
-            return result
-    return result
 
 def to_int_check(element):
 	try:
@@ -190,9 +188,7 @@ def governor_scan(mode:str, device, port: int, gov_number: int):
               exit(0)
 
     # Take screenshot to process
-    image = secure_adb_screencap(device, port)
-    with open(('currentState.png'), 'wb') as f:
-                f.write(image)  # type: ignore
+    secure_adb_screencap(device, port).save('currentState.png')
     image = cv2.imread('currentState.png')
 
     #Power and Killpoints
@@ -266,6 +262,13 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
 
         governor = governor_scan(mode, device, port, i)
 
+        # needed for detection of end in honor mode
+        if sheet1["B" + str(i+1)].value == governor["name"] and sheet1["C" + str(i+1)].value == to_int_check(governor["score"]):
+             global reached_bottom
+             reached_bottom = True
+             console.log("Duplicate governor, switching to scan of last governors")
+             governor = governor_scan(mode, device, port, i)
+
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
 
@@ -286,11 +289,7 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
         sheet1["B" + str(i+2)] = governor["name"]
         sheet1["C" + str(i+2)] = to_int_check(governor["score"])
 
-        # needed for detection of end in honor mode
-        if sheet1["B" + str(i+1)].value == governor["name"] and sheet1["C" + str(i+1)].value == to_int_check(governor["score"]):
-             global reached_bottom
-             reached_bottom = True
-             console.log("Duplicate governor, switching to scan of last governors")
+       
 
         if resume :
             file_name_prefix = 'NEXT'

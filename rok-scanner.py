@@ -4,7 +4,8 @@ from rich.prompt import Confirm
 from rich.console import Console
 from rich.table import Table
 from rich.markup import escape
-from ppadb.client import Client
+from PIL.Image import Image, new as NewImage
+from com.dtmilano.android.adb.adbclient import AdbClient
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
@@ -50,25 +51,22 @@ def get_bluestacks_port():
     return 5555
 
 def start_adb(port: int):
-	console.print("Killing ADB server...")
-	process = subprocess.run(['.\\platform-tools\\adb.exe', 'kill-server'], 
+    console.print("Killing ADB server...")
+    process = subprocess.run(['.\\platform-tools\\adb.exe', 'kill-server'], 
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
-	console.print(process.stdout)
-	console.print("Starting adb server and connecting to adb device...")
-	process = subprocess.run(['.\\platform-tools\\adb.exe', 'connect',  'localhost:' + str(port)], 
+    console.print(process.stdout)
+    console.print("Starting adb server and connecting to adb device...")
+    process = subprocess.run(['.\\platform-tools\\adb.exe', 'connect',  'localhost:' + str(port)], 
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
-	console.print(process.stdout)
-	adb = Client(host='localhost', port=5037)
-	devices = adb.devices()
-
-	if len(devices) == 0:
-		console.print('no device attached')
-		quit()
-
-	#Probably a good idea to have only 1 device while running this
-	return devices[0]
+    console.print(process.stdout)
+    try:
+        adb_client = AdbClient(serialno=".*", hostname='localhost', port=5037)
+    except:
+         console.log("No device connected, aborting.")
+         exit(0)
+    return adb_client
 
 def secure_adb_shell(command_to_execute: str, device, port: int):
     result = ""
@@ -81,11 +79,11 @@ def secure_adb_shell(command_to_execute: str, device, port: int):
         else:
             return result
 
-def secure_adb_screencap(device, port: int):
-    result = None
+def secure_adb_screencap(device, port: int) -> Image:
+    result = NewImage(mode="RGB", size=(1,1))
     for i in range(3):
         try:
-            result = device.screencap()
+            result = device.takeSnapshot(reconnect=True)
         except:
             console.print("[red]ADB crashed[/red]")
             device = start_adb(port)
@@ -183,9 +181,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     count = 0
 
     while not (gov_info):
-        image_check_original = secure_adb_screencap(device, port)
-        with open(('check_more_info.png'), 'wb') as f:
-                    f.write(image_check_original)  # type: ignore
+        secure_adb_screencap(device, port).save("check_more_info.png")
         
         image_check = cv2.imread('check_more_info.png',cv2.IMREAD_GRAYSCALE)
         roi = (313, 727, 137, 29)	#Checking for more info
@@ -233,9 +229,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     
     time.sleep(2 + random.random())
 
-    image = secure_adb_screencap(device, port)
-    with open(('gov_info.png'), 'wb') as f:
-                f.write(image)  # type: ignore
+    secure_adb_screencap(device, port).save('gov_info.png')
     image = cv2.imread('gov_info.png')
 
     #Power and Killpoints
@@ -272,9 +266,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
 
     time.sleep(2 + random.random())
-    image = secure_adb_screencap(device, port)
-    with open(('kills_tier.png'), 'wb') as f:
-                f.write(image)  # type: ignore
+    secure_adb_screencap(device, port).save('kills_tier.png')
     image2 = cv2.imread('kills_tier.png')
     image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
     
@@ -325,9 +317,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
     time.sleep(1 + random.random())
-    image = secure_adb_screencap(device, port)
-    with open(('more_info.png'), 'wb') as f:
-                f.write(image)  # type: ignore
+    secure_adb_screencap(device, port).save('more_info.png')
     image3 = cv2.imread('more_info.png')
 
     roi = (1130, 443, 183, 40) #dead
@@ -499,9 +489,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
 
         if sheet1["A" + str(i+1-j)].value == to_int_check(governor["id"]):
             roi = (196, 698, 52, 27)
-            image = secure_adb_screencap(device, port)
-            with open(('currentState.png'), 'wb') as f:
-                        f.write(image)  # type: ignore
+            secure_adb_screencap(device, port).save('currentState.png')
             image = cv2.imread('currentState.png')
 
             im_ranking = cropToRegion(image, roi)

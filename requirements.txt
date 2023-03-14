@@ -1,3 +1,4 @@
+androidviewclient==22.5.1
 commonmark==0.9.1
 et-xmlfile==1.1.0
 inquirerpy==0.3.4
@@ -8,7 +9,6 @@ packaging==23.0
 pfzy==0.3.4
 Pillow==9.3.0
 prompt-toolkit==3.0.38
-pure-python-adb==0.3.0.dev0
 Pygments==2.14.0
 pytesseract==0.3.10
 rich==12.6.0
