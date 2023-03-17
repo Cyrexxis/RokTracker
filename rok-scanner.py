@@ -106,6 +106,32 @@ def preprocessImage(image, threshold, border_size, invert = False):
     im_bw = cropToTextWithBorder(im_bw, border_size)
     return im_bw
 
+def are_kills_ok(kills_t1, kills_t2, kills_t3, kills_t4, kills_t5, kill_points) -> bool:
+    expectedKp = math.floor(kills_t1 * 0.2) \
+                        + (kills_t2 * 2) \
+                        + (kills_t3 * 4) \
+                        + (kills_t4 * 10) \
+                        + (kills_t5 * 20)
+    return expectedKp == kill_points
+
+def are_kp_ok(kp_t1, kp_t2, kp_t3, kp_t4, kp_t5, kill_points) -> bool:
+    expectedKp = kp_t1 + kp_t2 + kp_t3 + kp_t4 + kp_t5
+    return kill_points == expectedKp
+
+def calculate_kills(k_t1: int, kp_t1: int, kp_t2: int, kp_t3: int, kp_t4: int, kp_t5: int) -> tuple[int, int, int, int, int]:
+    kills_t1 = kp_t1 / 0.2
+
+    if kills_t1 < k_t1 <= (kills_t1 + 4): # fix t1 kills if no error is present
+        kills_t1 = k_t1
+    elif kills_t1 % 10 < k_t1 % 10 <= (kills_t1 + 4) % 10: # try to fix t1 with error (assuming last digit is correct)
+        kills_t1 = (kills_t1 % 10) - (k_t1 % 10)
+
+    kills_t2 = kp_t2 / 2
+    kills_t3 = kp_t3 / 4
+    kills_t4 = kp_t4 / 10
+    kills_t5 = kp_t5 / 20
+    return int(kills_t1), int(kills_t2), int(kills_t3), int(kills_t4), int(kills_t5)
+
 def governor_scan(device, port: int, current_player: int, inactive_players: int, track_inactives: bool):
     # set up the scan variables
     gov_name = ""
@@ -223,21 +249,41 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     im_kills_tier1 = cropToRegion(image2, roi)
     im_kills_tier1_bw = preprocessImage(im_kills_tier1, 150, 12)
 
+    roi = (1243, 461, 171, 38) #tier 1 KP
+    im_kp_tier1 = cropToRegion(image2, roi)
+    im_kp_tier1_bw = preprocessImage(im_kp_tier1, 150, 12)
+
     roi = (862, 505, 150, 38) #tier 2
     im_kills_tier2 = cropToRegion(image2, roi)
     im_kills_tier2_bw = preprocessImage(im_kills_tier2, 150, 12)
+
+    roi = (1243, 505, 171, 38) #tier 2 KP
+    im_kp_tier2 = cropToRegion(image2, roi)
+    im_kp_tier2_bw = preprocessImage(im_kp_tier2, 150, 12)
 
     roi = (862, 549, 150, 38) #tier 3
     im_kills_tier3 = cropToRegion(image2, roi)
     im_kills_tier3_bw = preprocessImage(im_kills_tier3, 150, 12)
 
+    roi = (1243, 549, 171, 38) #tier 3 KP
+    im_kp_tier3 = cropToRegion(image2, roi)
+    im_kp_tier3_bw = preprocessImage(im_kp_tier3, 150, 12)
+
     roi = (862, 593, 150, 38) #tier 4
     im_kills_tier4 = cropToRegion(image2, roi)
     im_kills_tier4_bw = preprocessImage(im_kills_tier4, 150, 12)
 
+    roi = (1243, 593, 171, 38) #tier 4 KP
+    im_kp_tier4 = cropToRegion(image2, roi)
+    im_kp_tier4_bw = preprocessImage(im_kp_tier4, 150, 12)
+
     roi = (862, 638, 150, 38) #tier 5
     im_kills_tier5 = cropToRegion(image2, roi)
     im_kills_tier5_bw = preprocessImage(im_kills_tier5, 150, 12)
+
+    roi = (1243, 638, 171, 38) #tier 5 KP
+    im_kp_tier5 = cropToRegion(image2, roi)
+    im_kp_tier5_bw = preprocessImage(im_kp_tier5, 150, 12)
 
     roi = (1274, 740, 146, 38) #ranged points
     im_ranged_points = cropToRegion(image2, roi)
@@ -250,17 +296,32 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_kills_tier1 = pytesseract.image_to_string(im_kills_tier1_bw,config="--oem 1 --psm 8")
     gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
 
+    gov_kp_tier1 = pytesseract.image_to_string(im_kp_tier1_bw,config="--oem 1 --psm 8")
+    gov_kp_tier1 = re.sub("[^0-9]", "", gov_kp_tier1)
+
     gov_kills_tier2 = pytesseract.image_to_string(im_kills_tier2_bw,config="--oem 1 --psm 8")
     gov_kills_tier2 = re.sub("[^0-9]", "", gov_kills_tier2)
+
+    gov_kp_tier2 = pytesseract.image_to_string(im_kp_tier2_bw,config="--oem 1 --psm 8")
+    gov_kp_tier2 = re.sub("[^0-9]", "", gov_kp_tier2)
 
     gov_kills_tier3 = pytesseract.image_to_string(im_kills_tier3_bw,config="--oem 1 --psm 8")
     gov_kills_tier3 = re.sub("[^0-9]", "", gov_kills_tier3)
 
+    gov_kp_tier3 = pytesseract.image_to_string(im_kp_tier3_bw,config="--oem 1 --psm 8")
+    gov_kp_tier3 = re.sub("[^0-9]", "", gov_kp_tier3)
+
     gov_kills_tier4 = pytesseract.image_to_string(im_kills_tier4_bw,config="--oem 1 --psm 8")
     gov_kills_tier4 = re.sub("[^0-9]", "", gov_kills_tier4)
 
+    gov_kp_tier4 = pytesseract.image_to_string(im_kp_tier4_bw,config="--oem 1 --psm 8")
+    gov_kp_tier4 = re.sub("[^0-9]", "", gov_kp_tier4)
+
     gov_kills_tier5 = pytesseract.image_to_string(im_kills_tier5_bw,config="--oem 1 --psm 8")
     gov_kills_tier5 = re.sub("[^0-9]", "", gov_kills_tier5)
+
+    gov_kp_tier5 = pytesseract.image_to_string(im_kp_tier5_bw,config="--oem 1 --psm 8")
+    gov_kp_tier5 = re.sub("[^0-9]", "", gov_kp_tier5)
 
     gov_ranged_points = pytesseract.image_to_string(im_ranged_points_bw,config="--oem 1 --psm 8")
     gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
@@ -340,10 +401,15 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
         "power": gov_power,
         "killpoints": gov_killpoints,
         "kills_t1": gov_kills_tier1,
+        "kp_t1": gov_kp_tier1,
         "kills_t2": gov_kills_tier2,
+        "kp_t2": gov_kp_tier2,
         "kills_t3": gov_kills_tier3,
+        "kp_t3": gov_kp_tier3,
         "kills_t4": gov_kills_tier4,
+        "kp_t4": gov_kp_tier4,
         "kills_t5": gov_kills_tier5,
+        "kp_t5": gov_kp_tier5,
         "kills_t45": gov_kills_tier45,
         "kills_total": gov_kills_total,
         "ranged_points": gov_ranged_points,
@@ -355,7 +421,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
         "inactives": inactive_players
     }
 
-def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bool):
+def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bool, reconstruct_fails: bool):
     #Initialize the connection to adb
     device = start_adb(port)
 
@@ -472,17 +538,53 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
 
-        expectedKp = math.floor(to_int_check(governor["kills_t1"]) * 0.2) \
-                        + (to_int_check(governor["kills_t2"]) * 2) \
-                        + (to_int_check(governor["kills_t3"]) * 4) \
-                        + (to_int_check(governor["kills_t4"]) * 10) \
-                        + (to_int_check(governor["kills_t5"]) * 20)
-        killsOk = expectedKp == to_int_check(governor["killpoints"])
+        kills_ok = are_kills_ok(to_int_check(governor["kills_t1"]),
+                               to_int_check(governor["kills_t2"]),
+                               to_int_check(governor["kills_t3"]),
+                               to_int_check(governor["kills_t4"]),
+                               to_int_check(governor["kills_t5"]),
+                               to_int_check(governor["killpoints"]))
+        kp_ok = False
+
+        if(not kills_ok):
+            Path(review_path).mkdir(parents=True, exist_ok=True)
+            kp_ok = are_kp_ok(to_int_check(governor["kp_t1"]),
+                            to_int_check(governor["kp_t2"]),
+                            to_int_check(governor["kp_t3"]),
+                            to_int_check(governor["kp_t4"]),
+                            to_int_check(governor["kp_t5"]),
+                            to_int_check(governor["killpoints"]))
+            
+            if (not reconstruct_fails or not kp_ok):
+                shutil.copy(Path("./gov_info.png"), Path(f'''{review_path}/F{governor["id"]}-profile.png'''))
+                shutil.copy(Path("./kills_tier.png"), Path(f'''{review_path}/F{governor["id"]}-kills.png'''))
+                logging.log(logging.WARNING, f'''Kills for {governor["name"]} ({to_int_check(governor["id"])}) don't check out, manually need to look at them!''')
+            else:
+                kills_t1, kills_t2, kills_t3, kills_t4, kills_t5 = calculate_kills(to_int_check(governor["kills_t1"]),
+                            to_int_check(governor["kp_t1"]),
+                            to_int_check(governor["kp_t2"]),
+                            to_int_check(governor["kp_t3"]),
+                            to_int_check(governor["kp_t4"]),
+                            to_int_check(governor["kp_t5"]))
+                governor["kills_t1"] = kills_t1
+                governor["kills_t2"] = kills_t2
+                governor["kills_t3"] = kills_t3
+                governor["kills_t4"] = kills_t4
+                governor["kills_t5"] = kills_t5
+
+                shutil.copy(Path("./gov_info.png"), Path(f'''{review_path}/R{governor["id"]}-profile-reconstructed.png'''))
+                shutil.copy(Path("./kills_tier.png"), Path(f'''{review_path}/R{governor["id"]}-kills-reconstructed.png'''))
+                logging.log(logging.INFO, f'''Kills for {governor["name"]} ({to_int_check(governor["id"])}) reconstructed, t1 might be off by up to 4 kills.''')
 
         # nice output for console
         table = Table(title='[' + current_time + ']\n' + "Latest Scan Result\nGovernor " + str(i + 1) + ' of ' + str(amount), show_header=True, show_footer=True)
-        table.add_column("Entry", "Approx time remaining\nSkipped\nKills check out", style="magenta")
-        table.add_column("Value", str(datetime.timedelta(seconds=(amount - i) * 19)) + "\n" + str(inactive_players) + "\n" + str(killsOk), style="cyan")
+
+        if not reconstruct_fails or kills_ok:
+            table.add_column("Entry", "Approx time remaining\nSkipped\nKills check out", style="magenta")
+            table.add_column("Value", str(datetime.timedelta(seconds=(amount - i) * 19)) + "\n" + str(inactive_players) + "\n" + str(kills_ok), style="cyan")
+        else:
+            table.add_column("Entry", "Approx time remaining\nSkipped\nKills check out\nReconstruct success", style="magenta")
+            table.add_column("Value", str(datetime.timedelta(seconds=(amount - i) * 19)) + "\n" + str(inactive_players) + "\n" + str(kills_ok) + "\n" + str(kp_ok), style="cyan")
 
         table.add_row("Governor ID", str(governor["id"]))
         table.add_row("Governor Name", governor["name"])
@@ -503,12 +605,6 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         table.add_row("Governor Alliance", escape(governor["alliance"].rstrip()))
 
         console.print(table)
-
-        if(not killsOk):
-            Path(review_path).mkdir(parents=True, exist_ok=True)
-            shutil.copy(Path("./gov_info.png"), Path(f'''{review_path}/{governor["id"]}-profile.png'''))
-            shutil.copy(Path("./kills_tier.png"), Path(f'''{review_path}/{governor["id"]}-kills.png'''))
-            logging.log(logging.WARNING, f'''Kills for {governor["name"]} ({to_int_check(governor["id"])}) don't check out, manually need to look at them!''')
 
         #Write results in excel file
         sheet1["A" + str(i+2-j)] = to_int_check(governor["id"])
@@ -554,14 +650,15 @@ def main():
     start_date = datetime.date.today()
     console.print(f"The UUID of this scan is [green]{run_id}[/green]", highlight=False) 
 
-    port = IntPrompt.ask("Adb port of device", default=get_bluestacks_port())
+    bluestacks_port = IntPrompt.ask("Adb port of device", default=get_bluestacks_port())
     kingdom = Prompt.ask("Kingdom name (used for file name)", default="KD")
     scan_amount = IntPrompt.ask("People to scan", default=600)
     resume_scan = Confirm.ask("Resume scan", default=False)
     new_scroll = Confirm.ask("Use the new scrolling method (more accurate, but might not work)", default=True)
     track_inactives = Confirm.ask("Track inactives (via screenshot)", default=False)
+    reconstruct_fails = Confirm.ask("Try to reconstruct kills via killpoints", default=True)
 
-    scan(port, kingdom, scan_amount, resume_scan, track_inactives)
+    scan(bluestacks_port, kingdom, scan_amount, resume_scan, track_inactives, reconstruct_fails)
     exit(1)
 
 if __name__ == "__main__":

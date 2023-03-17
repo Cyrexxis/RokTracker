@@ -21,25 +21,22 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 
 `rok-tracker.py`:
 
-* complete kingdom ranking scan
-
-* detection for wrong kills based on if kills to kill points are correct
-  
-  * in case something doesn't check out the corresponding images are saved in the `manual_review`-folder and a warning is logged in the log file.
-
-* detection of inactive accounts
-  
-  * an inactive account is an account that cannot be clicked in the kingdom rankings
-  
-  * those are skipped automatically and it is optionally possible to save a screenshot of the name in the `inactives`-folder.
+- complete kingdom ranking sca
+- detection for wrong kills based on if kills to kill points are correct
+  - in case something doesn't check out the corresponding images are saved in the `manual_review`-folder (prefix F) and a warning is logged in the log file.
+- option to try to recover kills if wrong kills are detected
+  - nevertheless the same images as for a fail get copied to the `manual_review`-folder (prefix R) and a info is logged in the log file.
+- detection of inactive accounts
+  - an inactive account is an account that cannot be clicked in the kingdom rankings
+  - those are skipped automatically and it is optionally possible to save a screenshot of the name in the `inactives`-folder.
 
 `alliance-scanner.py`:
 
-* complete alliance ranking scan
+- complete alliance ranking scan
 
-* complete personal honor ranking scan
+- complete personal honor ranking scan
 
-* due to how the game works the names are very inaccurate and it is not possible to track the governor id
+- due to how the game works the names are very inaccurate and it is not possible to track the governor id
 
 # Bluestacks 5 Settings
 
@@ -58,7 +55,7 @@ Everything (maybe not the performance, adjust that to your PC) should be like th
 3. Make sure the tesseract executable is on the PATH variable of your machine
 
 4. Platform tools folder should be extracted as a folder inside the Tracker's folder. Like the following image
-   
+
    ![](images/platform-tools-pos.png)
 
 5. In order to get only your kingdoms ranks, the character that is currently logged in game must be in HOME KINGDOM, else you will get all the players in your KvK including players from different kingdoms.
