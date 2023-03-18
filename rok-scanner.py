@@ -124,7 +124,8 @@ def calculate_kills(k_t1: int, kp_t1: int, kp_t2: int, kp_t3: int, kp_t4: int, k
     if kills_t1 < k_t1 <= (kills_t1 + 4): # fix t1 kills if no error is present
         kills_t1 = k_t1
     elif kills_t1 % 10 < k_t1 % 10 <= (kills_t1 + 4) % 10: # try to fix t1 with error (assuming last digit is correct)
-        kills_t1 = (kills_t1 % 10) - (k_t1 % 10)
+        kill_dif_t1 = (k_t1 % 10) - (kills_t1 % 10)
+        kills_t1 = kills_t1 + kill_dif_t1
 
     kills_t2 = kp_t2 / 2
     kills_t3 = kp_t3 / 4

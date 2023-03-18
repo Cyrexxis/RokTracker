@@ -33,9 +33,7 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 `alliance-scanner.py`:
 
 - complete alliance ranking scan
-
 - complete personal honor ranking scan
-
 - due to how the game works the names are very inaccurate and it is not possible to track the governor id
 
 # Bluestacks 5 Settings
