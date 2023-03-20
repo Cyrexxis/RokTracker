@@ -121,7 +121,7 @@ def preprocessImage(image, scale_factor, threshold, border_size, invert = False)
     im_bw = cropToTextWithBorder(im_bw, border_size)
     return im_bw
 
-def governor_scan(mode:str, device, port: int, gov_number: int):
+def governor_scan(mode:str, port: int, gov_number: int):
     # set up the scan variables
     global scan_index
     global reached_bottom
@@ -137,7 +137,7 @@ def governor_scan(mode:str, device, port: int, gov_number: int):
               exit(0)
 
     # Take screenshot to process
-    secure_adb_screencap(device, port).save('currentState.png')
+    secure_adb_screencap(port).save('currentState.png')
     image = cv2.imread('currentState.png')
 
     #Power and Killpoints
@@ -209,14 +209,14 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
             console.print("Scan Terminated! Saving the current progress...")
             break
 
-        governor = governor_scan(mode, device, port, i)
+        governor = governor_scan(mode, port, i)
 
         # needed for detection of end in honor mode
         if sheet1["B" + str(i+1)].value == governor["name"] and sheet1["C" + str(i+1)].value == to_int_check(governor["score"]):
              global reached_bottom
              reached_bottom = True
              console.log("Duplicate governor, switching to scan of last governors")
-             governor = governor_scan(mode, device, port, i)
+             governor = governor_scan(mode, port, i)
 
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
@@ -247,7 +247,7 @@ def scan(port: int, kingdom: str, mode: str, amount: int, resume: bool):
         wb.save(file_name_prefix + str(amount) + '-' +str(datetime.date.today())+ '-' + kingdom +'.xlsx')
 
         if not reached_bottom:
-            adb_send_events("Touch", mode_data[mode]["script"], device, port)
+            adb_send_events("Touch", mode_data[mode]["script"], port)
         
         time.sleep(1 + random.random())
     if resume :

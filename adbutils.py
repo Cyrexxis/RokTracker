@@ -6,6 +6,7 @@ import subprocess
 import socket
 
 adb_server_port = 0
+device: AdbClient
 
 def get_free_port():
     s = socket.socket()
@@ -21,8 +22,9 @@ def kill_adb():
                          universal_newlines=True)
     console.print(process.stdout)
 
-def start_adb(port: int) -> AdbClient:
+def start_adb(port: int):
     global adb_server_port
+    global device
     adb_server_port = get_free_port()
     console.print("Starting adb server and connecting to adb device...")
     process = subprocess.run(['.\\platform-tools\\adb.exe', '-P ' + str(adb_server_port), 'connect',  'localhost:' + str(port)], 
@@ -35,9 +37,9 @@ def start_adb(port: int) -> AdbClient:
          console.log("No device connected, aborting.")
          kill_adb()
          exit(0)
-    return adb_client
+    device = adb_client
 
-def secure_adb_shell(command_to_execute: str, device: AdbClient, port: int) -> str:
+def secure_adb_shell(command_to_execute: str, port: int) -> str:
     result = ""
     for i in range(3):
         try:
@@ -45,12 +47,12 @@ def secure_adb_shell(command_to_execute: str, device: AdbClient, port: int) -> s
         except:
             console.print("[red]ADB crashed[/red]")
             kill_adb()
-            device = start_adb(port)
+            start_adb(port)
         else:
             return result
     return result
 
-def secure_adb_screencap(device: AdbClient, port: int) -> Image:
+def secure_adb_screencap(port: int) -> Image:
     result = NewImage(mode="RGB", size=(1,1))
     for i in range(3):
         try:
@@ -58,16 +60,16 @@ def secure_adb_screencap(device: AdbClient, port: int) -> Image:
         except:
             console.print("[red]ADB crashed[/red]")
             kill_adb()
-            device = start_adb(port)
+            start_adb(port)
         else:
             return result
     return result
 
-def adb_send_events(input_device_name: str, event_file: str | Path, device: AdbClient, port: int):
-    idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", device, port)
+def adb_send_events(input_device_name: str, event_file: str | Path, port: int):
+    idn = secure_adb_shell(f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'", port)
     idn = str(idn).strip()
     macroFile = open(event_file, 'r')
     lines = macroFile.readlines()
 
     for line in lines:
-            secure_adb_shell(f'''sendevent {idn} {line.strip()}''', device, port)
+            secure_adb_shell(f'''sendevent {idn} {line.strip()}''', port)

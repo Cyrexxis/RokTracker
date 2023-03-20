@@ -133,7 +133,7 @@ def calculate_kills(k_t1: int, kp_t1: int, kp_t2: int, kp_t3: int, kp_t4: int, k
     kills_t5 = kp_t5 / 20
     return int(kills_t1), int(kills_t2), int(kills_t3), int(kills_t4), int(kills_t5)
 
-def governor_scan(device, port: int, current_player: int, inactive_players: int, track_inactives: bool):
+def governor_scan(port: int, current_player: int, inactive_players: int, track_inactives: bool):
     # set up the scan variables
     gov_name = ""
     gov_id = 0
@@ -150,14 +150,14 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_helps = 0
 
     #Open governor
-    secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), device, port)
+    secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), port)
     time.sleep(2 + random.random())
 
     gov_info = False
     count = 0
 
     while not (gov_info):
-        secure_adb_screencap(device, port).save("check_more_info.png")
+        secure_adb_screencap(port).save("check_more_info.png")
         
         image_check = cv2.imread('check_more_info.png',cv2.IMREAD_GRAYSCALE)
         roi = (313, 727, 137, 29)	#Checking for more info
@@ -173,10 +173,10 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
                 image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
                 cv2.imwrite(f'./inactives/{start_date}/{run_id}/inactive {inactive_players:03}.png', image_inactive_raw)
             if new_scroll:
-                adb_send_events("Touch", "./inputs/kingdom_1_person_scroll.txt", device, port)
+                adb_send_events("Touch", "./inputs/kingdom_1_person_scroll.txt", port)
             else:
-                secure_adb_shell(f'input swipe 690 605 690 540', device, port)
-            secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), device, port)
+                secure_adb_shell(f'input swipe 690 605 690 540', port)
+            secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), port)
             count += 1
             time.sleep(2 + random.random())
             if count == 10:
@@ -194,7 +194,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     copy_try = 0
     while copy_try < 3:
         try:
-            secure_adb_shell(f'input tap 690 283', device, port)
+            secure_adb_shell(f'input tap 690 283', port)
             time.sleep(0.2)
             gov_name = tk.Tk().clipboard_get()
             break
@@ -205,7 +205,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     
     time.sleep(2 + random.random())
 
-    secure_adb_screencap(device, port).save('gov_info.png')
+    secure_adb_screencap(port).save('gov_info.png')
     image = cv2.imread('gov_info.png')
 
     #Power and Killpoints
@@ -229,7 +229,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     im_alliance_tag = cropToRegion(image, roi)
     
     #kills tier
-    secure_adb_shell(f'input tap 1118 350', device, port)
+    secure_adb_shell(f'input tap 1118 350', port)
 
     #1st image data
     gov_id = pytesseract.image_to_string(im_gov_id_bw,config="--psm 7")
@@ -242,7 +242,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
 
     time.sleep(2 + random.random())
-    secure_adb_screencap(device, port).save('kills_tier.png')
+    secure_adb_screencap(port).save('kills_tier.png')
     image2 = cv2.imread('kills_tier.png')
     image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
     
@@ -291,7 +291,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     im_ranged_points_bw = preprocessImage(im_ranged_points, 150, 12)
 
     #More info tab
-    secure_adb_shell(f'input tap 387 664', device, port)
+    secure_adb_shell(f'input tap 387 664', port)
     
     #2nd image data
     gov_kills_tier1 = pytesseract.image_to_string(im_kills_tier1_bw,config="--oem 1 --psm 8")
@@ -328,7 +328,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
     time.sleep(1 + random.random())
-    secure_adb_screencap(device, port).save('more_info.png')
+    secure_adb_screencap(port).save('more_info.png')
     image3 = cv2.imread('more_info.png')
 
     roi = (1130, 443, 183, 40) #dead
@@ -391,9 +391,9 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
     gov_kills_tier45 = to_int_check(gov_kills_tier4) + to_int_check(gov_kills_tier5)
     gov_kills_total = to_int_check(gov_kills_tier1) + to_int_check(gov_kills_tier2) + to_int_check(gov_kills_tier3) + gov_kills_tier45
 
-    secure_adb_shell(f'input tap 1396 58', device, port) #close more info
+    secure_adb_shell(f'input tap 1396 58', port) #close more info
     time.sleep(0.5 + random.random())
-    secure_adb_shell(f'input tap 1365 104', device, port) #close governor info
+    secure_adb_shell(f'input tap 1365 104', port) #close governor info
     time.sleep(2 + random.random())
 
     return {
@@ -424,7 +424,7 @@ def governor_scan(device, port: int, current_player: int, inactive_players: int,
 
 def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bool, reconstruct_fails: bool):
     #Initialize the connection to adb
-    device = start_adb(port)
+    start_adb(port)
 
     if(track_inactives):
          Path(f"./inactives/{start_date}/{run_id}").mkdir(parents=True, exist_ok=True)
@@ -500,12 +500,12 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
             break
 
         next_gov_to_scan = max(next_gov_to_scan + 1, i)
-        governor = governor_scan(device, port, next_gov_to_scan, inactive_players, track_inactives)
+        governor = governor_scan(port, next_gov_to_scan, inactive_players, track_inactives)
         inactive_players = governor["inactives"]
 
         if sheet1["A" + str(i+1-j)].value == to_int_check(governor["id"]):
             roi = (196, 698, 52, 27)
-            secure_adb_screencap(device, port).save('currentState.png')
+            secure_adb_screencap(port).save('currentState.png')
             image = cv2.imread('currentState.png')
 
             im_ranking = cropToRegion(image, roi)
@@ -518,7 +518,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
                 logging.log(logging.INFO, f"Duplicate governor detected, but current rank is {ranking}, trying a second time.")
 
                 # repeat scan with next governor
-                governor = governor_scan(device, port, next_gov_to_scan, inactive_players, track_inactives)
+                governor = governor_scan(port, next_gov_to_scan, inactive_players, track_inactives)
                 inactive_players = governor["inactives"]
             else:
                 if not last_two:
@@ -528,7 +528,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
                     logging.log(logging.INFO, "Duplicate governor detected, switching to scanning of last two governors.")
                     
                     # repeat scan with next governor
-                    governor = governor_scan(device, port, next_gov_to_scan, inactive_players, track_inactives)
+                    governor = governor_scan(port, next_gov_to_scan, inactive_players, track_inactives)
                     inactive_players = governor["inactives"]
                 else:
                     console.log("Reached final governor on the screen. Scan complete.")
