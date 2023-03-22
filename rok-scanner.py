@@ -132,6 +132,14 @@ def check_for_buff(image) -> bool:
     logging.log(logging.INFO, f"Buff '{buff_text}' detected.")
     return True
 
+def check_and_handle_buff(tapX: int, tapY: int, port: int):
+    secure_adb_screencap(port).save('buff_check.png')
+    buff_check = cv2.imread('buff_check.png')
+    buff = check_for_buff(buff_check)
+    if(buff):
+        secure_adb_shell(f'input tap {tapX} {tapY}', port)
+        time.sleep(1 + random.random())
+
 def are_kills_ok(kills_t1, kills_t2, kills_t3, kills_t4, kills_t5, kill_points) -> bool:
     expectedKp = math.floor(kills_t1 * 0.2) \
                         + (kills_t2 * 2) \
@@ -176,6 +184,7 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_helps = 0
 
     #Open governor
+    check_and_handle_buff(500, 500, port)
     secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), port)
     time.sleep(2 + random.random())
 
@@ -205,6 +214,8 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
                 roiInactive = (0, get_gov_position(current_player, inactive_players - 1) - 100, 1400, 200)
                 image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
                 cv2.imwrite(f'./inactives/{start_date}/{run_id}/inactive {inactive_players:03}.png', image_inactive_raw)
+
+            check_and_handle_buff(500, 500, port)
             if new_scroll:
                 adb_send_events("Touch", "./inputs/kingdom_1_person_scroll.txt", port)
             else:
@@ -223,7 +234,6 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
             break
         
     #nickname copy
-
     copy_try = 0
     while copy_try < 3:
         try:
@@ -241,6 +251,12 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     secure_adb_screencap(port).save('gov_info.png')
     image = cv2.imread('gov_info.png')
     buff = check_for_buff(image)
+
+    if(buff):
+            secure_adb_shell(f'input tap 500 500', port)
+            time.sleep(1 + random.random())
+            secure_adb_screencap(port).save('gov_info.png')
+            image = cv2.imread('gov_info.png')
 
     #Power and Killpoints
     roi = (642, 230, 260, 38)
@@ -262,16 +278,6 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     roi = (645, 362, 260, 40) #alliance tag
     im_alliance_tag = cropToRegion(image, roi)
     
-    #kills tier
-    secure_adb_screencap(port).save('buff_check.png')
-    buff_check = cv2.imread('buff_check.png')
-    buff = check_for_buff(buff_check)
-    if(buff):
-        secure_adb_shell(f'input tap 500 500', port)
-        time.sleep(1 + random.random())
-
-    secure_adb_shell(f'input tap 1118 350', port)
-
     #1st image data
     gov_id = pytesseract.image_to_string(im_gov_id_bw,config="--psm 7")
     gov_id = int(re.sub("[^0-9]", "", gov_id))
@@ -282,10 +288,19 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_killpoints = pytesseract.image_to_string(im_gov_killpoints_bw,config="--oem 1 --psm 8")
     gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
 
+    #kills tier
+    check_and_handle_buff(500, 500, port)
+    secure_adb_shell(f'input tap 1118 350', port)
     time.sleep(2 + random.random())
     secure_adb_screencap(port).save('kills_tier.png')
     image2 = cv2.imread('kills_tier.png')
     buff = check_for_buff(image2)
+
+    if(buff):
+            secure_adb_shell(f'input tap 500 500', port)
+            time.sleep(1 + random.random())
+            secure_adb_screencap(port).save("kills_tier.png")
+            image2 = cv2.imread('kills_tier.png')
     #image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
     
     roi = (862, 461, 150, 38) #tier 1
@@ -332,16 +347,6 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     im_ranged_points = cropToRegion(image2, roi)
     im_ranged_points_bw = preprocessImage(im_ranged_points, 150, 12)
 
-    #More info tab
-    secure_adb_screencap(port).save('buff_check.png')
-    buff_check = cv2.imread('buff_check.png')
-    buff = check_for_buff(buff_check)
-    if(buff):
-        secure_adb_shell(f'input tap 500 500', port)
-        time.sleep(1 + random.random())
-
-    secure_adb_shell(f'input tap 387 664', port)
-    
     #2nd image data
     gov_kills_tier1 = pytesseract.image_to_string(im_kills_tier1_bw,config="--oem 1 --psm 8")
     gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
@@ -376,10 +381,20 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_ranged_points = pytesseract.image_to_string(im_ranged_points_bw,config="--oem 1 --psm 8")
     gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
+    #More info tab
+    check_and_handle_buff(500, 500, port)
+    secure_adb_shell(f'input tap 387 664', port)
+    
     time.sleep(1 + random.random())
     secure_adb_screencap(port).save('more_info.png')
     image3 = cv2.imread('more_info.png')
     buff = check_for_buff(image3)
+
+    if(buff):
+            secure_adb_shell(f'input tap 500 500', port)
+            time.sleep(1 + random.random())
+            secure_adb_screencap(port).save("more_info.png")
+            image3 = cv2.imread('more_info.png')
 
     roi = (1130, 443, 183, 40) #dead
     im_dead = cropToRegion(image3, roi)
@@ -441,13 +456,7 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_kills_tier45 = to_int_check(gov_kills_tier4) + to_int_check(gov_kills_tier5)
     gov_kills_total = to_int_check(gov_kills_tier1) + to_int_check(gov_kills_tier2) + to_int_check(gov_kills_tier3) + gov_kills_tier45
 
-    secure_adb_screencap(port).save('buff_check.png')
-    buff_check = cv2.imread('buff_check.png')
-    buff = check_for_buff(buff_check)
-    if(buff):
-        secure_adb_shell(f'input tap 500 500', port)
-        time.sleep(1 + random.random())
-        
+    check_and_handle_buff(500, 500, port)   
     secure_adb_shell(f'input tap 1396 58', port) #close more info
     time.sleep(0.5 + random.random())
     secure_adb_shell(f'input tap 1365 104', port) #close governor info
