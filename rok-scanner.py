@@ -118,12 +118,12 @@ def check_for_buff(image) -> bool:
     black_pixels = totalPixels - cv2.countNonZero(image_bw)
 
     if img_height < border * 2 + 2 or img_width < border * 2 + 2:
-        console.print("No buff detected")
+        #console.print("No buff detected")
         return False
 
     if black_pixels / totalPixels < 0.1:
-        console.print("Disregarding buff, probably noise")
-        logging.log(logging.DEBUG, "Disregarding buff, probably noise")
+        #console.print("Disregarding buff, probably noise")
+        #logging.log(logging.DEBUG, "Disregarding buff, probably noise")
         return False
 
     buff_text = pytesseract.image_to_string(image_bw,config="--oem 1 --psm 8").strip()
