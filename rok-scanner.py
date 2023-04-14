@@ -8,6 +8,17 @@ if current_version < required_version:
           f"but version {required_version[0]}.{required_version[1]} or higher is needed.")
     sys.exit(1)
 
+
+import pytesseract
+#pytesseract.pytesseract.tesseract_cmd = r'<full_path_to_your_tesseract_executable>'
+try:
+    tes_ver = pytesseract.get_tesseract_version()
+except:
+    print("Could not find tesseract, please set the installation path manually in rok-scanner.py (uncomment line 13 and set path to your executable).")
+    sys.exit(1)
+else:
+    print(f"Found tesseract version: {tes_ver}")
+
 from console import console
 from rich.prompt import Prompt
 from rich.prompt import IntPrompt
@@ -24,7 +35,6 @@ import datetime
 import time
 import random
 import cv2
-import pytesseract
 import signal
 import re
 import logging
