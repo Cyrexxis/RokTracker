@@ -7,6 +7,7 @@ import socket
 
 adb_server_port = 0
 device: AdbClient
+adb_path = '.\\platform-tools\\adb.exe'
 
 def get_free_port():
     s = socket.socket()
@@ -15,9 +16,13 @@ def get_free_port():
     s.close()
     return port
 
+def set_adb_path(path: str):
+    global adb_path
+    adb_path = path
+
 def kill_adb():
     console.print("Killing ADB server...")
-    process = subprocess.run(['.\\platform-tools\\adb.exe', '-P ' + str(adb_server_port), 'kill-server'], 
+    process = subprocess.run([adb_path, '-P ' + str(adb_server_port), 'kill-server'], 
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
     console.print(process.stdout)
@@ -27,7 +32,7 @@ def start_adb(port: int):
     global device
     adb_server_port = get_free_port()
     console.print("Starting adb server and connecting to adb device...")
-    process = subprocess.run(['.\\platform-tools\\adb.exe', '-P ' + str(adb_server_port), 'connect',  'localhost:' + str(port)], 
+    process = subprocess.run([adb_path, '-P ' + str(adb_server_port), 'connect',  'localhost:' + str(port)], 
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
     console.print(process.stdout)

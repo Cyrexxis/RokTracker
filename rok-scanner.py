@@ -41,6 +41,7 @@ import logging
 import math
 import shutil
 import string
+import time
 
 logging.basicConfig(filename='rok-scanner.log', encoding='utf-8', format='%(asctime)s %(module)s %(levelname)s %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -48,6 +49,9 @@ run_id = ""
 start_date = ""
 new_scroll = True
 scan_abort = False
+
+def random_delay() -> float:
+    return random.random() * 0.1
 
 def get_bluestacks_port():
     # try to read port from bluestacks config
@@ -154,6 +158,7 @@ def calculate_kills(k_t1: int, kp_t1: int, kp_t2: int, kp_t3: int, kp_t4: int, k
     return int(kills_t1), int(kills_t2), int(kills_t3), int(kills_t4), int(kills_t5)
 
 def governor_scan(port: int, current_player: int, inactive_players: int, track_inactives: bool):
+    start_time = time.time()
     # set up the scan variables
     gov_name = ""
     gov_id = 0
@@ -171,7 +176,7 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
 
     #Open governor
     secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), port)
-    time.sleep(2 + random.random())
+    time.sleep(2 + random_delay())
 
     gov_info = False
     count = 0
@@ -198,7 +203,7 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
                 secure_adb_shell(f'input swipe 690 605 690 540', port)
             secure_adb_shell(f'input tap 690 ' + str(get_gov_position(current_player, inactive_players)), port)
             count += 1
-            time.sleep(2 + random.random())
+            time.sleep(2 + random_delay())
             if count == 10:
                 cont = Confirm.ask("Could not find user, retry?", default=True)
                 if(cont):
@@ -223,7 +228,7 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
              logging.log(logging.INFO, "Name copy failed, retying")
              copy_try = copy_try + 1
     
-    time.sleep(2 + random.random())
+    time.sleep(1.5 + random_delay())
 
     secure_adb_screencap(port).save('gov_info.png')
     image = cv2.imread('gov_info.png')
@@ -261,7 +266,8 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_killpoints = pytesseract.image_to_string(im_gov_killpoints_bw,config="--oem 1 --psm 8")
     gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
 
-    time.sleep(2 + random.random())
+    time.sleep(1 + random_delay())
+
     secure_adb_screencap(port).save('kills_tier.png')
     image2 = cv2.imread('kills_tier.png')
     image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
@@ -313,6 +319,7 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     #More info tab
     secure_adb_shell(f'input tap 387 664', port)
     
+    kills_start = time.time()
     #2nd image data
     gov_kills_tier1 = pytesseract.image_to_string(im_kills_tier1_bw,config="--oem 1 --psm 8")
     gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
@@ -347,7 +354,10 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_ranged_points = pytesseract.image_to_string(im_ranged_points_bw,config="--oem 1 --psm 8")
     gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
-    time.sleep(1 + random.random())
+    kills_end = time.time()
+    print("Time to process kills: " + str(kills_end - kills_start))
+
+    time.sleep(1 + random_delay())
     secure_adb_screencap(port).save('more_info.png')
     image3 = cv2.imread('more_info.png')
 
@@ -412,9 +422,13 @@ def governor_scan(port: int, current_player: int, inactive_players: int, track_i
     gov_kills_total = to_int_check(gov_kills_tier1) + to_int_check(gov_kills_tier2) + to_int_check(gov_kills_tier3) + gov_kills_tier45
 
     secure_adb_shell(f'input tap 1396 58', port) #close more info
-    time.sleep(0.5 + random.random())
+    time.sleep(0.5 + random_delay())
     secure_adb_shell(f'input tap 1365 104', port) #close governor info
-    time.sleep(2 + random.random())
+    time.sleep(1 + random_delay())
+
+    end_time = time.time()
+
+    print("Time needed for governor: " + str((end_time - start_time)))
 
     return {
         "id": gov_id,
@@ -651,6 +665,7 @@ def scan(port: int, kingdom: str, amount: int, resume: bool, track_inactives: bo
         else:
             file_name_prefix = 'TOP'
         wb.save(file_name_prefix + str(amount-j) + '-' +str(datetime.date.today())+ '-' + kingdom + f'-[{run_id}]' + '.xlsx')
+        
     if resume :
         file_name_prefix = 'NEXT'
     else:
