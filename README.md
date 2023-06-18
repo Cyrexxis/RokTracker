@@ -1,6 +1,7 @@
 # RokTracker
 
 **Now with version 2 faster than ever, around 15 seconds per governor! Because it's a pre-release only the core rok-tracker.py works, the alliance scanner will be updated at a later time.**
+
 Due to major changes on the library side of this project you need to reread the requirements and also the newly added installation section before being able to run the new version if you upgrade form the old one.
 
 Open Source Rise of Kingdoms Stats Management Tool. Track TOP X Players in kingdom / alliance / honor leaderboard. Depending on what you scan the resulting .xlsx will look different:
