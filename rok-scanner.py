@@ -53,10 +53,15 @@ start_date = ""
 new_scroll = True
 scan_abort = False
 bluestacks_device_name = "RoK Tracker"
+scan_times = []
 
 
 def random_delay() -> float:
     return random.random() * 0.1
+
+
+def get_remaining_time(remaining_govs: int) -> float:
+    return (sum(scan_times, start=0) / len(scan_times)) * remaining_govs
 
 
 def get_bluestacks_port():
@@ -526,6 +531,7 @@ def governor_scan(
     end_time = time.time()
 
     print("Time needed for governor: " + str((end_time - start_time)))
+    scan_times.append(end_time - start_time)
 
     return {
         "id": gov_id,
@@ -790,7 +796,7 @@ def scan(
             )
             table.add_column(
                 "Value",
-                str(datetime.timedelta(seconds=(amount - i) * 19))
+                str(datetime.timedelta(seconds=get_remaining_time(amount - i)))
                 + "\n"
                 + str(inactive_players)
                 + "\n"
