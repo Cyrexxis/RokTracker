@@ -1,5 +1,8 @@
 # RokTracker
 
+**Now with version 2 faster than ever, around 15 seconds per governor! Because it's a pre-release only the core rok-tracker.py works, the alliance scanner will be updated at a later time.**
+Due to major changes on the library side of this project you need to reread the requirements and also the newly added installation section before being able to run the new version if you upgrade form the old one.
+
 Open Source Rise of Kingdoms Stats Management Tool. Track TOP X Players in kingdom / alliance / honor leaderboard. Depending on what you scan the resulting .xlsx will look different:
 
 For kingdom rankings Governor Id, Governor Name, Power, Kill Points, Ranged Points, T1/T2/T3/T4/T5 Kills, Total kills, T4+T5 kills, Dead troops, RSS Gathered, RSS Assistance, Helps and Alliance name will get saved.
@@ -12,10 +15,24 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 
 1. Bluestacks 5 Installation [https://www.bluestacks.com/de/bluestacks-5.html](https://www.bluestacks.com/de/bluestacks-5.html)
 2. Python 3.11.0 Installation [https://www.python.org/downloads/release/python-3110/](https://www.python.org/downloads/release/python-3110/)
-3. Tesseract-OCR Installation [https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0.20211201.exe](https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0.20211201.exe)
-4. Adb Platform Tools Download and Extract(See Important Notes) [https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip](https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip)
-5. On Windows "Microsoft Build Tools für C++" might be required for some of the python packages [https://visualstudio.microsoft.com/de/visual-cpp-build-tools/](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/)
-6. Windows 10-Tested, Windows 7 or Windows 11 could be fine.
+3. On Windows you need to download the tesserocr manualy to install it with pip [https://github.com/simonflueckiger/tesserocr-windows_build/releases](https://github.com/simonflueckiger/tesserocr-windows_build/releases)
+4. To use tesserocr you also need to download the trained tesseract models [https://github.com/tesseract-ocr/tessdata](https://github.com/tesseract-ocr/tessdata)
+5. Adb Platform Tools Download and Extract(See Important Notes) [https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip](https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip)
+6. On Windows "Microsoft Build Tools für C++" might be required for some of the python packages [https://visualstudio.microsoft.com/de/visual-cpp-build-tools/](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/)
+7. Windows 10-Tested, Windows 7 or Windows 11 could be fine.
+
+# Installation
+
+To use this tool a little bit of command line knowledge is required (you need to be able to open your powershell in the downloaded or cloned folder). Apart from that the installation and usage of this tool is pretty easy.
+
+1. Download and install Bluestacks + Python + Build Tools for C++
+2. Download tesserocr wheel and tessdata and put them in the deps folder
+3. Extract the tessdata zip to a tessdata-main folder inside deps
+4. Download adb platform tools and extract them into a platform-tools folder in the main directory of this scanner
+5. Open your terminal in this folder and create a venv via `python -m venv venv`
+6. Activate that venv via `./venv/Scrips/activate`
+7. Install the python requirements via `pip install -r requirements.txt`
+8. You are done, congrats ;)
 
 # Features
 
