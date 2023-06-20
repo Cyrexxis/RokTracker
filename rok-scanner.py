@@ -314,7 +314,6 @@ def governor_scan(
     im_gov_killpoints = cropToRegion(image, roi)
     im_gov_killpoints_bw = preprocessImage(im_gov_killpoints, 100, 12, True)
 
-    gov_name = tk.Tk().clipboard_get()
     roi = (645, 362, 260, 40)  # alliance tag
     im_alliance_tag = cropToRegion(image, roi)
 
