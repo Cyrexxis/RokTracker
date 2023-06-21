@@ -23,7 +23,6 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
 from adbutils import *
-import tkinter as tk
 import configparser
 import datetime
 import time
