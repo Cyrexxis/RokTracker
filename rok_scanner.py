@@ -23,6 +23,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
 from adbutils import *
+import tkinter
 import configparser
 import datetime
 import time
@@ -286,7 +287,7 @@ def governor_scan(
         try:
             secure_adb_shell(f"input tap 690 283", port)
             time.sleep(0.2)
-            gov_name = tk.Tk().clipboard_get()
+            gov_name = tkinter.Tk().clipboard_get()
             break
         except:
             console.log("Name copy failed, retying")
