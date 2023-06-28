@@ -6,7 +6,9 @@ from rok_scanner import generate_random_id
 import customtkinter
 import datetime
 
-customtkinter.set_appearance_mode("dark")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_appearance_mode(
+    "system"
+)  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme(
     "blue"
 )  # Themes: "blue" (standard), "green", "dark-blue"
@@ -76,6 +78,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
         self.adb_port_text = customtkinter.CTkEntry(self)  # TODO: add validation
         self.adb_port_text.grid(row=3, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.adb_port_text.insert(0, "5555")
 
         self.scan_amount_label = customtkinter.CTkLabel(
             self, text="People to scan:", height=1
@@ -120,7 +123,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         )
 
         self.reconstruct_fails_label = customtkinter.CTkLabel(
-            self, text="Advanced scroll:", height=1
+            self, text="Reconstruct kills:", height=1
         )
         self.reconstruct_fails_label.grid(
             row=8, column=0, padx=10, pady=(10, 0), sticky="w"
@@ -135,6 +138,17 @@ class BasicOptionsFame(customtkinter.CTkFrame):
 
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)
+
+    def get_options(self):
+        return {
+            "name": self.scan_name_text.get(),
+            "port": int(self.adb_port_text.get()),
+            "amount": int(self.scan_amount_text.get()),
+            "resume": self.resume_scan_checkbox.get(),
+            "adv_scroll": self.new_scroll_switch.get(),
+            "inactives": self.track_inactives_switch.get(),
+            "reconstruct": self.reconstruct_fails_switch.get(),
+        }
 
 
 class CombinedOptionsFrame(customtkinter.CTkFrame):
@@ -154,6 +168,12 @@ class CombinedOptionsFrame(customtkinter.CTkFrame):
 
         self.basic_options = BasicOptionsFame(self)
         self.basic_options.grid(row=0, column=1, padx=10, pady=10, sticky="ewsn")
+
+    def get(self):
+        return {
+            "to_scan": self.scan_data_options_frame.get(),
+            "options": self.basic_options.get_options(),
+        }
 
 
 class AdditionalStatusInfo(customtkinter.CTkFrame):
@@ -359,6 +379,7 @@ class App(customtkinter.CTk):
         )
 
         self.options_frame.basic_options.set_uuid(generate_random_id(8))
+        print(self.options_frame.get())
         # print(self.scan_data_options_frame.get())
         pass
 
