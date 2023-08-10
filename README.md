@@ -2,7 +2,8 @@
 
 **Now with version 2 faster than ever, around 15 seconds per governor! Because it's a pre-release only the core rok-tracker.py works, the alliance scanner will be updated at a later time.**
 
-Due to major changes on the library side of this project you need to reread the requirements and also the newly added installation section before being able to run the new version if you upgrade form the old one.
+> [!IMPORTANT]  
+> Due to major changes on the library side of this project you need to reread the requirements and also the newly added installation section before being able to run the new version if you upgrade form the old one.
 
 Open Source Rise of Kingdoms Stats Management Tool. Track TOP X Players in kingdom / alliance / honor leaderboard. Depending on what you scan the resulting .xlsx will look different:
 
@@ -33,7 +34,8 @@ To use this tool a little bit of command line knowledge is required (you need to
 5. Open your terminal in this folder and create a venv via `python -m venv venv`
 6. Activate that venv via `./venv/Scrips/activate`
 7. Install the python requirements via `pip install -r requirements.txt`
-8. You are done, congrats ;)
+8. Install tesserocr via `pip install ./deps/[your downloaded wheel]`
+9. You are done, congrats ;)
 
 # Features
 
