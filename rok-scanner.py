@@ -37,6 +37,7 @@ import shutil
 import string
 import time
 import tesserocr
+import rok_ui_positions as rok_ui
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
 
@@ -233,9 +234,8 @@ def governor_scan(
         secure_adb_screencap(port).save("check_more_info.png")
 
         image_check = cv2.imread("check_more_info.png", cv2.IMREAD_GRAYSCALE)
-        roi = (313, 727, 137, 29)  # Checking for more info
-        im_check_more_info = cropToRegion(image_check, roi)
-        # check_more_info = pytesseract.image_to_string(im_check_more_info,config="-c tessedit_char_whitelist=MoreInfo")
+        # Checking for more info
+        im_check_more_info = cropToRegion(image_check, rok_ui.ocr_regions["more_info"])
         check_more_info = ""
 
         with PyTessBaseAPI(path="./deps/tessdata-main") as api:
@@ -281,11 +281,10 @@ def governor_scan(
             break
 
     # nickname copy
-
     copy_try = 0
     while copy_try < 3:
         try:
-            secure_adb_shell(f"input tap 690 283", port)
+            secure_adb_tap(rok_ui.tap_positions["name_copy"], port)
             time.sleep(0.2)
             gov_name = tk.Tk().clipboard_get()
             break
@@ -300,25 +299,22 @@ def governor_scan(
     image = cv2.imread("gov_info.png")
 
     # Power and Killpoints
-    roi = (774, 230, 260, 38)
-    im_gov_id = cropToRegion(image, roi)
+    im_gov_id = cropToRegion(image, rok_ui.ocr_regions["gov_id"])
     im_gov_id_gray = cv2.cvtColor(im_gov_id, cv2.COLOR_BGR2GRAY)
     im_gov_id_gray = cv2.bitwise_not(im_gov_id_gray)
     (thresh, im_gov_id_bw) = cv2.threshold(im_gov_id_gray, 120, 255, cv2.THRESH_BINARY)
 
-    roi = (890, 364, 170, 44)
-    im_gov_power = cropToRegion(image, roi)
+    im_gov_power = cropToRegion(image, rok_ui.ocr_regions["power"])
     im_gov_power_bw = preprocessImage(im_gov_power, 100, 12, True)
 
-    roi = (1114, 364, 222, 44)
-    im_gov_killpoints = cropToRegion(image, roi)
+    im_gov_killpoints = cropToRegion(image, rok_ui.ocr_regions["killpoints"])
     im_gov_killpoints_bw = preprocessImage(im_gov_killpoints, 100, 12, True)
 
-    roi = (645, 362, 260, 40)  # alliance tag
-    im_alliance_tag = cropToRegion(image, roi)
+    # alliance tag
+    im_alliance_tag = cropToRegion(image, rok_ui.ocr_regions["alliance_name"])
 
     # kills tier
-    secure_adb_shell(f"input tap 1118 350", port)
+    secure_adb_tap(rok_ui.tap_positions["open_kills"], port)
 
     # 1st image data
     with PyTessBaseAPI(
@@ -352,52 +348,52 @@ def governor_scan(
     image2 = cv2.imread("kills_tier.png")
     image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
 
-    roi = (862, 461, 150, 38)  # tier 1
-    im_kills_tier1 = cropToRegion(image2, roi)
+    # tier 1
+    im_kills_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_kills"])
     im_kills_tier1_bw = preprocessImage(im_kills_tier1, 150, 12)
 
-    roi = (1243, 461, 171, 38)  # tier 1 KP
-    im_kp_tier1 = cropToRegion(image2, roi)
+    # tier 1 KP
+    im_kp_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_killpoints"])
     im_kp_tier1_bw = preprocessImage(im_kp_tier1, 150, 12)
 
-    roi = (862, 505, 150, 38)  # tier 2
-    im_kills_tier2 = cropToRegion(image2, roi)
+    # tier 2
+    im_kills_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_kills"])
     im_kills_tier2_bw = preprocessImage(im_kills_tier2, 150, 12)
 
-    roi = (1243, 505, 171, 38)  # tier 2 KP
-    im_kp_tier2 = cropToRegion(image2, roi)
+    # tier 2 KP
+    im_kp_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_killpoints"])
     im_kp_tier2_bw = preprocessImage(im_kp_tier2, 150, 12)
 
-    roi = (862, 549, 150, 38)  # tier 3
-    im_kills_tier3 = cropToRegion(image2, roi)
+    # tier 3
+    im_kills_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_kills"])
     im_kills_tier3_bw = preprocessImage(im_kills_tier3, 150, 12)
 
-    roi = (1243, 549, 171, 38)  # tier 3 KP
-    im_kp_tier3 = cropToRegion(image2, roi)
+    # tier 3 KP
+    im_kp_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_killpoints"])
     im_kp_tier3_bw = preprocessImage(im_kp_tier3, 150, 12)
 
-    roi = (862, 593, 150, 38)  # tier 4
-    im_kills_tier4 = cropToRegion(image2, roi)
+    # tier 4
+    im_kills_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_kills"])
     im_kills_tier4_bw = preprocessImage(im_kills_tier4, 150, 12)
 
-    roi = (1243, 593, 171, 38)  # tier 4 KP
-    im_kp_tier4 = cropToRegion(image2, roi)
+    # tier 4 KP
+    im_kp_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_killpoints"])
     im_kp_tier4_bw = preprocessImage(im_kp_tier4, 150, 12)
 
-    roi = (862, 638, 150, 38)  # tier 5
-    im_kills_tier5 = cropToRegion(image2, roi)
+    # tier 5
+    im_kills_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_kills"])
     im_kills_tier5_bw = preprocessImage(im_kills_tier5, 150, 12)
 
-    roi = (1243, 638, 171, 38)  # tier 5 KP
-    im_kp_tier5 = cropToRegion(image2, roi)
+    # tier 5 KP
+    im_kp_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_killpoints"])
     im_kp_tier5_bw = preprocessImage(im_kp_tier5, 150, 12)
 
-    roi = (1274, 740, 146, 38)  # ranged points
-    im_ranged_points = cropToRegion(image2, roi)
+    # ranged points
+    im_ranged_points = cropToRegion(image2, rok_ui.ocr_regions["ranged_points"])
     im_ranged_points_bw = preprocessImage(im_ranged_points, 150, 12)
 
     # More info tab
-    secure_adb_shell(f"input tap 387 664", port)
+    secure_adb_tap(rok_ui.tap_positions["more_info"], port)
 
     with PyTessBaseAPI(
         path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
@@ -450,20 +446,20 @@ def governor_scan(
     secure_adb_screencap(port).save("more_info.png")
     image3 = cv2.imread("more_info.png")
 
-    roi = (1130, 443, 183, 40)  # dead
-    im_dead = cropToRegion(image3, roi)
+    # dead
+    im_dead = cropToRegion(image3, rok_ui.ocr_regions["deads"])
     im_dead_bw = preprocessImage(im_dead, 150, 12, True)
 
-    roi = (1130, 668, 183, 40)  # rss assistance
-    im_rss_assistance = cropToRegion(image3, roi)
+    # rss assistance
+    im_rss_assistance = cropToRegion(image3, rok_ui.ocr_regions["rss_assisted"])
     im_rss_assistance_bw = preprocessImage(im_rss_assistance, 150, 12, True)
 
-    roi = (1130, 735, 183, 40)  # alliance helps
-    im_helps = cropToRegion(image3, roi)
+    # alliance helps
+    im_helps = cropToRegion(image3, rok_ui.ocr_regions["alliance_helps"])
     im_helps_bw = preprocessImage(im_helps, 150, 12, True)
 
-    roi = (1130, 612, 183, 40)  # rss gathered
-    im_rss_gathered = cropToRegion(image3, roi)
+    # rss gathered
+    im_rss_gathered = cropToRegion(image3, rok_ui.ocr_regions["rss_gathered"])
     im_rss_gathered_bw = preprocessImage(im_rss_gathered, 150, 12, True)
 
     with PyTessBaseAPI(
@@ -522,9 +518,9 @@ def governor_scan(
         + gov_kills_tier45
     )
 
-    secure_adb_shell(f"input tap 1396 58", port)  # close more info
+    secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
     time.sleep(0.5 + random_delay())
-    secure_adb_shell(f"input tap 1365 104", port)  # close governor info
+    secure_adb_tap(rok_ui.tap_positions["close_gov"], port)  # close governor info
     time.sleep(1 + random_delay())
 
     end_time = time.time()
