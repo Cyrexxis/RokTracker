@@ -1,7 +1,8 @@
 from math import ceil
 from typing import Dict, List, Optional, Tuple, Union
 import customtkinter
-from rok_scanner import generate_random_id
+from rok_scanner import generate_random_id, start_from_gui, end_scan
+from threading import Thread
 
 import customtkinter
 import datetime
@@ -12,6 +13,13 @@ customtkinter.set_appearance_mode(
 customtkinter.set_default_color_theme(
     "blue"
 )  # Themes: "blue" (standard), "green", "dark-blue"
+
+
+def to_int_or(element, alternative):
+    try:
+        return int(element)
+    except ValueError:
+        return alternative
 
 
 class CheckboxFrame(customtkinter.CTkFrame):
@@ -141,6 +149,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
 
     def get_options(self):
         return {
+            "uuid": self.scan_uuid_var.get(),
             "name": self.scan_name_text.get(),
             "port": int(self.adb_port_text.get()),
             "amount": int(self.scan_amount_text.get()),
@@ -171,7 +180,7 @@ class CombinedOptionsFrame(customtkinter.CTkFrame):
 
     def get(self):
         return {
-            "to_scan": self.scan_data_options_frame.get(),
+            "scan": self.scan_data_options_frame.get(),
             "options": self.basic_options.get_options(),
         }
 
@@ -348,40 +357,53 @@ class App(customtkinter.CTk):
         )
 
         self.start_scan_button = customtkinter.CTkButton(
-            self, text="Start scan", command=self.button_callback
+            self, text="Start scan", command=self.start_scan
         )
         self.start_scan_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
-    def button_callback(self):
+        self.end_scan_button = customtkinter.CTkButton(
+            self, text="End scan", command=self.end_scan
+        )
+        self.end_scan_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+    def start_scan(self):
+        self.options_frame.basic_options.set_uuid(generate_random_id(8))
+        options = self.options_frame.get()
+        print(f"Stuff to scan: {options['scan']}")
+        print(f"General options: {options['options']}")
+        Thread(target=start_from_gui, args=(options, self.governor_callback)).start()
+
+    def end_scan(self):
+        end_scan()
+
+    def governor_callback(self, gov_info):
+        # self.last_gov_frame.set(gov_info)
         self.last_gov_frame.set(
             {
-                "ID": "12345678",
-                "Name": "Super Governor",
-                "Power": 100000000,
-                "Killpoints": 3000000000,
-                "T1 Kills": 343434,
-                "T2 Kills": 565656,
-                "T3 Kills": 1212121,
-                "T4 Kills": 867867868,
-                "T5 Kills": 10000000,
-                "T4+5 Kills": 10000000,
-                "Total Kills": 10000000,
-                "Ranged": 200000,
-                "Dead": 1000000,
-                "Rss Assistance": 9000000000,
-                "Helps": 90000,
-                "Alliance": "Biggest Alliance ever!",
-                "govs": "400 of 900",
-                "skipped": "Skipped: 55",
-                "time": datetime.datetime.now().strftime("%H:%M:%S"),
-                "eta": "01:34:56",
+                "ID": gov_info["id"],
+                "Name": gov_info["name"],
+                "Power": to_int_or(gov_info["power"], "Unknown"),
+                "Killpoints": to_int_or(gov_info["killpoints"], "Unknown"),
+                "Dead": to_int_or(gov_info["dead"], "Unknown"),
+                "T1 Kills": to_int_or(gov_info["kills_t1"], "Unknown"),
+                "T2 Kills": to_int_or(gov_info["kills_t2"], "Unknown"),
+                "T3 Kills": to_int_or(gov_info["kills_t3"], "Unknown"),
+                "T4 Kills": to_int_or(gov_info["kills_t4"], "Unknown"),
+                "T5 Kills": to_int_or(gov_info["kills_t5"], "Unknown"),
+                "T4+5 Kills": to_int_or(gov_info["kills_t45"], "Unknown"),
+                "Total Kills": to_int_or(gov_info["kills_total"], "Unknown"),
+                "Ranged": to_int_or(gov_info["ranged_points"], "Unknown"),
+                "Rss Assistance": to_int_or(gov_info["rss_assistance"], "Unknown"),
+                "Rss Gathered": to_int_or(gov_info["rss_gathered"], "Unknown"),
+                "Helps": to_int_or(gov_info["helps"], "Unknown"),
+                "Alliance": gov_info["alliance"].rstrip(),
+                "govs": gov_info["govs"],
+                "skipped": gov_info["skipped"],
+                "time": gov_info["time"],
+                "eta": gov_info["eta"],
             }
         )
-
-        self.options_frame.basic_options.set_uuid(generate_random_id(8))
-        print(self.options_frame.get())
-        # print(self.scan_data_options_frame.get())
-        pass
+        print(gov_info)
 
 
 app = App()

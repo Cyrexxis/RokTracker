@@ -52,8 +52,21 @@ run_id = ""
 start_date = ""
 new_scroll = True
 scan_abort = False
-bluestacks_device_name = "RoK Tracker"
 scan_times = []
+
+
+def format_timedelta_to_HHMMSS(td):
+    td_in_seconds = td.total_seconds()
+    hours, remainder = divmod(td_in_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    hours = int(hours)
+    minutes = int(minutes)
+    seconds = int(seconds)
+    if minutes < 10:
+        minutes = "0{}".format(minutes)
+    if seconds < 10:
+        seconds = "0{}".format(seconds)
+    return "{}:{}:{}".format(hours, minutes, seconds)
 
 
 def random_delay() -> float:
@@ -64,7 +77,7 @@ def get_remaining_time(remaining_govs: int) -> float:
     return (sum(scan_times, start=0) / len(scan_times)) * remaining_govs
 
 
-def get_bluestacks_port():
+def get_bluestacks_port(bluestacks_device_name):
     # try to read port from bluestacks config
     try:
         dummy = "AmazingDummy"
@@ -566,6 +579,7 @@ def scan(
     resume: bool,
     track_inactives: bool,
     reconstruct_fails: bool,
+    callback=lambda _: (),
 ):
     # Initialize the connection to adb
     start_adb(port)
@@ -874,6 +888,17 @@ def scan(
             + ".xlsx"
         )
 
+        additional_info = {
+            "govs": f"{i + 1} of {amount}",
+            "skipped": f"Skipped {inactive_players}",
+            "time": current_time,
+            "eta": format_timedelta_to_HHMMSS(
+                datetime.timedelta(seconds=get_remaining_time(amount - i))
+            ),
+        }
+        governor.update(additional_info)
+        callback(governor)
+
     if resume:
         file_name_prefix = "NEXT"
     else:
@@ -894,6 +919,32 @@ def scan(
     return
 
 
+def end_scan():
+    global scan_abort
+    scan_abort = True
+
+
+def start_from_gui(options, callback):
+    global run_id
+    global start_date
+    global new_scroll
+    general_options = options["options"]
+    scan_options = options["scan"]
+
+    run_id = general_options["uuid"]
+    start_date = datetime.date.today()
+
+    scan(
+        general_options["port"],
+        general_options["name"],
+        general_options["amount"],
+        general_options["resume"],
+        general_options["inactives"],
+        general_options["reconstruct"],
+        callback,
+    )
+
+
 def main():
     signal.signal(signal.SIGINT, stopHandler)
     console.print(
@@ -903,7 +954,7 @@ def main():
     global run_id
     global start_date
     global new_scroll
-    global bluestacks_device_name
+    bluestacks_device_name = "RoK Tracker"
     run_id = generate_random_id(8)
     start_date = datetime.date.today()
     console.print(f"The UUID of this scan is [green]{run_id}[/green]", highlight=False)
@@ -911,7 +962,9 @@ def main():
     bluestacks_device_name = Prompt.ask(
         "Name of your bluestacks instance", default=bluestacks_device_name
     )
-    bluestacks_port = IntPrompt.ask("Adb port of device", default=get_bluestacks_port())
+    bluestacks_port = IntPrompt.ask(
+        "Adb port of device", default=get_bluestacks_port(bluestacks_device_name)
+    )
     kingdom = Prompt.ask("Kingdom name (used for file name)", default="KD")
     scan_amount = IntPrompt.ask("People to scan", default=600)
     resume_scan = Confirm.ask("Resume scan", default=False)
