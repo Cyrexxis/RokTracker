@@ -285,7 +285,7 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("RoK Tracker by Cyrexxis")
-        self.geometry("760x410")
+        self.geometry("760x450")
         self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
         self.grid_rowconfigure(0, weight=1)
