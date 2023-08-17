@@ -214,7 +214,11 @@ def calculate_kills(
 
 
 def governor_scan(
-    port: int, current_player: int, inactive_players: int, track_inactives: bool
+    port: int,
+    current_player: int,
+    inactive_players: int,
+    track_inactives: bool,
+    state_callback=lambda _: (),
 ):
     start_time = time.time()
     # set up the scan variables
@@ -233,6 +237,7 @@ def governor_scan(
     gov_helps = 0
     alliance_name = ""
 
+    state_callback("Opening governor")
     # Open governor
     secure_adb_shell(
         f"input tap 690 " + str(get_gov_position(current_player, inactive_players)),
@@ -293,6 +298,7 @@ def governor_scan(
             gov_info = True
             break
 
+    state_callback("Scanning general page")
     # nickname copy
     copy_try = 0
     while copy_try < 3:
@@ -355,6 +361,7 @@ def governor_scan(
     # gov_killpoints = pytesseract.image_to_string(im_gov_killpoints_bw,config="--oem 1 --psm 8")
     # gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
 
+    state_callback("Scanning kills page")
     time.sleep(1 + random_delay())
 
     secure_adb_screencap(port).save("kills_tier.png")
@@ -455,6 +462,7 @@ def governor_scan(
         gov_ranged_points = api.GetUTF8Text()
         gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
+    state_callback("Scanning more info page")
     time.sleep(1 + random_delay())
     secure_adb_screencap(port).save("more_info.png")
     image3 = cv2.imread("more_info.png")
@@ -531,6 +539,7 @@ def governor_scan(
         + gov_kills_tier45
     )
 
+    state_callback("Closing governor")
     secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
     time.sleep(0.5 + random_delay())
     secure_adb_tap(rok_ui.tap_positions["close_gov"], port)  # close governor info
@@ -576,6 +585,7 @@ def scan(
     track_inactives: bool,
     reconstruct_fails: bool,
     callback=lambda _: (),
+    state_callback=lambda _: (),
 ):
     # Initialize the connection to adb
     start_adb(port)
@@ -655,7 +665,7 @@ def scan(
 
         next_gov_to_scan = max(next_gov_to_scan + 1, i)
         governor = governor_scan(
-            port, next_gov_to_scan, inactive_players, track_inactives
+            port, next_gov_to_scan, inactive_players, track_inactives, state_callback
         )
         inactive_players = governor["inactives"]
 
@@ -713,6 +723,7 @@ def scan(
                         logging.INFO,
                         "Reached final governor on the screen. Scan complete.",
                     )
+                    state_callback("Scan finished")
                     exit(0)
 
         now = datetime.datetime.now()
@@ -912,6 +923,7 @@ def scan(
     console.log("Reached the target amount of people. Scan complete.")
     logging.log(logging.INFO, "Reached the target amount of people. Scan complete.")
     kill_adb()  # make sure to clean up adb server
+    state_callback("Scan finished")
     return
 
 
@@ -920,7 +932,7 @@ def end_scan():
     scan_abort = True
 
 
-def start_from_gui(options, callback):
+def start_from_gui(options, callback, state_callback):
     global run_id
     global start_date
     global new_scroll
@@ -938,6 +950,7 @@ def start_from_gui(options, callback):
         general_options["inactives"],
         general_options["reconstruct"],
         callback,
+        state_callback,
     )
 
 

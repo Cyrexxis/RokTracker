@@ -1,7 +1,12 @@
 from math import ceil
 from typing import Dict, List, Optional, Tuple, Union
 import customtkinter
-from rok_scanner import generate_random_id, start_from_gui, end_scan
+from rok_scanner import (
+    generate_random_id,
+    start_from_gui,
+    end_scan,
+    get_bluestacks_port,
+)
 from threading import Thread
 
 import customtkinter
@@ -86,7 +91,10 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
         self.adb_port_text = customtkinter.CTkEntry(self)  # TODO: add validation
         self.adb_port_text.grid(row=3, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.adb_port_text.insert(0, "5555")
+        self.bluestacks_instance_text.configure(
+            validatecommand=(self.register(self.update_port), "%P"), validate="key"
+        )
+        self.update_port()
 
         self.scan_amount_label = customtkinter.CTkLabel(
             self, text="People to scan:", height=1
@@ -146,6 +154,17 @@ class BasicOptionsFame(customtkinter.CTkFrame):
 
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)
+
+    def update_port(self, name=""):
+        self.adb_port_text.delete(0, len(self.adb_port_text.get()))
+
+        if name != "":
+            self.adb_port_text.insert(0, get_bluestacks_port(name))
+        else:
+            self.adb_port_text.insert(
+                0, get_bluestacks_port(self.bluestacks_instance_text.get())
+            )
+        return True
 
     def get_options(self):
         return {
@@ -366,12 +385,18 @@ class App(customtkinter.CTk):
         )
         self.end_scan_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
+        self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
+        self.current_state.grid(row=2, column=1, padx=10, pady=(10, 0), sticky="ewns")
+
     def start_scan(self):
         self.options_frame.basic_options.set_uuid(generate_random_id(8))
         options = self.options_frame.get()
         print(f"Stuff to scan: {options['scan']}")
         print(f"General options: {options['options']}")
-        Thread(target=start_from_gui, args=(options, self.governor_callback)).start()
+        Thread(
+            target=start_from_gui,
+            args=(options, self.governor_callback, self.state_callback),
+        ).start()
 
     def end_scan(self):
         end_scan()
@@ -404,6 +429,9 @@ class App(customtkinter.CTk):
             }
         )
         print(gov_info)
+
+    def state_callback(self, state):
+        self.current_state.configure(text=state)
 
 
 app = App()
