@@ -932,12 +932,10 @@ def end_scan():
     scan_abort = True
 
 
-def start_from_gui(options, callback, state_callback):
+def start_from_gui(general_options, scan_options, callback, state_callback):
     global run_id
     global start_date
     global new_scroll
-    general_options = options["options"]
-    scan_options = options["scan"]
 
     run_id = general_options["uuid"]
     start_date = datetime.date.today()

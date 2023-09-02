@@ -12,12 +12,15 @@ from threading import Thread
 import customtkinter
 import datetime
 
+
 customtkinter.set_appearance_mode(
     "system"
 )  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme(
     "blue"
 )  # Themes: "blue" (standard), "green", "dark-blue"
+
+print(customtkinter.ThemeManager.theme)
 
 
 def to_int_or(element, alternative):
@@ -27,15 +30,30 @@ def to_int_or(element, alternative):
         return alternative
 
 
-class CheckboxFrame(customtkinter.CTkFrame):
-    def __init__(self, master, values):
-        super().__init__(master)
-        self.values = values
+class CheckboxFrame(customtkinter.CTkTabview):
+    def __init__(self, master, values, groupName):
+        super().__init__(
+            master,
+            state="disabled",
+            width=0,
+            height=0,
+            segmented_button_fg_color=customtkinter.ThemeManager.theme["CTkFrame"][
+                "fg_color"
+            ],
+            segmented_button_selected_color=customtkinter.ThemeManager.theme[
+                "CTkFrame"
+            ]["fg_color"],
+            text_color_disabled=customtkinter.ThemeManager.theme["CTkLabel"][
+                "text_color"
+            ],
+        )
+        self.add(groupName)
+        self.values = list(filter(lambda x: x["group"] == groupName, values))
         self.checkboxes: List[customtkinter.CTkCheckBox] = []
 
         for i, value in enumerate(self.values):
             checkbox = customtkinter.CTkCheckBox(
-                self,
+                self.tab(groupName),
                 text=value["name"],
                 onvalue=True,
                 offvalue=False,
@@ -43,7 +61,7 @@ class CheckboxFrame(customtkinter.CTkFrame):
                 checkbox_width=16,
                 height=16,
             )
-            checkbox.grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            checkbox.grid(row=i, column=0, padx=10, pady=2, sticky="w")
 
             if value["default"]:
                 checkbox.select()
@@ -64,7 +82,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.grid_columnconfigure(1, weight=2)
         self.scan_uuid_label = customtkinter.CTkLabel(self, text="Scan UUID:", height=1)
         self.scan_uuid_label.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.scan_uuid_var = customtkinter.StringVar(self, generate_random_id(8))
+        self.scan_uuid_var = customtkinter.StringVar(self, "---")
         self.scan_uuid_label_2 = customtkinter.CTkLabel(
             self, textvariable=self.scan_uuid_var, height=1, anchor="w"
         )
@@ -179,29 +197,36 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         }
 
 
-class CombinedOptionsFrame(customtkinter.CTkFrame):
+class ScanOptionsFrame(customtkinter.CTkFrame):
     def __init__(self, master, values):
         super().__init__(master)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=3)
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
         self.values = values
-        self.scan_data_options_frame = CheckboxFrame(
-            self,
-            values,
-        )
-        self.scan_data_options_frame.grid(
-            row=0, column=0, padx=10, pady=10, sticky="ewsn"
+        self.first_screen_options_frame = CheckboxFrame(self, values, "First Screen")
+        self.second_screen_options_frame = CheckboxFrame(self, values, "Second Screen")
+        self.third_screen_options_frame = CheckboxFrame(self, values, "Third Screen")
+
+        self.first_screen_options_frame.grid(
+            row=0, column=0, padx=10, pady=0, sticky="ewsn"
         )
 
-        self.basic_options = BasicOptionsFame(self)
-        self.basic_options.grid(row=0, column=1, padx=10, pady=10, sticky="ewsn")
+        self.second_screen_options_frame.grid(
+            row=1, column=0, padx=10, pady=0, sticky="ewsn"
+        )
+
+        self.third_screen_options_frame.grid(
+            row=2, column=0, padx=10, pady=(0, 10), sticky="ewsn"
+        )
 
     def get(self):
-        return {
-            "scan": self.scan_data_options_frame.get(),
-            "options": self.basic_options.get_options(),
-        }
+        options = {}
+        options.update(self.first_screen_options_frame.get())
+        options.update(self.second_screen_options_frame.get())
+        options.update(self.third_screen_options_frame.get())
+        return options
 
 
 class AdditionalStatusInfo(customtkinter.CTkFrame):
@@ -220,15 +245,20 @@ class AdditionalStatusInfo(customtkinter.CTkFrame):
         self.last_time_var = customtkinter.StringVar(value="13:55:30")
         self.values.update({"time": self.last_time_var})
 
+        self.last_time = customtkinter.CTkLabel(self, text="Current time", height=1)
+        self.last_time.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
         self.last_time_text = customtkinter.CTkLabel(
             self, textvariable=self.last_time_var, height=1
         )
-        self.last_time_text.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.last_time_text.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
+        self.eta = customtkinter.CTkLabel(self, text="ETA", height=1)
+        self.eta.grid(row=0, column=2, padx=10, pady=5, sticky="e")
         self.time_remaining_text = customtkinter.CTkLabel(
             self, textvariable=self.approx_time_remaining_var, height=1
         )
-        self.time_remaining_text.grid(row=0, column=2, padx=10, pady=5, sticky="e")
+        self.time_remaining_text.grid(row=1, column=2, padx=10, pady=5, sticky="e")
 
         self.gov_number_text = customtkinter.CTkLabel(
             self, textvariable=self.gov_number_var, height=1
@@ -304,28 +334,39 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("RoK Tracker by Cyrexxis")
-        self.geometry("760x450")
+        self.geometry("760x470")
         self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
         self.grid_rowconfigure(0, weight=1)
 
-        self.options_frame = CombinedOptionsFrame(
+        self.options_frame = BasicOptionsFame(
+            self,
+        )
+        self.options_frame.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn")
+
+        self.scan_options_frame = ScanOptionsFrame(
             self,
             [
-                {"name": "T1 Kills", "default": True},
-                {"name": "T2 Kills", "default": True},
-                {"name": "T3 Kills", "default": True},
-                {"name": "T4 Kills", "default": True},
-                {"name": "T5 Kills", "default": True},
-                {"name": "Ranged", "default": True},
-                {"name": "Deads", "default": True},
-                {"name": "Rss Assistance", "default": True},
-                {"name": "Rss Gathered", "default": True},
-                {"name": "Helps", "default": True},
-                {"name": "Alliance", "default": True},
+                {"name": "ID", "default": True, "group": "First Screen"},
+                {"name": "Name", "default": True, "group": "First Screen"},
+                {"name": "Power", "default": True, "group": "First Screen"},
+                {"name": "Killpoints", "default": True, "group": "First Screen"},
+                {"name": "Alliance", "default": True, "group": "First Screen"},
+                {"name": "T1 Kills", "default": True, "group": "Second Screen"},
+                {"name": "T2 Kills", "default": True, "group": "Second Screen"},
+                {"name": "T3 Kills", "default": True, "group": "Second Screen"},
+                {"name": "T4 Kills", "default": True, "group": "Second Screen"},
+                {"name": "T5 Kills", "default": True, "group": "Second Screen"},
+                {"name": "Ranged", "default": True, "group": "Second Screen"},
+                {"name": "Deads", "default": True, "group": "Third Screen"},
+                {"name": "Rss Assistance", "default": True, "group": "Third Screen"},
+                {"name": "Rss Gathered", "default": True, "group": "Third Screen"},
+                {"name": "Helps", "default": True, "group": "Third Screen"},
             ],
         )
-        self.options_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ewsn")
+        self.scan_options_frame.grid(
+            row=0, column=0, padx=10, pady=10, sticky="ewsn", rowspan=3
+        )
 
         self.last_gov_frame = LastGovernorInfo(
             self,
@@ -372,30 +413,29 @@ class App(customtkinter.CTk):
         )
 
         self.last_gov_frame.grid(
-            row=0, column=1, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
+            row=0, column=2, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
         )
 
         self.start_scan_button = customtkinter.CTkButton(
             self, text="Start scan", command=self.start_scan
         )
-        self.start_scan_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.start_scan_button.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
 
         self.end_scan_button = customtkinter.CTkButton(
             self, text="End scan", command=self.end_scan
         )
-        self.end_scan_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        self.end_scan_button.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
         self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
-        self.current_state.grid(row=2, column=1, padx=10, pady=(10, 0), sticky="ewns")
+        self.current_state.grid(row=2, column=2, padx=10, pady=(10, 0), sticky="ewns")
 
     def start_scan(self):
-        self.options_frame.basic_options.set_uuid(generate_random_id(8))
-        options = self.options_frame.get()
-        print(f"Stuff to scan: {options['scan']}")
-        print(f"General options: {options['options']}")
+        self.options_frame.set_uuid(generate_random_id(8))
+        options = self.options_frame.get_options()
+        scan_options = self.scan_options_frame.get()
         Thread(
             target=start_from_gui,
-            args=(options, self.governor_callback, self.state_callback),
+            args=(options, scan_options, self.governor_callback, self.state_callback),
         ).start()
 
     def end_scan(self):
@@ -428,7 +468,6 @@ class App(customtkinter.CTk):
                 "eta": gov_info["eta"],
             }
         )
-        print(gov_info)
 
     def state_callback(self, state):
         self.current_state.configure(text=state)
