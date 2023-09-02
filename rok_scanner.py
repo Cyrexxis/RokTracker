@@ -55,6 +55,24 @@ new_scroll = True
 scan_abort = False
 scan_times = []
 
+scan_options = {
+    "ID": True,
+    "Name": True,
+    "Power": True,
+    "Killpoints": True,
+    "Alliance": True,
+    "T1 Kills": True,
+    "T2 Kills": True,
+    "T3 Kills": True,
+    "T4 Kills": True,
+    "T5 Kills": True,
+    "Ranged": True,
+    "Deads": True,
+    "Rss Assistance": True,
+    "Rss Gathered": True,
+    "Helps": True,
+}
+
 
 def format_timedelta_to_HHMMSS(td):
     td_in_seconds = td.total_seconds()
@@ -68,6 +86,10 @@ def format_timedelta_to_HHMMSS(td):
     if seconds < 10:
         seconds = "0{}".format(seconds)
     return "{}:{}:{}".format(hours, minutes, seconds)
+
+
+def next_alpha(s):
+    return chr((ord(s.upper()) + 1 - 65) % 26 + 65)
 
 
 def random_delay() -> float:
@@ -213,6 +235,128 @@ def calculate_kills(
     return int(kills_t1), int(kills_t2), int(kills_t3), int(kills_t4), int(kills_t5)
 
 
+def check_page_needed(page: int) -> bool:
+    match page:
+        case 1:
+            return (
+                scan_options["ID"]
+                or scan_options["Name"]
+                or scan_options["Power"]
+                or scan_options["Killpoints"]
+                or scan_options["Alliance"]
+            )
+        case 2:
+            return (
+                scan_options["T1 Kills"]
+                or scan_options["T2 Kills"]
+                or scan_options["T3 Kills"]
+                or scan_options["T4 Kills"]
+                or scan_options["T5 Kills"]
+                or scan_options["Ranged"]
+            )
+        case 3:
+            return (
+                scan_options["Deads"]
+                or scan_options["Rss Assistance"]
+                or scan_options["Rss Gathered"]
+                or scan_options["Helps"]
+            )
+        case _:
+            return False
+
+
+def assign_columns():
+    assigned_cols = {}
+    current_char = "A"
+
+    if scan_options["ID"]:
+        assigned_cols.update({"ID": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Name"]:
+        assigned_cols.update({"Name": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Power"]:
+        assigned_cols.update({"Power": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Killpoints"]:
+        assigned_cols.update({"Killpoints": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Deads"]:
+        assigned_cols.update({"Deads": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["T1 Kills"]:
+        assigned_cols.update({"T1 Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["T2 Kills"]:
+        assigned_cols.update({"T2 Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["T3 Kills"]:
+        assigned_cols.update({"T3 Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["T4 Kills"]:
+        assigned_cols.update({"T4 Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["T5 Kills"]:
+        assigned_cols.update({"T5 Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if (
+        scan_options["T1 Kills"]
+        and scan_options["T2 Kills"]
+        and scan_options["T3 Kills"]
+        and scan_options["T4 Kills"]
+        and scan_options["T5 Kills"]
+    ):
+        assigned_cols.update({"Total Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["T4 Kills"] and scan_options["T5 Kills"]:
+        assigned_cols.update({"T45 Kills": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Ranged"]:
+        assigned_cols.update({"Ranged": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Rss Gathered"]:
+        assigned_cols.update({"Rss Gathered": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Rss Assistance"]:
+        assigned_cols.update({"Rss Assistance": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Helps"]:
+        assigned_cols.update({"Helps": current_char})
+        current_char = next_alpha(current_char)
+
+    if scan_options["Alliance"]:
+        assigned_cols.update({"Alliance": current_char})
+        current_char = next_alpha(current_char)
+
+    return assigned_cols
+
+
+def createHeader(display_name, name, colNames, sheet, font):
+    if name in colNames:
+        sheet[str(colNames[name]) + "1"] = display_name
+        sheet[str(colNames[name]) + "1"].font = font
+
+
+def setCell(sheet, colNames, name, row, value):
+    if name in colNames:
+        sheet[str(colNames[name]) + str(row)] = value
+
+
 def governor_scan(
     port: int,
     current_player: int,
@@ -226,16 +370,22 @@ def governor_scan(
     gov_id = 0
     gov_power = 0
     gov_killpoints = 0
-    gov_dead = 0
-    gov_kills_tier1 = 0
-    gov_kills_tier2 = 0
-    gov_kills_tier3 = 0
-    gov_kills_tier4 = 0
-    gov_kills_tier5 = 0
-    gov_ranged_points = 0
-    gov_rss_assistance = 0
-    gov_helps = 0
     alliance_name = ""
+    gov_kills_tier1 = 0
+    gov_kp_tier1 = 0
+    gov_kills_tier2 = 0
+    gov_kp_tier2 = 0
+    gov_kills_tier3 = 0
+    gov_kp_tier3 = 0
+    gov_kills_tier4 = 0
+    gov_kp_tier4 = 0
+    gov_kills_tier5 = 0
+    gov_kp_tier5 = 0
+    gov_ranged_points = 0
+    gov_dead = 0
+    gov_rss_assistance = 0
+    gov_rss_gathered = 0
+    gov_helps = 0
 
     state_callback("Opening governor")
     # Open governor
@@ -298,214 +448,207 @@ def governor_scan(
             gov_info = True
             break
 
-    state_callback("Scanning general page")
-    # nickname copy
-    copy_try = 0
-    while copy_try < 3:
-        try:
-            secure_adb_tap(rok_ui.tap_positions["name_copy"], port)
-            time.sleep(0.2)
-            gov_name = tkinter.Tk().clipboard_get()
-            break
-        except:
-            console.log("Name copy failed, retying")
-            logging.log(logging.INFO, "Name copy failed, retying")
-            copy_try = copy_try + 1
+    if check_page_needed(1):
+        state_callback("Scanning general page")
+        # nickname copy
+        copy_try = 0
+        while copy_try < 3:
+            try:
+                secure_adb_tap(rok_ui.tap_positions["name_copy"], port)
+                time.sleep(0.2)
+                gov_name = tkinter.Tk().clipboard_get()
+                break
+            except:
+                console.log("Name copy failed, retying")
+                logging.log(logging.INFO, "Name copy failed, retying")
+                copy_try = copy_try + 1
 
-    time.sleep(1.5 + random_delay())
+        time.sleep(1.5 + random_delay())
 
-    secure_adb_screencap(port).save("gov_info.png")
-    image = cv2.imread("gov_info.png")
+        secure_adb_screencap(port).save("gov_info.png")
+        image = cv2.imread("gov_info.png")
 
-    # Power and Killpoints
-    im_gov_id = cropToRegion(image, rok_ui.ocr_regions["gov_id"])
-    im_gov_id_gray = cv2.cvtColor(im_gov_id, cv2.COLOR_BGR2GRAY)
-    im_gov_id_gray = cv2.bitwise_not(im_gov_id_gray)
-    (thresh, im_gov_id_bw) = cv2.threshold(im_gov_id_gray, 120, 255, cv2.THRESH_BINARY)
+        # Power and Killpoints
+        im_gov_id = cropToRegion(image, rok_ui.ocr_regions["gov_id"])
+        im_gov_id_gray = cv2.cvtColor(im_gov_id, cv2.COLOR_BGR2GRAY)
+        im_gov_id_gray = cv2.bitwise_not(im_gov_id_gray)
+        (thresh, im_gov_id_bw) = cv2.threshold(
+            im_gov_id_gray, 120, 255, cv2.THRESH_BINARY
+        )
 
-    im_gov_power = cropToRegion(image, rok_ui.ocr_regions["power"])
-    im_gov_power_bw = preprocessImage(im_gov_power, 100, 12, True)
+        im_gov_power = cropToRegion(image, rok_ui.ocr_regions["power"])
+        im_gov_power_bw = preprocessImage(im_gov_power, 100, 12, True)
 
-    im_gov_killpoints = cropToRegion(image, rok_ui.ocr_regions["killpoints"])
-    im_gov_killpoints_bw = preprocessImage(im_gov_killpoints, 100, 12, True)
+        im_gov_killpoints = cropToRegion(image, rok_ui.ocr_regions["killpoints"])
+        im_gov_killpoints_bw = preprocessImage(im_gov_killpoints, 100, 12, True)
 
-    # alliance tag
-    im_alliance_tag = cropToRegion(image, rok_ui.ocr_regions["alliance_name"])
+        # alliance tag
+        im_alliance_tag = cropToRegion(image, rok_ui.ocr_regions["alliance_name"])
 
-    # kills tier
-    secure_adb_tap(rok_ui.tap_positions["open_kills"], port)
+        # 1st image data
+        with PyTessBaseAPI(
+            path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+        ) as api:
+            api.SetImage(Image.fromarray(im_gov_power_bw))
+            gov_power = api.GetUTF8Text()
+            gov_power = re.sub("[^0-9]", "", gov_power)
 
-    # 1st image data
-    with PyTessBaseAPI(
-        path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
-    ) as api:
-        api.SetImage(Image.fromarray(im_gov_power_bw))
-        gov_power = api.GetUTF8Text()
-        gov_power = re.sub("[^0-9]", "", gov_power)
+            api.SetImage(Image.fromarray(im_gov_killpoints_bw))
+            gov_killpoints = api.GetUTF8Text()
+            gov_killpoints = re.sub("[^0-9]", "", gov_killpoints)
 
-        api.SetImage(Image.fromarray(im_gov_killpoints_bw))
-        gov_killpoints = api.GetUTF8Text()
-        gov_killpoints = re.sub("[^0-9]", "", gov_killpoints)
+            api.SetPageSegMode(PSM.SINGLE_LINE)
+            api.SetImage(Image.fromarray(im_gov_id_bw))
+            gov_id = api.GetUTF8Text()
+            gov_id = re.sub("[^0-9]", "", gov_id)
 
-        api.SetPageSegMode(PSM.SINGLE_LINE)
-        api.SetImage(Image.fromarray(im_gov_id_bw))
-        gov_id = api.GetUTF8Text()
-        gov_id = re.sub("[^0-9]", "", gov_id)
+            im_alliance_bw = preprocessImage(im_alliance_tag, 50, 12, True)
+            api.SetImage(Image.fromarray(im_alliance_bw))
+            alliance_name = api.GetUTF8Text()
 
-    # gov_id = pytesseract.image_to_string(im_gov_id_bw,config="--psm 7")
-    # gov_id = int(re.sub("[^0-9]", "", gov_id))
+    if check_page_needed(2):
+        # kills tier
+        secure_adb_tap(rok_ui.tap_positions["open_kills"], port)
+        state_callback("Scanning kills page")
+        time.sleep(1 + random_delay())
 
-    # gov_power = pytesseract.image_to_string(im_gov_power_bw,config="--oem 1 --psm 8")
-    # gov_power = int(re.sub("[^0-9]", "", gov_power))
+        secure_adb_screencap(port).save("kills_tier.png")
+        image2 = cv2.imread("kills_tier.png")
+        image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
 
-    # gov_killpoints = pytesseract.image_to_string(im_gov_killpoints_bw,config="--oem 1 --psm 8")
-    # gov_killpoints = int(re.sub("[^0-9]", "", gov_killpoints))
+        # tier 1
+        im_kills_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_kills"])
+        im_kills_tier1_bw = preprocessImage(im_kills_tier1, 150, 12)
 
-    state_callback("Scanning kills page")
-    time.sleep(1 + random_delay())
+        # tier 1 KP
+        im_kp_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_killpoints"])
+        im_kp_tier1_bw = preprocessImage(im_kp_tier1, 150, 12)
 
-    secure_adb_screencap(port).save("kills_tier.png")
-    image2 = cv2.imread("kills_tier.png")
-    image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
+        # tier 2
+        im_kills_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_kills"])
+        im_kills_tier2_bw = preprocessImage(im_kills_tier2, 150, 12)
 
-    # tier 1
-    im_kills_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_kills"])
-    im_kills_tier1_bw = preprocessImage(im_kills_tier1, 150, 12)
+        # tier 2 KP
+        im_kp_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_killpoints"])
+        im_kp_tier2_bw = preprocessImage(im_kp_tier2, 150, 12)
 
-    # tier 1 KP
-    im_kp_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_killpoints"])
-    im_kp_tier1_bw = preprocessImage(im_kp_tier1, 150, 12)
+        # tier 3
+        im_kills_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_kills"])
+        im_kills_tier3_bw = preprocessImage(im_kills_tier3, 150, 12)
 
-    # tier 2
-    im_kills_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_kills"])
-    im_kills_tier2_bw = preprocessImage(im_kills_tier2, 150, 12)
+        # tier 3 KP
+        im_kp_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_killpoints"])
+        im_kp_tier3_bw = preprocessImage(im_kp_tier3, 150, 12)
 
-    # tier 2 KP
-    im_kp_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_killpoints"])
-    im_kp_tier2_bw = preprocessImage(im_kp_tier2, 150, 12)
+        # tier 4
+        im_kills_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_kills"])
+        im_kills_tier4_bw = preprocessImage(im_kills_tier4, 150, 12)
 
-    # tier 3
-    im_kills_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_kills"])
-    im_kills_tier3_bw = preprocessImage(im_kills_tier3, 150, 12)
+        # tier 4 KP
+        im_kp_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_killpoints"])
+        im_kp_tier4_bw = preprocessImage(im_kp_tier4, 150, 12)
 
-    # tier 3 KP
-    im_kp_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_killpoints"])
-    im_kp_tier3_bw = preprocessImage(im_kp_tier3, 150, 12)
+        # tier 5
+        im_kills_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_kills"])
+        im_kills_tier5_bw = preprocessImage(im_kills_tier5, 150, 12)
 
-    # tier 4
-    im_kills_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_kills"])
-    im_kills_tier4_bw = preprocessImage(im_kills_tier4, 150, 12)
+        # tier 5 KP
+        im_kp_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_killpoints"])
+        im_kp_tier5_bw = preprocessImage(im_kp_tier5, 150, 12)
 
-    # tier 4 KP
-    im_kp_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_killpoints"])
-    im_kp_tier4_bw = preprocessImage(im_kp_tier4, 150, 12)
+        # ranged points
+        im_ranged_points = cropToRegion(image2, rok_ui.ocr_regions["ranged_points"])
+        im_ranged_points_bw = preprocessImage(im_ranged_points, 150, 12)
 
-    # tier 5
-    im_kills_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_kills"])
-    im_kills_tier5_bw = preprocessImage(im_kills_tier5, 150, 12)
+        with PyTessBaseAPI(
+            path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+        ) as api:
+            api.SetImage(Image.fromarray(im_kills_tier1_bw))
+            gov_kills_tier1 = api.GetUTF8Text()
+            gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
 
-    # tier 5 KP
-    im_kp_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_killpoints"])
-    im_kp_tier5_bw = preprocessImage(im_kp_tier5, 150, 12)
+            api.SetImage(Image.fromarray(im_kp_tier1_bw))
+            gov_kp_tier1 = api.GetUTF8Text()
+            gov_kp_tier1 = re.sub("[^0-9]", "", gov_kp_tier1)
 
-    # ranged points
-    im_ranged_points = cropToRegion(image2, rok_ui.ocr_regions["ranged_points"])
-    im_ranged_points_bw = preprocessImage(im_ranged_points, 150, 12)
+            api.SetImage(Image.fromarray(im_kills_tier2_bw))
+            gov_kills_tier2 = api.GetUTF8Text()
+            gov_kills_tier2 = re.sub("[^0-9]", "", gov_kills_tier2)
 
-    # More info tab
-    secure_adb_tap(rok_ui.tap_positions["more_info"], port)
+            api.SetImage(Image.fromarray(im_kp_tier2_bw))
+            gov_kp_tier2 = api.GetUTF8Text()
+            gov_kp_tier2 = re.sub("[^0-9]", "", gov_kp_tier2)
 
-    with PyTessBaseAPI(
-        path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
-    ) as api:
-        api.SetImage(Image.fromarray(im_kills_tier1_bw))
-        gov_kills_tier1 = api.GetUTF8Text()
-        gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
+            api.SetImage(Image.fromarray(im_kills_tier3_bw))
+            gov_kills_tier3 = api.GetUTF8Text()
+            gov_kills_tier3 = re.sub("[^0-9]", "", gov_kills_tier3)
 
-        api.SetImage(Image.fromarray(im_kp_tier1_bw))
-        gov_kp_tier1 = api.GetUTF8Text()
-        gov_kp_tier1 = re.sub("[^0-9]", "", gov_kp_tier1)
+            api.SetImage(Image.fromarray(im_kp_tier3_bw))
+            gov_kp_tier3 = api.GetUTF8Text()
+            gov_kp_tier3 = re.sub("[^0-9]", "", gov_kp_tier3)
 
-        api.SetImage(Image.fromarray(im_kills_tier2_bw))
-        gov_kills_tier2 = api.GetUTF8Text()
-        gov_kills_tier2 = re.sub("[^0-9]", "", gov_kills_tier2)
+            api.SetImage(Image.fromarray(im_kills_tier4_bw))
+            gov_kills_tier4 = api.GetUTF8Text()
+            gov_kills_tier4 = re.sub("[^0-9]", "", gov_kills_tier4)
 
-        api.SetImage(Image.fromarray(im_kp_tier2_bw))
-        gov_kp_tier2 = api.GetUTF8Text()
-        gov_kp_tier2 = re.sub("[^0-9]", "", gov_kp_tier2)
+            api.SetImage(Image.fromarray(im_kp_tier4_bw))
+            gov_kp_tier4 = api.GetUTF8Text()
+            gov_kp_tier4 = re.sub("[^0-9]", "", gov_kp_tier4)
 
-        api.SetImage(Image.fromarray(im_kills_tier3_bw))
-        gov_kills_tier3 = api.GetUTF8Text()
-        gov_kills_tier3 = re.sub("[^0-9]", "", gov_kills_tier3)
+            api.SetImage(Image.fromarray(im_kills_tier5_bw))
+            gov_kills_tier5 = api.GetUTF8Text()
+            gov_kills_tier5 = re.sub("[^0-9]", "", gov_kills_tier5)
 
-        api.SetImage(Image.fromarray(im_kp_tier3_bw))
-        gov_kp_tier3 = api.GetUTF8Text()
-        gov_kp_tier3 = re.sub("[^0-9]", "", gov_kp_tier3)
+            api.SetImage(Image.fromarray(im_kp_tier5_bw))
+            gov_kp_tier5 = api.GetUTF8Text()
+            gov_kp_tier5 = re.sub("[^0-9]", "", gov_kp_tier5)
 
-        api.SetImage(Image.fromarray(im_kills_tier4_bw))
-        gov_kills_tier4 = api.GetUTF8Text()
-        gov_kills_tier4 = re.sub("[^0-9]", "", gov_kills_tier4)
+            api.SetImage(Image.fromarray(im_ranged_points_bw))
+            gov_ranged_points = api.GetUTF8Text()
+            gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
-        api.SetImage(Image.fromarray(im_kp_tier4_bw))
-        gov_kp_tier4 = api.GetUTF8Text()
-        gov_kp_tier4 = re.sub("[^0-9]", "", gov_kp_tier4)
+    if check_page_needed(3):
+        # More info tab
+        secure_adb_tap(rok_ui.tap_positions["more_info"], port)
+        state_callback("Scanning more info page")
+        time.sleep(1 + random_delay())
+        secure_adb_screencap(port).save("more_info.png")
+        image3 = cv2.imread("more_info.png")
 
-        api.SetImage(Image.fromarray(im_kills_tier5_bw))
-        gov_kills_tier5 = api.GetUTF8Text()
-        gov_kills_tier5 = re.sub("[^0-9]", "", gov_kills_tier5)
+        # dead
+        im_dead = cropToRegion(image3, rok_ui.ocr_regions["deads"])
+        im_dead_bw = preprocessImage(im_dead, 150, 12, True)
 
-        api.SetImage(Image.fromarray(im_kp_tier5_bw))
-        gov_kp_tier5 = api.GetUTF8Text()
-        gov_kp_tier5 = re.sub("[^0-9]", "", gov_kp_tier5)
+        # rss assistance
+        im_rss_assistance = cropToRegion(image3, rok_ui.ocr_regions["rss_assisted"])
+        im_rss_assistance_bw = preprocessImage(im_rss_assistance, 150, 12, True)
 
-        api.SetImage(Image.fromarray(im_ranged_points_bw))
-        gov_ranged_points = api.GetUTF8Text()
-        gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
+        # alliance helps
+        im_helps = cropToRegion(image3, rok_ui.ocr_regions["alliance_helps"])
+        im_helps_bw = preprocessImage(im_helps, 150, 12, True)
 
-    state_callback("Scanning more info page")
-    time.sleep(1 + random_delay())
-    secure_adb_screencap(port).save("more_info.png")
-    image3 = cv2.imread("more_info.png")
+        # rss gathered
+        im_rss_gathered = cropToRegion(image3, rok_ui.ocr_regions["rss_gathered"])
+        im_rss_gathered_bw = preprocessImage(im_rss_gathered, 150, 12, True)
 
-    # dead
-    im_dead = cropToRegion(image3, rok_ui.ocr_regions["deads"])
-    im_dead_bw = preprocessImage(im_dead, 150, 12, True)
+        with PyTessBaseAPI(
+            path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+        ) as api:
+            api.SetImage(Image.fromarray(im_dead_bw))
+            gov_dead = api.GetUTF8Text()
+            gov_dead = re.sub("[^0-9]", "", gov_dead)
 
-    # rss assistance
-    im_rss_assistance = cropToRegion(image3, rok_ui.ocr_regions["rss_assisted"])
-    im_rss_assistance_bw = preprocessImage(im_rss_assistance, 150, 12, True)
+            api.SetImage(Image.fromarray(im_rss_gathered_bw))
+            gov_rss_gathered = api.GetUTF8Text()
+            gov_rss_gathered = re.sub("[^0-9]", "", gov_rss_gathered)
 
-    # alliance helps
-    im_helps = cropToRegion(image3, rok_ui.ocr_regions["alliance_helps"])
-    im_helps_bw = preprocessImage(im_helps, 150, 12, True)
+            api.SetImage(Image.fromarray(im_rss_assistance_bw))
+            gov_rss_assistance = api.GetUTF8Text()
+            gov_rss_assistance = re.sub("[^0-9]", "", gov_rss_assistance)
 
-    # rss gathered
-    im_rss_gathered = cropToRegion(image3, rok_ui.ocr_regions["rss_gathered"])
-    im_rss_gathered_bw = preprocessImage(im_rss_gathered, 150, 12, True)
-
-    with PyTessBaseAPI(
-        path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
-    ) as api:
-        api.SetImage(Image.fromarray(im_dead_bw))
-        gov_dead = api.GetUTF8Text()
-        gov_dead = re.sub("[^0-9]", "", gov_dead)
-
-        api.SetImage(Image.fromarray(im_rss_gathered_bw))
-        gov_rss_gathered = api.GetUTF8Text()
-        gov_rss_gathered = re.sub("[^0-9]", "", gov_rss_gathered)
-
-        api.SetImage(Image.fromarray(im_rss_assistance_bw))
-        gov_rss_assistance = api.GetUTF8Text()
-        gov_rss_assistance = re.sub("[^0-9]", "", gov_rss_assistance)
-
-        api.SetImage(Image.fromarray(im_helps_bw))
-        gov_helps = api.GetUTF8Text()
-        gov_helps = re.sub("[^0-9]", "", gov_helps)
-
-        api.SetPageSegMode(PSM.SINGLE_LINE)
-        im_alliance_bw = preprocessImage(im_alliance_tag, 50, 12, True)
-        api.SetImage(Image.fromarray(im_alliance_bw))
-        alliance_name = api.GetUTF8Text()
+            api.SetImage(Image.fromarray(im_helps_bw))
+            gov_helps = api.GetUTF8Text()
+            gov_helps = re.sub("[^0-9]", "", gov_helps)
 
     # Just to check the progress, printing in cmd the result for each governor
     if gov_power == "":
@@ -540,8 +683,9 @@ def governor_scan(
     )
 
     state_callback("Closing governor")
-    secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
-    time.sleep(0.5 + random_delay())
+    if check_page_needed(3):
+        secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
+        time.sleep(0.5 + random_delay())
     secure_adb_tap(rok_ui.tap_positions["close_gov"], port)  # close governor info
     time.sleep(1 + random_delay())
 
@@ -603,42 +747,26 @@ def scan(
     # Make Head Bold
     font = Font(bold=True)
 
-    # Initialize Excel Sheet Header
-    sheet1["A1"] = "Governor ID"
-    sheet1["B1"] = "Governor Name"
-    sheet1["C1"] = "Power"
-    sheet1["D1"] = "Kill Points"
-    sheet1["E1"] = "Deaths"
-    sheet1["F1"] = "T1"
-    sheet1["G1"] = "T2"
-    sheet1["H1"] = "T3"
-    sheet1["I1"] = "T4"
-    sheet1["J1"] = "T5"
-    sheet1["K1"] = "Kills"
-    sheet1["L1"] = "Kills (T4+)"
-    sheet1["M1"] = "Resource Assistance"
-    sheet1["N1"] = "Helps"
-    sheet1["O1"] = "Alliance"
-    sheet1["P1"] = "Ranged Points"
-    sheet1["Q1"] = "RSS Gathered"
+    colNames = assign_columns()
 
-    sheet1["A1"].font = font
-    sheet1["B1"].font = font
-    sheet1["C1"].font = font
-    sheet1["D1"].font = font
-    sheet1["E1"].font = font
-    sheet1["F1"].font = font
-    sheet1["G1"].font = font
-    sheet1["H1"].font = font
-    sheet1["I1"].font = font
-    sheet1["J1"].font = font
-    sheet1["K1"].font = font
-    sheet1["L1"].font = font
-    sheet1["M1"].font = font
-    sheet1["N1"].font = font
-    sheet1["O1"].font = font
-    sheet1["P1"].font = font
-    sheet1["Q1"].font = font
+    # Initialize Excel Sheet Header
+    createHeader("Governor ID", "ID", colNames, sheet1, font)
+    createHeader("Governor Name", "Name", colNames, sheet1, font)
+    createHeader("Power", "Power", colNames, sheet1, font)
+    createHeader("Kill Points", "Killpoints", colNames, sheet1, font)
+    createHeader("Deaths", "Deads", colNames, sheet1, font)
+    createHeader("T1", "T1 Kills", colNames, sheet1, font)
+    createHeader("T2", "T2 Kills", colNames, sheet1, font)
+    createHeader("T3", "T3 Kills", colNames, sheet1, font)
+    createHeader("T4", "T4 Kills", colNames, sheet1, font)
+    createHeader("T5", "T5 Kills", colNames, sheet1, font)
+    createHeader("Kills", "Total Kills", colNames, sheet1, font)
+    createHeader("Kills (T4+)", "T45 Kills", colNames, sheet1, font)
+    createHeader("Ranged Points", "Ranged", colNames, sheet1, font)
+    createHeader("RSS Gathered", "Rss Gathered", colNames, sheet1, font)
+    createHeader("RSS Assistance", "Rss Assistance", colNames, sheet1, font)
+    createHeader("Helps", "Helps", colNames, sheet1, font)
+    createHeader("Alliance", "Alliance", colNames, sheet1, font)
 
     # Counter for fails
     inactive_players = 0
@@ -831,7 +959,7 @@ def scan(
             )
             table.add_column(
                 "Value",
-                str(datetime.timedelta(seconds=(amount - i) * 19))
+                str(datetime.timedelta(seconds=get_remaining_time(amount - i)))
                 + "\n"
                 + str(inactive_players)
                 + "\n"
@@ -861,24 +989,27 @@ def scan(
 
         console.print(table)
 
+        # fmt: off
         # Write results in excel file
-        sheet1["A" + str(i + 2 - j)] = to_int_check(governor["id"])
-        sheet1["B" + str(i + 2 - j)] = governor["name"]
-        sheet1["C" + str(i + 2 - j)] = to_int_check(governor["power"])
-        sheet1["D" + str(i + 2 - j)] = to_int_check(governor["killpoints"])
-        sheet1["E" + str(i + 2 - j)] = to_int_check(governor["dead"])
-        sheet1["F" + str(i + 2 - j)] = to_int_check(governor["kills_t1"])
-        sheet1["G" + str(i + 2 - j)] = to_int_check(governor["kills_t2"])
-        sheet1["H" + str(i + 2 - j)] = to_int_check(governor["kills_t3"])
-        sheet1["I" + str(i + 2 - j)] = to_int_check(governor["kills_t4"])
-        sheet1["J" + str(i + 2 - j)] = to_int_check(governor["kills_t5"])
-        sheet1["K" + str(i + 2 - j)] = to_int_check(governor["kills_total"])
-        sheet1["L" + str(i + 2 - j)] = to_int_check(governor["kills_t45"])
-        sheet1["M" + str(i + 2 - j)] = to_int_check(governor["rss_assistance"])
-        sheet1["N" + str(i + 2 - j)] = to_int_check(governor["helps"])
-        sheet1["O" + str(i + 2 - j)] = governor["alliance"].rstrip()
-        sheet1["P" + str(i + 2 - j)] = to_int_check(governor["ranged_points"])
-        sheet1["Q" + str(i + 2 - j)] = to_int_check(governor["rss_gathered"])
+        current_row = i + 2 - j
+        setCell(sheet1, colNames, "ID", current_row, to_int_check(governor["id"]))
+        setCell(sheet1, colNames, "Name", current_row, governor["name"])
+        setCell(sheet1, colNames, "Power", current_row, to_int_check(governor["power"]))
+        setCell(sheet1, colNames, "Killpoints", current_row, to_int_check(governor["killpoints"]))
+        setCell(sheet1, colNames, "Deads", current_row, to_int_check(governor["dead"]))
+        setCell(sheet1, colNames, "T1 Kills", current_row, to_int_check(governor["kills_t1"]))
+        setCell(sheet1, colNames, "T2 Kills", current_row, to_int_check(governor["kills_t2"]))
+        setCell(sheet1, colNames, "T3 Kills", current_row, to_int_check(governor["kills_t3"]))
+        setCell(sheet1, colNames, "T4 Kills", current_row, to_int_check(governor["kills_t4"]))
+        setCell(sheet1, colNames, "T5 Kills", current_row, to_int_check(governor["kills_t5"]))
+        setCell(sheet1, colNames, "Total Kills", current_row, to_int_check(governor["kills_total"]))
+        setCell(sheet1, colNames, "T45 Kills", current_row, to_int_check(governor["kills_t45"]))
+        setCell(sheet1, colNames, "Ranged", current_row, to_int_check(governor["ranged_points"]))
+        setCell(sheet1, colNames, "Rss Gathered", current_row, to_int_check(governor["rss_gathered"]))
+        setCell(sheet1, colNames, "Rss Assistance", current_row, to_int_check(governor["rss_assistance"]))
+        setCell(sheet1, colNames, "Helps", current_row, to_int_check(governor["helps"]))
+        setCell(sheet1, colNames, "Alliance", current_row, governor["alliance"].rstrip())
+        # fmt: on
 
         if resume:
             file_name_prefix = "NEXT"
@@ -932,13 +1063,19 @@ def end_scan():
     scan_abort = True
 
 
-def start_from_gui(general_options, scan_options, callback, state_callback):
+def start_from_gui(general_options, scan_options_new, callback, state_callback):
     global run_id
     global start_date
     global new_scroll
+    global scan_options
+    global scan_abort
+    global scan_times
 
+    scan_times = []
+    scan_abort = False
     run_id = general_options["uuid"]
     start_date = datetime.date.today()
+    scan_options = scan_options_new
 
     scan(
         general_options["port"],
@@ -961,6 +1098,7 @@ def main():
     global run_id
     global start_date
     global new_scroll
+    global scan_options
     bluestacks_device_name = "RoK Tracker"
     run_id = generate_random_id(8)
     start_date = datetime.date.today()
