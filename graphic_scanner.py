@@ -1,4 +1,3 @@
-from math import ceil
 from typing import Dict, List, Optional, Tuple, Union
 import customtkinter
 from rok_scanner import (
@@ -9,18 +8,12 @@ from rok_scanner import (
 )
 from threading import Thread
 
-import customtkinter
-import datetime
-
-
 customtkinter.set_appearance_mode(
     "system"
 )  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme(
     "blue"
 )  # Themes: "blue" (standard), "green", "dark-blue"
-
-print(customtkinter.ThemeManager.theme)
 
 
 def to_int_or(element, alternative):
