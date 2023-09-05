@@ -14,15 +14,13 @@ if current_version < required_version:
     sys.exit(1)
 
 from console import console
-from rich.prompt import Prompt
-from rich.prompt import IntPrompt
-from rich.prompt import Confirm
 from rich.table import Table
 from rich.markup import escape
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
 from adbutils import *
+import questionary
 import tkinter
 import configparser
 import datetime
@@ -56,21 +54,21 @@ scan_abort = False
 scan_times = []
 
 scan_options = {
-    "ID": True,
-    "Name": True,
-    "Power": True,
-    "Killpoints": True,
-    "Alliance": True,
-    "T1 Kills": True,
-    "T2 Kills": True,
-    "T3 Kills": True,
-    "T4 Kills": True,
-    "T5 Kills": True,
-    "Ranged": True,
-    "Deads": True,
-    "Rss Assistance": True,
-    "Rss Gathered": True,
-    "Helps": True,
+    "ID": False,
+    "Name": False,
+    "Power": False,
+    "Killpoints": False,
+    "Alliance": False,
+    "T1 Kills": False,
+    "T2 Kills": False,
+    "T3 Kills": False,
+    "T4 Kills": False,
+    "T5 Kills": False,
+    "Ranged": False,
+    "Deads": False,
+    "Rss Assistance": False,
+    "Rss Gathered": False,
+    "Helps": False,
 }
 
 
@@ -132,6 +130,14 @@ def to_int_check(element):
         return int(0)
 
 
+def is_string_int(element: str) -> bool:
+    try:
+        _ = int(element)
+        return True
+    except ValueError:
+        return False
+
+
 def generate_random_id(length):
     alphabet = string.ascii_lowercase + string.digits
     return "".join(random.choices(alphabet, k=length))
@@ -161,7 +167,9 @@ def get_gov_position(current_position, skips):
 
 def stopHandler(signum, frame):
     global scan_abort
-    stop = Confirm.ask("Do you really want to exit?")
+    stop = questionary.confirm(
+        message="Do you want to stop the scanner?:", auto_enter=False, default=False
+    ).ask()
     if stop:
         console.print("Scan will aborted after next governor.")
         scan_abort = True
@@ -439,7 +447,11 @@ def governor_scan(
             count += 1
             time.sleep(2 + random_delay())
             if count == 10:
-                cont = Confirm.ask("Could not find user, retry?", default=True)
+                cont = questionary.confirm(
+                    message="Could not find user, retry?:",
+                    auto_enter=False,
+                    default=True,
+                ).ask()
                 if cont:
                     count = 0
                 else:
@@ -1104,22 +1116,195 @@ def main():
     start_date = datetime.date.today()
     console.print(f"The UUID of this scan is [green]{run_id}[/green]", highlight=False)
 
-    bluestacks_device_name = Prompt.ask(
-        "Name of your bluestacks instance", default=bluestacks_device_name
-    )
-    bluestacks_port = IntPrompt.ask(
-        "Adb port of device", default=get_bluestacks_port(bluestacks_device_name)
-    )
-    kingdom = Prompt.ask("Kingdom name (used for file name)", default="KD")
-    scan_amount = IntPrompt.ask("People to scan", default=600)
-    resume_scan = Confirm.ask("Resume scan", default=False)
-    new_scroll = Confirm.ask(
-        "Use the new scrolling method (more accurate, but might not work)", default=True
-    )
-    track_inactives = Confirm.ask("Track inactives (via screenshot)", default=False)
-    reconstruct_fails = Confirm.ask(
-        "Try to reconstruct kills via killpoints", default=True
-    )
+    bluestacks_device_name = questionary.text(
+        message="Name of your bluestacks instance:", default=bluestacks_device_name
+    ).ask()
+
+    bluestacks_port = questionary.text(
+        f"Adb port of device (detected {get_bluestacks_port(bluestacks_device_name)}):",
+        default=str(get_bluestacks_port(bluestacks_device_name)),
+        validate=lambda port: is_string_int(port),
+    ).ask()
+
+    kingdom = questionary.text(message="Kingdom name (used for file name):").ask()
+
+    scan_amount = questionary.text(
+        message="Number of people to scan:",
+        validate=lambda port: is_string_int(port),
+    ).ask()
+
+    resume_scan = questionary.confirm(
+        message="Resume scan:", auto_enter=False, default=False
+    ).ask()
+
+    new_scroll = questionary.confirm(
+        message="Use advanced scrolling method:", auto_enter=False, default=True
+    ).ask()
+
+    track_inactives = questionary.confirm(
+        message="Screenshot inactives:", auto_enter=False, default=False
+    ).ask()
+
+    scan_mode = questionary.select(
+        "What scan do you want to do?",
+        choices=[
+            questionary.Choice(
+                "Full (Everything the scanner can)",
+                value="full",
+                checked=True,
+                shortcut_key="f",
+            ),
+            questionary.Choice(
+                "Seed (ID, Name, Power, KP, Alliance)",
+                value="seed",
+                checked=False,
+                shortcut_key="s",
+            ),
+            questionary.Choice(
+                "Custom (select needed items in next step)",
+                value="custom",
+                checked=False,
+                shortcut_key="c",
+            ),
+        ],
+    ).ask()
+
+    match scan_mode:
+        case "full":
+            scan_options = {
+                "ID": True,
+                "Name": True,
+                "Power": True,
+                "Killpoints": True,
+                "Alliance": True,
+                "T1 Kills": True,
+                "T2 Kills": True,
+                "T3 Kills": True,
+                "T4 Kills": True,
+                "T5 Kills": True,
+                "Ranged": True,
+                "Deads": True,
+                "Rss Assistance": True,
+                "Rss Gathered": True,
+                "Helps": True,
+            }
+        case "seed":
+            scan_options = {
+                "ID": True,
+                "Name": True,
+                "Power": True,
+                "Killpoints": True,
+                "Alliance": True,
+                "T1 Kills": False,
+                "T2 Kills": False,
+                "T3 Kills": False,
+                "T4 Kills": False,
+                "T5 Kills": False,
+                "Ranged": False,
+                "Deads": False,
+                "Rss Assistance": False,
+                "Rss Gathered": False,
+                "Helps": False,
+            }
+        case "custom":
+            items_to_scan = questionary.checkbox(
+                "What stats should be scanned?",
+                choices=[
+                    questionary.Choice(
+                        "ID",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Name",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Power",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Killpoints",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Alliance",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "T1 Kills",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "T2 Kills",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "T3 Kills",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "T4 Kills",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "T5 Kills",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Ranged",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Deads",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Rss Assistance",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Rss Gathered",
+                        checked=False,
+                    ),
+                    questionary.Choice(
+                        "Helps",
+                        checked=False,
+                    ),
+                ],
+            ).ask()
+            if items_to_scan == [] or items_to_scan == None:
+                console.print("Exiting, no items selected.")
+                exit(0)
+            else:
+                for item in items_to_scan:
+                    scan_options[item] = True
+        case _:
+            console.print("Exiting, no mode selected.")
+            exit(0)
+
+    validate_kills = False
+    reconstruct_fails = False
+
+    if (
+        scan_options["T1 Kills"]
+        and scan_options["T2 Kills"]
+        and scan_options["T3 Kills"]
+        and scan_options["T4 Kills"]
+        and scan_options["T5 Kills"]
+        and scan_options["Killpoints"]
+    ):
+        validate_kills = questionary.confirm(
+            message="Validate killpoints:",
+            auto_enter=False,
+            default=True,
+        ).ask()
+
+    if validate_kills:
+        reconstruct_fails = questionary.confirm(
+            message="Try reconstructiong wrong kills values:",
+            auto_enter=False,
+            default=True,
+        ).ask()
 
     scan(
         bluestacks_port,
