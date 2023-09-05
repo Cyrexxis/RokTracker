@@ -17,6 +17,9 @@ customtkinter.set_default_color_theme(
 
 
 def to_int_or(element, alternative):
+    if element == "Skipped":
+        return element
+
     try:
         return int(element)
     except ValueError:
@@ -149,17 +152,31 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             row=7, column=1, padx=10, pady=(10, 0), sticky="w"
         )
 
+        self.validate_kills_label = customtkinter.CTkLabel(
+            self, text="Validate kills:", height=1
+        )
+        self.validate_kills_label.grid(
+            row=8, column=0, padx=10, pady=(10, 0), sticky="w"
+        )
+        self.validate_kills_switch = customtkinter.CTkSwitch(
+            self, text="", onvalue=True, offvalue=False
+        )
+        self.validate_kills_switch.grid(
+            row=8, column=1, padx=10, pady=(10, 0), sticky="w"
+        )
+        self.validate_kills_switch.select()
+
         self.reconstruct_fails_label = customtkinter.CTkLabel(
             self, text="Reconstruct kills:", height=1
         )
         self.reconstruct_fails_label.grid(
-            row=8, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=9, column=0, padx=10, pady=(10, 0), sticky="w"
         )
         self.reconstruct_fails_switch = customtkinter.CTkSwitch(
             self, text="", onvalue=True, offvalue=False
         )
         self.reconstruct_fails_switch.grid(
-            row=8, column=1, padx=10, pady=(10, 0), sticky="w"
+            row=9, column=1, padx=10, pady=(10, 0), sticky="w"
         )
         self.reconstruct_fails_switch.select()
 
@@ -186,6 +203,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             "resume": self.resume_scan_checkbox.get(),
             "adv_scroll": self.new_scroll_switch.get(),
             "inactives": self.track_inactives_switch.get(),
+            "validate": self.validate_kills_switch.get(),
             "reconstruct": self.reconstruct_fails_switch.get(),
         }
 
