@@ -15,5 +15,8 @@ if($LastExitCode -eq 1){
     Exit
 }
 
+Write-Host -NoNewLine 'Press any key to continue after build tools are installed...';
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
+
 pip install -r requirements.txt
 pip install .\deps\tesserocr-2.6.0-cp311-cp311-win_amd64.whl

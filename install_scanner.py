@@ -4,6 +4,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 from tqdm import tqdm
+import shutil
 
 
 def download_file(
@@ -31,9 +32,17 @@ def main():
     try:
         root_dir = Path(__file__).parent
 
+        # delete previous files
+        deps_path = Path(root_dir / "deps")
+        if deps_path.exists() and deps_path.is_dir():
+            shutil.rmtree(deps_path)
+
+        adb_path = Path(root_dir / "platform-tools")
+        if adb_path.exists() and adb_path.is_dir():
+            shutil.rmtree(adb_path)
+
         # create needed folders
         Path(root_dir / "deps").mkdir(parents=True, exist_ok=True)
-        Path(root_dir / "platform-tools").mkdir(parents=True, exist_ok=True)
         Path(root_dir / "installer_downloads").mkdir(parents=True, exist_ok=True)
 
         # download build tools
@@ -84,7 +93,8 @@ def main():
         Path(root_dir / "deps" / "tessdata-4.1.0").rename(
             root_dir / "deps" / "tessdata-main"
         )
-    except:
+    except Exception as e:
+        print(e)
         print("Installation FAILED! Try to follow the error message or open an issue.")
         sys.exit(1)
 
