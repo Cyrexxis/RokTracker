@@ -24,4 +24,4 @@ IF NOT EXIST "%scriptdir%deps\tessdata-main\" (
   EXIT
 )
 
-powershell.exe -noLogo -ExecutionPolicy unrestricted -file graphic_scanner.ps1
+powershell.exe -noLogo -ExecutionPolicy unrestricted -file %scriptdir%graphic_scanner.ps1
