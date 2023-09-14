@@ -52,6 +52,8 @@ start_date = ""
 new_scroll = True
 scan_abort = False
 scan_times = []
+info_close_time = 0.5
+gov_close_time = 1
 
 scan_options = {
     "ID": False,
@@ -133,6 +135,14 @@ def to_int_check(element):
 def is_string_int(element: str) -> bool:
     try:
         _ = int(element)
+        return True
+    except ValueError:
+        return False
+
+
+def is_string_float(element: str) -> bool:
+    try:
+        _ = float(element)
         return True
     except ValueError:
         return False
@@ -725,9 +735,9 @@ def governor_scan(
     state_callback("Closing governor")
     if check_page_needed(3):
         secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
-        time.sleep(0.5 + random_delay())
+        time.sleep(info_close_time + random_delay())
     secure_adb_tap(rok_ui.tap_positions["close_gov"], port)  # close governor info
-    time.sleep(1 + random_delay())
+    time.sleep(gov_close_time + random_delay())
 
     end_time = time.time()
 
@@ -1113,12 +1123,16 @@ def start_from_gui(general_options, scan_options_new, callback, state_callback):
     global scan_options
     global scan_abort
     global scan_times
+    global info_close_time
+    global gov_close_time
 
     scan_times = []
     scan_abort = False
     run_id = general_options["uuid"]
     start_date = datetime.date.today()
     scan_options = scan_options_new
+    info_close_time = general_options["info_time"]
+    gov_close_time = general_options["gov_time"]
 
     scan(
         general_options["port"],
@@ -1143,6 +1157,8 @@ def main():
     global start_date
     global new_scroll
     global scan_options
+    global info_close_time
+    global gov_close_time
     bluestacks_device_name = "RoK Tracker"
     run_id = generate_random_id(8)
     start_date = datetime.date.today()
@@ -1341,6 +1357,22 @@ def main():
             auto_enter=False,
             default=True,
         ).ask()
+
+    info_close_time = float(
+        questionary.text(
+            message="Time to wait after more info close:",
+            validate=lambda port: is_string_float(port),
+            default=str(info_close_time),
+        ).ask()
+    )
+
+    gov_close_time = float(
+        questionary.text(
+            message="Time to wait after governor close:",
+            validate=lambda port: is_string_float(port),
+            default=str(gov_close_time),
+        ).ask()
+    )
 
     scan(
         bluestacks_port,
