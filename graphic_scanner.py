@@ -180,6 +180,22 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         )
         self.reconstruct_fails_switch.select()
 
+        self.info_close_label = customtkinter.CTkLabel(
+            self, text="More info wait:", height=1
+        )
+        self.info_close_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.info_close_text = customtkinter.CTkEntry(self)  # TODO: add validation
+        self.info_close_text.grid(row=10, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.info_close_text.insert(0, "0.5")
+
+        self.gov_close_label = customtkinter.CTkLabel(
+            self, text="Governor wait:", height=1
+        )
+        self.gov_close_label.grid(row=11, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.gov_close_text = customtkinter.CTkEntry(self)  # TODO: add validation
+        self.gov_close_text.grid(row=11, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.gov_close_text.insert(0, "1")
+
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)
 
@@ -205,6 +221,8 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             "inactives": self.track_inactives_switch.get(),
             "validate": self.validate_kills_switch.get(),
             "reconstruct": self.reconstruct_fails_switch.get(),
+            "info_time": float(self.info_close_text.get()),
+            "gov_time": float(self.gov_close_text.get()),
         }
 
 
@@ -345,7 +363,7 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("RoK Tracker by Cyrexxis")
-        self.geometry("760x470")
+        self.geometry("760x535")
         self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
         self.grid_rowconfigure(0, weight=1)
