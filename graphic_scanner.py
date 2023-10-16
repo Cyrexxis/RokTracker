@@ -1,5 +1,7 @@
 from typing import Dict, List, Optional, Tuple, Union
+from pathlib import Path
 import customtkinter
+import json
 from rok_scanner import (
     generate_random_id,
     start_from_gui,
@@ -7,6 +9,11 @@ from rok_scanner import (
     get_bluestacks_port,
 )
 from threading import Thread
+
+root_dir = Path(__file__).parent
+config_file = open(root_dir / "config.json")
+config = json.load(config_file)
+config_file.close()
 
 customtkinter.set_appearance_mode(
     "system"
@@ -88,6 +95,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_name_label.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="w")
         self.scan_name_text = customtkinter.CTkEntry(self)
         self.scan_name_text.grid(row=1, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.scan_name_text.insert(0, config["scan"]["kingdom_name"])
 
         self.bluestacks_instance_label = customtkinter.CTkLabel(
             self, text="Bluestacks name:", height=1
@@ -99,7 +107,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.bluestacks_instance_text.grid(
             row=2, column=1, padx=10, pady=(10, 0), sticky="ew"
         )
-        self.bluestacks_instance_text.insert(0, "RoK Tracker")
+        self.bluestacks_instance_text.insert(0, config["scan"]["bluestacks_name"])
 
         self.adb_port_label = customtkinter.CTkLabel(self, text="Adb port:", height=1)
         self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
@@ -116,7 +124,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_amount_label.grid(row=4, column=0, padx=10, pady=(10, 0), sticky="w")
         self.scan_amount_text = customtkinter.CTkEntry(self)  # TODO: add validation
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.scan_amount_text.insert(0, "600")
+        self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
 
         self.resume_scan_label = customtkinter.CTkLabel(
             self, text="Resume scan:", height=1
@@ -129,6 +137,9 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             row=5, column=1, padx=10, pady=(10, 0), sticky="w"
         )
 
+        if config["scan"]["resume"]:
+            self.resume_scan_checkbox.select()
+
         self.new_scroll_label = customtkinter.CTkLabel(
             self, text="Advanced scroll:", height=1
         )
@@ -137,7 +148,9 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="", onvalue=True, offvalue=False
         )
         self.new_scroll_switch.grid(row=6, column=1, padx=10, pady=(10, 0), sticky="w")
-        self.new_scroll_switch.select()
+
+        if config["scan"]["advanced_scroll"]:
+            self.new_scroll_switch.select()
 
         self.track_inactives_label = customtkinter.CTkLabel(
             self, text="Track inactives:", height=1
@@ -152,6 +165,9 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             row=7, column=1, padx=10, pady=(10, 0), sticky="w"
         )
 
+        if config["scan"]["track_inactives"]:
+            self.track_inactives_switch.select()
+
         self.validate_kills_label = customtkinter.CTkLabel(
             self, text="Validate kills:", height=1
         )
@@ -164,7 +180,9 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.validate_kills_switch.grid(
             row=8, column=1, padx=10, pady=(10, 0), sticky="w"
         )
-        self.validate_kills_switch.select()
+
+        if config["scan"]["validate_kills"]:
+            self.validate_kills_switch.select()
 
         self.reconstruct_fails_label = customtkinter.CTkLabel(
             self, text="Reconstruct kills:", height=1
@@ -178,7 +196,9 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.reconstruct_fails_switch.grid(
             row=9, column=1, padx=10, pady=(10, 0), sticky="w"
         )
-        self.reconstruct_fails_switch.select()
+
+        if config["scan"]["reconstruct_kills"]:
+            self.reconstruct_fails_switch.select()
 
         self.info_close_label = customtkinter.CTkLabel(
             self, text="More info wait:", height=1
@@ -186,7 +206,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.info_close_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky="w")
         self.info_close_text = customtkinter.CTkEntry(self)  # TODO: add validation
         self.info_close_text.grid(row=10, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.info_close_text.insert(0, "0.5")
+        self.info_close_text.insert(0, str(config["scan"]["timings"]["info_close"]))
 
         self.gov_close_label = customtkinter.CTkLabel(
             self, text="Governor wait:", height=1
@@ -194,7 +214,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.gov_close_label.grid(row=11, column=0, padx=10, pady=(10, 0), sticky="w")
         self.gov_close_text = customtkinter.CTkEntry(self)  # TODO: add validation
         self.gov_close_text.grid(row=11, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.gov_close_text.insert(0, "1")
+        self.gov_close_text.insert(0, str(config["scan"]["timings"]["gov_close"]))
 
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)

@@ -35,6 +35,7 @@ import shutil
 import string
 import time
 import tesserocr
+import json
 import rok_ui_positions as rok_ui
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
@@ -47,13 +48,18 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+root_dir = Path(__file__).parent
+config_file = open(root_dir / "config.json")
+config = json.load(config_file)
+config_file.close()
+
 run_id = ""
 start_date = ""
 new_scroll = True
 scan_abort = False
 scan_times = []
-info_close_time = 0.5
-gov_close_time = 1
+
+timings = config["scan"]["timings"]
 
 scan_options = {
     "ID": False,
@@ -104,17 +110,15 @@ def get_bluestacks_port(bluestacks_device_name):
     # try to read port from bluestacks config
     try:
         dummy = "AmazingDummy"
-        with open(
-            "S:\\Other\\BlueStacks\\BlueStacks_nxt\\bluestacks.conf"
-        ) as config_file:
+        with open(config["general"]["bluestacks_config"]) as config_file:
             file_content = "[" + dummy + "]\n" + config_file.read()
-        config = configparser.RawConfigParser()
-        config.read_string(file_content)
+        bluestacks_config = configparser.RawConfigParser()
+        bluestacks_config.read_string(file_content)
 
-        for key, value in config.items(dummy):
+        for key, value in bluestacks_config.items(dummy):
             if value == f'"{bluestacks_device_name}"':
                 key_port = key.replace("display_name", "status.adb_port")
-                port = config.get(dummy, key_port)
+                port = bluestacks_config.get(dummy, key_port)
                 return int(port.strip('"'))
     except:
         console.print(
@@ -413,7 +417,7 @@ def governor_scan(
         f"input tap 690 " + str(get_gov_position(current_player, inactive_players)),
         port,
     )
-    time.sleep(2 + random_delay())
+    time.sleep(timings["gov_open"] + random_delay())
 
     gov_info = False
     count = 0
@@ -457,7 +461,7 @@ def governor_scan(
                 port,
             )
             count += 1
-            time.sleep(2 + random_delay())
+            time.sleep(timings["gov_open"] + random_delay())
             if count == 10:
                 cont = questionary.confirm(
                     message="Could not find user, retry?:",
@@ -480,7 +484,7 @@ def governor_scan(
             while copy_try < 3:
                 try:
                     secure_adb_tap(rok_ui.tap_positions["name_copy"], port)
-                    time.sleep(0.2)
+                    time.sleep(timings["copy_wait"])
                     gov_name = tkinter.Tk().clipboard_get()
                     break
                 except:
@@ -488,7 +492,7 @@ def governor_scan(
                     logging.log(logging.INFO, "Name copy failed, retying")
                     copy_try = copy_try + 1
 
-        time.sleep(1.5 + random_delay())
+        # time.sleep(1.5 + random_delay())
 
         secure_adb_screencap(port).save("gov_info.png")
         image = cv2.imread("gov_info.png")
@@ -541,7 +545,7 @@ def governor_scan(
         # kills tier
         secure_adb_tap(rok_ui.tap_positions["open_kills"], port)
         state_callback("Scanning kills page")
-        time.sleep(1 + random_delay())
+        time.sleep(timings["kills_open"] + random_delay())
 
         secure_adb_screencap(port).save("kills_tier.png")
         image2 = cv2.imread("kills_tier.png")
@@ -650,7 +654,7 @@ def governor_scan(
         # More info tab
         secure_adb_tap(rok_ui.tap_positions["more_info"], port)
         state_callback("Scanning more info page")
-        time.sleep(1 + random_delay())
+        time.sleep(timings["info_open"] + random_delay())
         secure_adb_screencap(port).save("more_info.png")
         image3 = cv2.imread("more_info.png")
 
@@ -735,9 +739,9 @@ def governor_scan(
     state_callback("Closing governor")
     if check_page_needed(3):
         secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
-        time.sleep(info_close_time + random_delay())
+        time.sleep(timings["info_close"] + random_delay())
     secure_adb_tap(rok_ui.tap_positions["close_gov"], port)  # close governor info
-    time.sleep(gov_close_time + random_delay())
+    time.sleep(timings["gov_close"] + random_delay())
 
     end_time = time.time()
 
@@ -1123,16 +1127,15 @@ def start_from_gui(general_options, scan_options_new, callback, state_callback):
     global scan_options
     global scan_abort
     global scan_times
-    global info_close_time
-    global gov_close_time
+    global timings
 
     scan_times = []
     scan_abort = False
     run_id = general_options["uuid"]
     start_date = datetime.date.today()
     scan_options = scan_options_new
-    info_close_time = general_options["info_time"]
-    gov_close_time = general_options["gov_time"]
+    timings["info_close"] = general_options["info_time"]
+    timings["gov_close"] = general_options["gov_time"]
 
     scan(
         general_options["port"],
@@ -1157,15 +1160,15 @@ def main():
     global start_date
     global new_scroll
     global scan_options
-    global info_close_time
-    global gov_close_time
-    bluestacks_device_name = "RoK Tracker"
+    global timings
+
     run_id = generate_random_id(8)
     start_date = datetime.date.today()
     console.print(f"The UUID of this scan is [green]{run_id}[/green]", highlight=False)
 
     bluestacks_device_name = questionary.text(
-        message="Name of your bluestacks instance:", default=bluestacks_device_name
+        message="Name of your bluestacks instance:",
+        default=config["scan"]["bluestacks_name"],
     ).ask()
 
     bluestacks_port = int(
@@ -1176,25 +1179,35 @@ def main():
         ).ask()
     )
 
-    kingdom = questionary.text(message="Kingdom name (used for file name):").ask()
+    kingdom = questionary.text(
+        message="Kingdom name (used for file name):",
+        default=config["scan"]["kingdom_name"],
+    ).ask()
 
     scan_amount = int(
         questionary.text(
             message="Number of people to scan:",
             validate=lambda port: is_string_int(port),
+            default=str(config["scan"]["people_to_scan"]),
         ).ask()
     )
 
     resume_scan = questionary.confirm(
-        message="Resume scan:", auto_enter=False, default=False
+        message="Resume scan:",
+        auto_enter=False,
+        default=config["scan"]["resume"],
     ).ask()
 
     new_scroll = questionary.confirm(
-        message="Use advanced scrolling method:", auto_enter=False, default=True
+        message="Use advanced scrolling method:",
+        auto_enter=False,
+        default=config["scan"]["advanced_scroll"],
     ).ask()
 
     track_inactives = questionary.confirm(
-        message="Screenshot inactives:", auto_enter=False, default=False
+        message="Screenshot inactives:",
+        auto_enter=False,
+        default=config["scan"]["track_inactives"],
     ).ask()
 
     scan_mode = questionary.select(
@@ -1348,29 +1361,29 @@ def main():
         validate_kills = questionary.confirm(
             message="Validate killpoints:",
             auto_enter=False,
-            default=True,
+            default=config["scan"]["validate_kills"],
         ).ask()
 
     if validate_kills:
         reconstruct_fails = questionary.confirm(
             message="Try reconstructiong wrong kills values:",
             auto_enter=False,
-            default=True,
+            default=config["scan"]["reconstruct_kills"],
         ).ask()
 
-    info_close_time = float(
+    timings["info_close"] = float(
         questionary.text(
             message="Time to wait after more info close:",
             validate=lambda port: is_string_float(port),
-            default=str(info_close_time),
+            default=str(timings["info_close"]),
         ).ask()
     )
 
-    gov_close_time = float(
+    timings["gov_close"] = float(
         questionary.text(
             message="Time to wait after governor close:",
             validate=lambda port: is_string_float(port),
-            default=str(gov_close_time),
+            default=str(timings["gov_close"]),
         ).ask()
     )
 
