@@ -40,15 +40,23 @@ import rok_ui_positions as rok_ui
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
 
+if getattr(sys, "frozen", False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True and sets the app
+    # path into variable _MEIPASS'.
+    print("Bundle detected!")
+    root_dir = Path(sys.executable).parent
+else:
+    root_dir = Path(__file__).parent
+
 logging.basicConfig(
-    filename="rok-scanner.log",
+    filename=str(root_dir / "rok-scanner.log"),
     encoding="utf-8",
     format="%(asctime)s %(module)s %(levelname)s %(message)s",
     level=logging.DEBUG,
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-root_dir = Path(__file__).parent
 config_file = open(root_dir / "config.json")
 config = json.load(config_file)
 config_file.close()
@@ -78,6 +86,15 @@ scan_options = {
     "Rss Gathered": False,
     "Helps": False,
 }
+
+img_path = Path(root_dir / "temp_images")
+img_path.mkdir(parents=True, exist_ok=True)
+tesseract_path = Path(root_dir / "deps" / "tessdata")
+
+scan_path = Path(root_dir / "scans")
+scan_path.mkdir(parents=True, exist_ok=True)
+
+set_adb_path(str(root_dir / "deps" / "platform-tools" / "adb.exe"))
 
 
 def format_timedelta_to_HHMMSS(td):
@@ -176,7 +193,7 @@ def get_gov_position(current_position, skips):
             logging.log(
                 logging.INFO, "Reached final governor on the screen. Scan complete."
             )
-            exit(0)
+            return Y[6]
 
 
 def stopHandler(signum, frame):
@@ -423,14 +440,16 @@ def governor_scan(
     count = 0
 
     while not (gov_info):
-        secure_adb_screencap(port).save("check_more_info.png")
+        secure_adb_screencap(port).save(img_path / "check_more_info.png")
 
-        image_check = cv2.imread("check_more_info.png", cv2.IMREAD_GRAYSCALE)
+        image_check = cv2.imread(
+            str(img_path / "check_more_info.png"), cv2.IMREAD_GRAYSCALE
+        )
         # Checking for more info
         im_check_more_info = cropToRegion(image_check, rok_ui.ocr_regions["more_info"])
         check_more_info = ""
 
-        with PyTessBaseAPI(path="./deps/tessdata-main") as api:
+        with PyTessBaseAPI(path=str(tesseract_path)) as api:
             api.SetVariable("tessedit_char_whitelist", "MoreInfo")
             api.SetImage(Image.fromarray(im_check_more_info))
             check_more_info = api.GetUTF8Text()
@@ -439,7 +458,7 @@ def governor_scan(
         if "MoreInfo" not in check_more_info:
             inactive_players += 1
             if track_inactives:
-                image_check_inactive = cv2.imread("check_more_info.png")
+                image_check_inactive = cv2.imread(str(img_path / "check_more_info.png"))
                 roiInactive = (
                     0,
                     get_gov_position(current_player, inactive_players - 1) - 100,
@@ -448,11 +467,21 @@ def governor_scan(
                 )
                 image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
                 cv2.imwrite(
-                    f"./inactives/{start_date}/{run_id}/inactive {inactive_players:03}.png",
+                    str(
+                        root_dir
+                        / "inactives"
+                        / str(start_date)
+                        / str(run_id)
+                        / f"inactive {inactive_players:03}.png"
+                    ),
                     image_inactive_raw,
                 )
             if new_scroll:
-                adb_send_events("Touch", "./inputs/kingdom_1_person_scroll.txt", port)
+                adb_send_events(
+                    "Touch",
+                    root_dir / "deps" / "inputs" / "kingdom_1_person_scroll.txt",
+                    port,
+                )
             else:
                 secure_adb_shell(f"input swipe 690 605 690 540", port)
             secure_adb_shell(
@@ -485,7 +514,9 @@ def governor_scan(
                 try:
                     secure_adb_tap(rok_ui.tap_positions["name_copy"], port)
                     time.sleep(timings["copy_wait"])
-                    gov_name = tkinter.Tk().clipboard_get()
+                    tk_clipboard = tkinter.Tk()
+                    gov_name = tk_clipboard.clipboard_get()
+                    tk_clipboard.destroy()
                     break
                 except:
                     console.log("Name copy failed, retying")
@@ -494,12 +525,12 @@ def governor_scan(
 
         # time.sleep(1.5 + random_delay())
 
-        secure_adb_screencap(port).save("gov_info.png")
-        image = cv2.imread("gov_info.png")
+        secure_adb_screencap(port).save(img_path / "gov_info.png")
+        image = cv2.imread(str(img_path / "gov_info.png"))
 
         # 1st image data (ID, Power, Killpoints, Alliance)
         with PyTessBaseAPI(
-            path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+            path=str(tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
         ) as api:
             if scan_options["Power"]:
                 im_gov_power = cropToRegion(image, rok_ui.ocr_regions["power"])
@@ -547,12 +578,12 @@ def governor_scan(
         state_callback("Scanning kills page")
         time.sleep(timings["kills_open"] + random_delay())
 
-        secure_adb_screencap(port).save("kills_tier.png")
-        image2 = cv2.imread("kills_tier.png")
+        secure_adb_screencap(port).save(img_path / "kills_tier.png")
+        image2 = cv2.imread(str(img_path / "kills_tier.png"))
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
 
         with PyTessBaseAPI(
-            path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+            path=str(tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
         ) as api:
             if scan_options["T1 Kills"]:
                 # tier 1 Kills
@@ -655,11 +686,11 @@ def governor_scan(
         secure_adb_tap(rok_ui.tap_positions["more_info"], port)
         state_callback("Scanning more info page")
         time.sleep(timings["info_open"] + random_delay())
-        secure_adb_screencap(port).save("more_info.png")
-        image3 = cv2.imread("more_info.png")
+        secure_adb_screencap(port).save(img_path / "more_info.png")
+        image3 = cv2.imread(str(img_path / "more_info.png"))
 
         with PyTessBaseAPI(
-            path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+            path=str(tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
         ) as api:
             if scan_options["Deads"]:
                 im_dead = cropToRegion(image3, rok_ui.ocr_regions["deads"])
@@ -790,9 +821,11 @@ def scan(
     start_adb(port)
 
     if track_inactives:
-        Path(f"./inactives/{start_date}/{run_id}").mkdir(parents=True, exist_ok=True)
+        Path(root_dir / "inactives" / str(start_date) / str(run_id)).mkdir(
+            parents=True, exist_ok=True
+        )
 
-    review_path = f"./manual_review/{start_date}/{run_id}"
+    review_path = Path(root_dir / "manual_review" / str(start_date) / str(run_id))
 
     ######Excel Formatting
     wb = Workbook()
@@ -854,8 +887,8 @@ def scan(
 
         if sheet1["A" + str(i + 1 - j)].value == to_int_check(governor["id"]):
             roi = (196, 698, 52, 27)
-            secure_adb_screencap(port).save("currentState.png")
-            image = cv2.imread("currentState.png")
+            secure_adb_screencap(port).save(img_path / "currentState.png")
+            image = cv2.imread(str(img_path / "currentState.png"))
 
             im_ranking = cropToRegion(image, roi)
             im_ranking_bw = preprocessImage(im_ranking, 90, 12, True)
@@ -863,7 +896,7 @@ def scan(
             ranking = ""
 
             with PyTessBaseAPI(
-                path="./deps/tessdata-main", psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+                path=str(tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
             ) as api:
                 api.SetImage(Image.fromarray(im_ranking_bw))
                 ranking = api.GetUTF8Text()
@@ -907,7 +940,7 @@ def scan(
                         "Reached final governor on the screen. Scan complete.",
                     )
                     state_callback("Scan finished")
-                    exit(0)
+                    return
 
         now = datetime.datetime.now()
         current_time = now.strftime("%H:%M:%S")
@@ -937,12 +970,12 @@ def scan(
 
             if not reconstruct_fails or not kp_ok:
                 shutil.copy(
-                    Path("./gov_info.png"),
-                    Path(f"""{review_path}/F{governor["id"]}-profile.png"""),
+                    Path(img_path / "gov_info.png"),
+                    Path(review_path / f"""F{governor["id"]}-profile.png"""),
                 )
                 shutil.copy(
-                    Path("./kills_tier.png"),
-                    Path(f"""{review_path}/F{governor["id"]}-kills.png"""),
+                    Path(img_path / "kills_tier.png"),
+                    Path(review_path / f"""F{governor["id"]}-kills.png"""),
                 )
                 logging.log(
                     logging.WARNING,
@@ -964,15 +997,15 @@ def scan(
                 governor["kills_t5"] = kills_t5
 
                 shutil.copy(
-                    Path("./gov_info.png"),
+                    Path(img_path / "gov_info.png"),
                     Path(
-                        f"""{review_path}/R{governor["id"]}-profile-reconstructed.png"""
+                        review_path / f"""R{governor["id"]}-profile-reconstructed.png"""
                     ),
                 )
                 shutil.copy(
-                    Path("./kills_tier.png"),
+                    Path(img_path / "kills_tier.png"),
                     Path(
-                        f"""{review_path}/R{governor["id"]}-kills-reconstructed.png"""
+                        review_path / f"""R{governor["id"]}-kills-reconstructed.png"""
                     ),
                 )
                 logging.log(
@@ -1073,14 +1106,19 @@ def scan(
         else:
             file_name_prefix = "TOP"
         wb.save(
-            file_name_prefix
-            + str(amount - j)
-            + "-"
-            + str(datetime.date.today())
-            + "-"
-            + kingdom
-            + f"-[{run_id}]"
-            + ".xlsx"
+            str(
+                scan_path
+                / (
+                    file_name_prefix
+                    + str(amount - j)
+                    + "-"
+                    + str(datetime.date.today())
+                    + "-"
+                    + kingdom
+                    + f"-[{run_id}]"
+                    + ".xlsx"
+                )
+            )
         )
 
         additional_info = {
@@ -1099,14 +1137,19 @@ def scan(
     else:
         file_name_prefix = "TOP"
     wb.save(
-        file_name_prefix
-        + str(amount - j)
-        + "-"
-        + str(datetime.date.today())
-        + "-"
-        + kingdom
-        + f"-[{run_id}]"
-        + ".xlsx"
+        str(
+            scan_path
+            / (
+                file_name_prefix
+                + str(amount - j)
+                + "-"
+                + str(datetime.date.today())
+                + "-"
+                + kingdom
+                + f"-[{run_id}]"
+                + ".xlsx"
+            )
+        )
     )
     console.log("Reached the target amount of people. Scan complete.")
     logging.log(logging.INFO, "Reached the target amount of people. Scan complete.")
@@ -1154,7 +1197,7 @@ def main():
     signal.signal(signal.SIGINT, stopHandler)
     console.print(
         "Tesseract languages available: "
-        + str(tesserocr.get_languages("./deps/tessdata-main"))
+        + str(tesserocr.get_languages(str(tesseract_path)))
     )
     global run_id
     global start_date
@@ -1339,13 +1382,13 @@ def main():
             ).ask()
             if items_to_scan == [] or items_to_scan == None:
                 console.print("Exiting, no items selected.")
-                exit(0)
+                return
             else:
                 for item in items_to_scan:
                     scan_options[item] = True
         case _:
             console.print("Exiting, no mode selected.")
-            exit(0)
+            return
 
     validate_kills = False
     reconstruct_fails = False
@@ -1396,8 +1439,9 @@ def main():
         validate_kills,
         reconstruct_fails,
     )
-    exit(1)
 
 
 if __name__ == "__main__":
     main()
+    time.sleep(3)
+    input("Press any key to exit...")
