@@ -1,0 +1,54 @@
+name: Package Application with Pyinstaller
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build-and-release-win64:
+    runs-on: windows-latest
+    steps:
+      - name: Create Console Executable
+        uses: sayyid5416/pyinstaller@v1.3.0
+        with:
+          python_ver: "3.11"
+          python_arch: "x64"
+          spec: "rok_scanner.py"
+          requirements: "requirements_win64.txt"
+          options: --onedir, --name "RoK Tracker (Console)"
+
+      - name: Get customtkinter folder
+        run: |
+          echo "CTKPATH=$(python -c "import customtkinter as _; print(_.__path__[0].replace('\\', '/'))")" >> $GITHUB_OUTPUT
+        id: ctk-path
+
+      - name: Create GUI Executable
+        uses: sayyid5416/pyinstaller@v1.3.0
+        with:
+          python_ver: "3.11"
+          python_arch: "x64"
+          spec: "graphic_scanner.py"
+          requirements: "requirements_win64.txt"
+          options: --onedir, --name "RoK Tracker (GUI)", --windowed, --add-data "${{ steps.ctk-path.outputs.CTKPATH }};customtkinter/"
+
+      - name: Prepare console folder for Zip and Zip
+        run: |
+          cp "config.json" "dist/RoK Tracker (Console)/config.json"
+          mkdir "dist/RoK Tracker (Console)/deps"
+          cp -r "deps/inputs/" "dist/RoK Tracker (Console)/deps/"
+          tar.exe -a -c -f "RoK Tracker (Console).zip" -C "dist/" "RoK Tracker (Console)"
+
+      - name: Prepare GUI folder for Zip and Zip
+        run: |
+          cp "config.json" "dist/RoK Tracker (GUI)/config.json"
+          mkdir "dist/RoK Tracker (GUI)/deps"
+          cp -r "deps/inputs/" "dist/RoK Tracker (GUI)/deps/"
+          tar.exe -a -c -f "RoK Tracker (GUI).zip" -C "dist/" "RoK Tracker (GUI)"
+
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          files: |
+            "RoK Tracker (GUI).zip"
+            "RoK Tracker (Console).zip"
