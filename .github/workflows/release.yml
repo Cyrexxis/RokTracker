@@ -37,12 +37,12 @@ jobs:
             --clean \
             --noconfirm \
             --onedir \
-            --name "RoK Tracker (Console) \
+            --name "RoK Tracker (Console)" \
             rok_scanner.py
 
           echo "✔️ Executable created successfully" >> $GITHUB_STEP_SUMMARY
-          echo "  - Python version used: '${{ inputs.python_ver }}'" >> $GITHUB_STEP_SUMMARY
-          echo "  - Python architecture used: '${{ inputs.python_arch }}'" >> $GITHUB_STEP_SUMMARY
+          echo "  - Python version used: '3.11'" >> $GITHUB_STEP_SUMMARY
+          echo "  - Python architecture used: 'x64'" >> $GITHUB_STEP_SUMMARY
 
       - name: Prepare executable for upload
         run: |
@@ -80,7 +80,7 @@ jobs:
       - name: Get customtkinter folder
         id: ctk-path
         run: |
-          echo "CTKPATH=$(python -c "import customtkinter as _; print(_.__path__[0].replace('\\', '/'))")" >> $GITHUB_ENV
+          echo "CTKPATH=$(python -c "import customtkinter as _; print(_.__path__[0].replace('\\', '/'))")" >> $env:GITHUB_OUTPUT
 
       - name: (Install) pyinstaller
         shell: bash
@@ -93,14 +93,14 @@ jobs:
             --clean \
             --noconfirm \
             --onedir \
-            --name "RoK Tracker (GUI) \
+            --name "RoK Tracker (GUI)" \
             --windowed \
-            --add-data "${{ env.CTKPATH }};customtkinter/" \
+            --add-data "${{ steps.ctk-path.outputs.CTKPATH }};customtkinter/" \
             graphic_scanner.py
 
           echo "✔️ Executable created successfully" >> $GITHUB_STEP_SUMMARY
-          echo "  - Python version used: '${{ inputs.python_ver }}'" >> $GITHUB_STEP_SUMMARY
-          echo "  - Python architecture used: '${{ inputs.python_arch }}'" >> $GITHUB_STEP_SUMMARY
+          echo "  - Python version used: '3.11'" >> $GITHUB_STEP_SUMMARY
+          echo "  - Python architecture used: 'x64'" >> $GITHUB_STEP_SUMMARY
 
       - name: Prepare executable for upload
         run: |
