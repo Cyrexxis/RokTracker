@@ -132,12 +132,6 @@ jobs:
         with:
           name: RoK Tracker (GUI)
 
-      - name: Unzip Artifacts
-        run: |
-          mkdir unzipped
-          unzip "RoK Tracker (Console).zip" -d unzipped
-          unzip "RoK Tracker (GUI).zip" -d unzipped
-
       - name: Release
         uses: softprops/action-gh-release@v0.1.15
         with:
