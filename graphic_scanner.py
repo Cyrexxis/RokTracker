@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from pathlib import Path
 import customtkinter
 import json
+import sys
 from rok_scanner import (
     generate_random_id,
     start_from_gui,
@@ -10,7 +11,15 @@ from rok_scanner import (
 )
 from threading import Thread
 
-root_dir = Path(__file__).parent
+if getattr(sys, "frozen", False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True and sets the app
+    # path into variable _MEIPASS'.
+    print("Bundle detected!")
+    root_dir = Path(sys.executable).parent
+else:
+    root_dir = Path(__file__).parent
+
 config_file = open(root_dir / "config.json")
 config = json.load(config_file)
 config_file.close()
