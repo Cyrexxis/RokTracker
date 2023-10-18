@@ -136,5 +136,5 @@ jobs:
         uses: softprops/action-gh-release@v0.1.15
         with:
           files: |
-            "RoK Tracker (GUI).zip"
-            "RoK Tracker (Console).zip"
+            RoK Tracker (GUI).zip
+            RoK Tracker (Console).zip
