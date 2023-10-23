@@ -1,6 +1,6 @@
 # RokTracker
 
-**Version 3 is now released! The biggest new feature is a brand new graphical user interface as well as better configurability. The alliance and honor scan scrips are currently not maintained and are still the same as version 1.**
+**Version 3 is now released! The biggest new feature is a brand new graphical user interface as well as better configurability. The alliance and honor scan scripts are currently not maintained and are still the same as version 1.**
 
 > [!IMPORTANT]  
 > There are now two ways to run the scanner. One way is to download the compiled exe file and the other is the old way to run the python script manually. Also, you will have to move some of the dependencies to a different folder if you are updating.
@@ -70,14 +70,14 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 2. Download and install Python and Build Tools for C++
 3. Download the requirements 3 (tessdata) and 4 (platform-tools) and extract them in the deps folder
 4. Open your terminal in this folder and create a venv via `python -m venv venv`
-5. Activate that venv via `./venv/Scrips/activate`
+5. Activate that venv via `./venv/Scripts/activate`
 6. Install the python requirements via `pip install -r requirements_win64.txt`
 7. Configure your Bluestacks instance according to the [instructions](#bluestacks-5-settings)
 
 ## Usage
 
 1. Open a terminal in your rok tracker folder
-2. Activate the venv via `./venv/Scrips/activate`
+2. Activate the venv via `./venv/Scripts/activate`
 3. Start the scanner either with `python rok_scanner.py` for the console version or with `python graphics_scanner.py` for the GUI version
 4. The results of the scans can be found in the `scans` folder
 
