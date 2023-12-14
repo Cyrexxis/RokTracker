@@ -1,6 +1,5 @@
 {
   "scan": {
-    "bluestacks_name": "RoK Tracker",
     "kingdom_name": "",
     "people_to_scan": "",
     "resume": false,
@@ -18,6 +17,7 @@
     }
   },
   "general": {
+    "bluestacks_name": "RoK Tracker",
     "bluestacks_config": "D:\\Other\\bluestacks\\BlueStacks_nxt\\bluestacks.conf"
   }
 }
