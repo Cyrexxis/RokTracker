@@ -20,6 +20,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
 from adbutils import *
+from validator import validate_installation
 import questionary
 import tkinter
 import configparser
@@ -1194,6 +1195,8 @@ def start_from_gui(general_options, scan_options_new, callback, state_callback):
 
 
 def main():
+    if not validate_installation():
+        exit(2)
     signal.signal(signal.SIGINT, stopHandler)
     console.print(
         "Tesseract languages available: "

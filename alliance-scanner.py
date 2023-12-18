@@ -23,6 +23,7 @@ from openpyxl.drawing.image import Image as OpImage
 from pathlib import Path
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
+from validator import validate_installation
 import configparser
 import datetime
 import time
@@ -656,6 +657,8 @@ def fast_scan(port: int, kingdom: str, mode: str, amount: int):
 
 
 def main():
+    if not validate_installation():
+        exit(2)
     signal.signal(signal.SIGINT, stopHandler)
 
     global run_id
