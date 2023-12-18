@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional, Tuple, Union
 from pathlib import Path
-from validator import validate_installation
+from scanner_utils.validator import validate_installation
+from scanner_utils.adb_utils import get_bluestacks_port
+from dummy_root import get_app_root
 import customtkinter
 import json
 import sys
@@ -8,23 +10,14 @@ from rok_scanner import (
     generate_random_id,
     start_from_gui,
     end_scan,
-    get_bluestacks_port,
 )
 from threading import Thread
 
 if not validate_installation():
     exit(2)
 
-if getattr(sys, "frozen", False):
-    # If the application is run as a bundle, the PyInstaller bootloader
-    # extends the sys module by a flag frozen=True and sets the app
-    # path into variable _MEIPASS'.
-    print("Bundle detected!")
-    root_dir = Path(sys.executable).parent
-else:
-    root_dir = Path(__file__).parent
 
-config_file = open(root_dir / "config.json")
+config_file = open(get_app_root() / "config.json")
 config = json.load(config_file)
 config_file.close()
 
@@ -236,10 +229,10 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_text.delete(0, len(self.adb_port_text.get()))
 
         if name != "":
-            self.adb_port_text.insert(0, get_bluestacks_port(name))
+            self.adb_port_text.insert(0, get_bluestacks_port(name, config))
         else:
             self.adb_port_text.insert(
-                0, get_bluestacks_port(self.bluestacks_instance_text.get())
+                0, get_bluestacks_port(self.bluestacks_instance_text.get(), config)
             )
         return True
 

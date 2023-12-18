@@ -19,36 +19,28 @@ from rich.markup import escape
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from pathlib import Path
-from adbutils import *
-from validator import validate_installation
+from scanner_utils.adb_utils import *
+from scanner_utils.validator import validate_installation
+from scanner_utils.general_utils import *
+from dummy_root import get_app_root
 import questionary
 import tkinter
-import configparser
 import datetime
 import time
-import random
 import cv2
 import signal
 import re
 import logging
 import math
 import shutil
-import string
 import time
 import tesserocr
 import json
-import rok_ui_positions as rok_ui
+import scanner_utils.rok_ui_positions as rok_ui
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
 
-if getattr(sys, "frozen", False):
-    # If the application is run as a bundle, the PyInstaller bootloader
-    # extends the sys module by a flag frozen=True and sets the app
-    # path into variable _MEIPASS'.
-    print("Bundle detected!")
-    root_dir = Path(sys.executable).parent
-else:
-    root_dir = Path(__file__).parent
+root_dir = get_app_root()
 
 logging.basicConfig(
     filename=str(root_dir / "rok-scanner.log"),
@@ -98,81 +90,8 @@ scan_path.mkdir(parents=True, exist_ok=True)
 set_adb_path(str(root_dir / "deps" / "platform-tools" / "adb.exe"))
 
 
-def format_timedelta_to_HHMMSS(td):
-    td_in_seconds = td.total_seconds()
-    hours, remainder = divmod(td_in_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    hours = int(hours)
-    minutes = int(minutes)
-    seconds = int(seconds)
-    if minutes < 10:
-        minutes = "0{}".format(minutes)
-    if seconds < 10:
-        seconds = "0{}".format(seconds)
-    return "{}:{}:{}".format(hours, minutes, seconds)
-
-
-def next_alpha(s):
-    return chr((ord(s.upper()) + 1 - 65) % 26 + 65)
-
-
-def random_delay() -> float:
-    return random.random() * 0.1
-
-
 def get_remaining_time(remaining_govs: int) -> float:
     return (sum(scan_times, start=0) / len(scan_times)) * remaining_govs
-
-
-def get_bluestacks_port(bluestacks_device_name):
-    # try to read port from bluestacks config
-    try:
-        dummy = "AmazingDummy"
-        with open(config["general"]["bluestacks_config"]) as config_file:
-            file_content = "[" + dummy + "]\n" + config_file.read()
-        bluestacks_config = configparser.RawConfigParser()
-        bluestacks_config.read_string(file_content)
-
-        for key, value in bluestacks_config.items(dummy):
-            if value == f'"{bluestacks_device_name}"':
-                key_port = key.replace("display_name", "status.adb_port")
-                port = bluestacks_config.get(dummy, key_port)
-                return int(port.strip('"'))
-    except:
-        console.print(
-            "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
-        )
-        return 5555
-    return 5555
-
-
-def to_int_check(element):
-    try:
-        return int(element)
-    except ValueError:
-        # return element
-        return int(0)
-
-
-def is_string_int(element: str) -> bool:
-    try:
-        _ = int(element)
-        return True
-    except ValueError:
-        return False
-
-
-def is_string_float(element: str) -> bool:
-    try:
-        _ = float(element)
-        return True
-    except ValueError:
-        return False
-
-
-def generate_random_id(length):
-    alphabet = string.ascii_lowercase + string.digits
-    return "".join(random.choices(alphabet, k=length))
 
 
 def get_gov_position(current_position, skips):
@@ -1219,8 +1138,8 @@ def main():
 
     bluestacks_port = int(
         questionary.text(
-            f"Adb port of device (detected {get_bluestacks_port(bluestacks_device_name)}):",
-            default=str(get_bluestacks_port(bluestacks_device_name)),
+            f"Adb port of device (detected {get_bluestacks_port(bluestacks_device_name, config)}):",
+            default=str(get_bluestacks_port(bluestacks_device_name, config)),
             validate=lambda port: is_string_int(port),
         ).ask()
     )

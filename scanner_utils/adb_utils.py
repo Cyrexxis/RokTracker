@@ -5,10 +5,33 @@ from com.dtmilano.android.adb.adbclient import AdbClient
 from pathlib import Path
 import subprocess
 import socket
+import configparser
 
 adb_server_port = 0
 device: AdbClient
 adb_path = ".\\platform-tools\\adb.exe"
+
+
+def get_bluestacks_port(bluestacks_device_name, config):
+    # try to read port from bluestacks config
+    try:
+        dummy = "AmazingDummy"
+        with open(config["general"]["bluestacks_config"]) as config_file:
+            file_content = "[" + dummy + "]\n" + config_file.read()
+        bluestacks_config = configparser.RawConfigParser()
+        bluestacks_config.read_string(file_content)
+
+        for key, value in bluestacks_config.items(dummy):
+            if value == f'"{bluestacks_device_name}"':
+                key_port = key.replace("display_name", "status.adb_port")
+                port = bluestacks_config.get(dummy, key_port)
+                return int(port.strip('"'))
+    except:
+        console.print(
+            "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
+        )
+        return 5555
+    return 5555
 
 
 def get_free_port():

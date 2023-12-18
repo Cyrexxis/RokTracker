@@ -14,7 +14,7 @@ if current_version < required_version:
     sys.exit(1)
 
 from console import console
-from adbutils import *
+from scanner_utils.adb_utils import *
 from rich.console import Console
 from rich.table import Table
 from openpyxl import Workbook
@@ -23,8 +23,11 @@ from openpyxl.drawing.image import Image as OpImage
 from pathlib import Path
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
-from validator import validate_installation
-import configparser
+from scanner_utils.validator import validate_installation
+from scanner_utils.adb_utils import get_bluestacks_port
+from scanner_utils.general_utils import *
+from scanner_utils.alliance_mode import mode_data
+from dummy_root import get_app_root
 import datetime
 import time
 import random
@@ -36,30 +39,19 @@ import math
 import questionary
 import string
 
-# this is needed due to not yet published fix from InquirerPy
-# pyright: reportPrivateImportUsage=false
 
-if getattr(sys, "frozen", False):
-    # If the application is run as a bundle, the PyInstaller bootloader
-    # extends the sys module by a flag frozen=True and sets the app
-    # path into variable _MEIPASS'.
-    print("Bundle detected!")
-    root_dir = Path(sys.executable).parent
-else:
-    root_dir = Path(__file__).parent
-
-config_file = open(root_dir / "config.json")
+config_file = open(get_app_root() / "config.json")
 config = json.load(config_file)
 config_file.close()
 
-img_path = Path(root_dir / "temp_images")
+img_path = Path(get_app_root() / "temp_images")
 img_path.mkdir(parents=True, exist_ok=True)
-tesseract_path = Path(root_dir / "deps" / "tessdata")
+tesseract_path = Path(get_app_root() / "deps" / "tessdata")
 
-scan_path = Path(root_dir / "scans_alliance")
+scan_path = Path(get_app_root() / "scans_alliance")
 scan_path.mkdir(parents=True, exist_ok=True)
 
-set_adb_path(str(root_dir / "deps" / "platform-tools" / "adb.exe"))
+set_adb_path(str(get_app_root() / "deps" / "platform-tools" / "adb.exe"))
 
 console = Console()
 scan_index = 0
@@ -68,103 +60,6 @@ abort_scan = False
 run_id = ""
 start_date = ""
 scan_times = []
-
-mode_data = {
-    "alliance": {
-        "name": (334, 260, 293, 33),
-        "score": (1117, 265, 250, 33),
-        "threshold": 90,
-        "invert": True,
-        "script": str(root_dir / "deps/inputs/alliance_6_person_scroll.txt"),
-        "normal": {
-            "name_pos": [
-                (334, 260, 293, 33),
-                (334, 359, 293, 33),
-                (334, 460, 293, 33),
-                (334, 562, 293, 33),
-                (334, 662, 293, 33),
-                (334, 763, 293, 33),
-            ],
-            "score_pos": [
-                (1117, 265, 250, 33),
-                (1117, 364, 250, 33),
-                (1117, 465, 250, 33),
-                (1117, 567, 250, 33),
-                (1117, 667, 250, 33),
-                (1117, 768, 250, 33),
-            ],
-        },
-        "last": {
-            "name_pos": [
-                (334, 283, 293, 33),
-                (334, 383, 293, 33),
-                (334, 483, 293, 33),
-                (334, 595, 293, 33),
-                (334, 685, 293, 33),
-                (334, 785, 293, 33),
-            ],
-            "score_pos": [
-                (1117, 288, 250, 33),
-                (1117, 388, 250, 33),
-                (1117, 488, 250, 33),
-                (1117, 590, 250, 33),
-                (1117, 690, 250, 33),
-                (1117, 790, 250, 33),
-            ],
-        },
-    },
-    "honor": {
-        "name": (774, 330, 257, 33),
-        "score": (1183, 330, 178, 33),
-        "threshold": 150,
-        "invert": False,
-        "script": str(root_dir / "deps/inputs/honor_5_person_scroll.txt"),
-        "name_pos": [
-            (774, 324, 257, 40),
-            (774, 424, 257, 40),
-            (774, 524, 257, 40),
-            (774, 624, 257, 40),
-            (774, 724, 257, 40),
-        ],
-        "score_pos": [
-            (1183, 324, 178, 40),
-            (1183, 424, 178, 40),
-            (1183, 524, 178, 40),
-            (1183, 624, 178, 40),
-            (1183, 724, 178, 40),
-        ],
-    },
-}
-
-
-def get_bluestacks_port(bluestacks_device_name):
-    # try to read port from bluestacks config
-    try:
-        dummy = "AmazingDummy"
-        with open(config["general"]["bluestacks_config"]) as config_file:
-            file_content = "[" + dummy + "]\n" + config_file.read()
-        bluestacks_config = configparser.RawConfigParser()
-        bluestacks_config.read_string(file_content)
-
-        for key, value in bluestacks_config.items(dummy):
-            if value == f'"{bluestacks_device_name}"':
-                key_port = key.replace("display_name", "status.adb_port")
-                port = bluestacks_config.get(dummy, key_port)
-                return int(port.strip('"'))
-    except:
-        console.print(
-            "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
-        )
-        return 5555
-    return 5555
-
-
-def to_int_check(element):
-    try:
-        return int(element)
-    except ValueError:
-        # return element
-        return int(0)
 
 
 def stopHandler(signum, frame):
@@ -211,14 +106,6 @@ def preprocessImage(image, scale_factor, threshold, border_size, invert=False):
     (thresh, im_bw) = cv2.threshold(im_gray, threshold, 255, cv2.THRESH_BINARY)
     im_bw = cropToTextWithBorder(im_bw, border_size)
     return im_bw
-
-
-def is_string_int(element: str) -> bool:
-    try:
-        _ = int(element)
-        return True
-    except ValueError:
-        return False
 
 
 def print_results(
@@ -675,8 +562,8 @@ def main():
 
     bluestacks_port = int(
         questionary.text(
-            f"Adb port of device (detected {get_bluestacks_port(bluestacks_device_name)}):",
-            default=str(get_bluestacks_port(bluestacks_device_name)),
+            f"Adb port of device (detected {get_bluestacks_port(bluestacks_device_name, config)}):",
+            default=str(get_bluestacks_port(bluestacks_device_name, config)),
             validate=lambda port: is_string_int(port),
         ).ask()
     )
