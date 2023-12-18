@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional, Tuple, Union
 from pathlib import Path
+from validator import validate_installation
 import customtkinter
 import json
 import sys
@@ -10,6 +11,9 @@ from rok_scanner import (
     get_bluestacks_port,
 )
 from threading import Thread
+
+if not validate_installation():
+    exit(2)
 
 if getattr(sys, "frozen", False):
     # If the application is run as a bundle, the PyInstaller bootloader
