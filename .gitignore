@@ -613,5 +613,9 @@ platform-tools/
 alliance.jpeg
 gov_info.png
 position_images/
-tmp/
 manual_review/
+temp_images/
+scans/
+scans_alliance/
+deps/
+!deps/inputs
