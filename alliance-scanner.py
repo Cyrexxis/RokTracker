@@ -13,7 +13,7 @@ if current_version < required_version:
     )
     sys.exit(1)
 
-from console import console
+from scanner_utils.console import console
 from scanner_utils.adb_utils import *
 from rich.console import Console
 from rich.table import Table
@@ -27,6 +27,7 @@ from scanner_utils.validator import validate_installation
 from scanner_utils.adb_utils import get_bluestacks_port
 from scanner_utils.general_utils import *
 from scanner_utils.alliance_mode import mode_data
+from scanner_utils.ocr_utils import *
 from dummy_root import get_app_root
 import datetime
 import time
@@ -74,38 +75,6 @@ def stopHandler(signum, frame):
 
 def get_remaining_time(remaining_govs: int) -> float:
     return (sum(scan_times, start=0) / len(scan_times)) * remaining_govs
-
-
-def cropToRegion(image, roi):
-    return image[int(roi[1]) : int(roi[1] + roi[3]), int(roi[0]) : int(roi[0] + roi[2])]
-
-
-def cropToTextWithBorder(img, border_size):
-    coords = cv2.findNonZero(cv2.bitwise_not(img))
-    x, y, w, h = cv2.boundingRect(coords)
-
-    roi = img[y : y + h, x : x + w]
-    bordered = cv2.copyMakeBorder(
-        roi,
-        top=border_size,
-        bottom=border_size,
-        left=border_size,
-        right=border_size,
-        borderType=cv2.BORDER_CONSTANT,
-        value=255,
-    )
-
-    return bordered
-
-
-def preprocessImage(image, scale_factor, threshold, border_size, invert=False):
-    im_big = cv2.resize(image, (0, 0), fx=scale_factor, fy=scale_factor)
-    im_gray = cv2.cvtColor(im_big, cv2.COLOR_BGR2GRAY)
-    if invert:
-        im_gray = cv2.bitwise_not(im_gray)
-    (thresh, im_bw) = cv2.threshold(im_gray, threshold, 255, cv2.THRESH_BINARY)
-    im_bw = cropToTextWithBorder(im_bw, border_size)
-    return im_bw
 
 
 def print_results(
@@ -245,24 +214,6 @@ def process_honor_screen(image, position):
     return (gov_name_im_bw, gov_name_im_bw_small, gov_score_im_bw)
 
 
-def generate_random_id(length):
-    alphabet = string.ascii_lowercase + string.digits
-    return "".join(random.choices(alphabet, k=length))
-
-
-def ocr_score(api, image):
-    api.SetImage(Image.fromarray(image))
-    score = api.GetUTF8Text()
-    score = re.sub("[^0-9]", "", score)
-    return score
-
-
-def ocr_name(api, image):
-    api.SetImage(Image.fromarray(image))
-    name = api.GetUTF8Text()
-    return name.rstrip("\n")
-
-
 def scan_screen(mode: str, port: int, screen_number: int):
     # set up the scan variables
     global scan_index
@@ -335,12 +286,12 @@ def scan_screen(mode: str, port: int, screen_number: int):
         with PyTessBaseAPI(
             path=str(tesseract_path), psm=PSM.SINGLE_LINE, oem=OEM.LSTM_ONLY
         ) as api:
-            gov_1_name = ocr_name(api, gov_1_name_im_bw)
-            gov_2_name = ocr_name(api, gov_2_name_im_bw)
-            gov_3_name = ocr_name(api, gov_3_name_im_bw)
-            gov_4_name = ocr_name(api, gov_4_name_im_bw)
-            gov_5_name = ocr_name(api, gov_5_name_im_bw)
-            gov_6_name = ocr_name(api, gov_6_name_im_bw)
+            gov_1_name = ocr_text(api, gov_1_name_im_bw)
+            gov_2_name = ocr_text(api, gov_2_name_im_bw)
+            gov_3_name = ocr_text(api, gov_3_name_im_bw)
+            gov_4_name = ocr_text(api, gov_4_name_im_bw)
+            gov_5_name = ocr_text(api, gov_5_name_im_bw)
+            gov_6_name = ocr_text(api, gov_6_name_im_bw)
 
             # fmt: off
             cv2.imwrite(str(img_path / f"gov_name_{(6 * screen_number) + 1}.png"), gov_1_name_im_bw_small)
@@ -352,12 +303,12 @@ def scan_screen(mode: str, port: int, screen_number: int):
             # fmt: on
 
             api.SetPageSegMode(PSM.SINGLE_WORD)
-            gov_1_score = ocr_score(api, gov_1_score_im_bw)
-            gov_2_score = ocr_score(api, gov_2_score_im_bw)
-            gov_3_score = ocr_score(api, gov_3_score_im_bw)
-            gov_4_score = ocr_score(api, gov_4_score_im_bw)
-            gov_5_score = ocr_score(api, gov_5_score_im_bw)
-            gov_6_score = ocr_score(api, gov_6_score_im_bw)
+            gov_1_score = ocr_number(api, gov_1_score_im_bw)
+            gov_2_score = ocr_number(api, gov_2_score_im_bw)
+            gov_3_score = ocr_number(api, gov_3_score_im_bw)
+            gov_4_score = ocr_number(api, gov_4_score_im_bw)
+            gov_5_score = ocr_number(api, gov_5_score_im_bw)
+            gov_6_score = ocr_number(api, gov_6_score_im_bw)
 
         return [
             {"name": gov_1_name, "score": gov_1_score},
@@ -402,11 +353,11 @@ def scan_screen(mode: str, port: int, screen_number: int):
         with PyTessBaseAPI(
             path=str(tesseract_path), psm=PSM.SINGLE_LINE, oem=OEM.LSTM_ONLY
         ) as api:
-            gov_1_name = ocr_name(api, gov_1_name_im_bw)
-            gov_2_name = ocr_name(api, gov_2_name_im_bw)
-            gov_3_name = ocr_name(api, gov_3_name_im_bw)
-            gov_4_name = ocr_name(api, gov_4_name_im_bw)
-            gov_5_name = ocr_name(api, gov_5_name_im_bw)
+            gov_1_name = ocr_text(api, gov_1_name_im_bw)
+            gov_2_name = ocr_text(api, gov_2_name_im_bw)
+            gov_3_name = ocr_text(api, gov_3_name_im_bw)
+            gov_4_name = ocr_text(api, gov_4_name_im_bw)
+            gov_5_name = ocr_text(api, gov_5_name_im_bw)
 
             # fmt: off
             cv2.imwrite(str(img_path / f"gov_name_{(5 * screen_number) + 1}.png"), gov_1_name_im_bw_small)
@@ -417,11 +368,11 @@ def scan_screen(mode: str, port: int, screen_number: int):
             # fmt: on
 
             api.SetPageSegMode(PSM.SINGLE_WORD)
-            gov_1_score = ocr_score(api, gov_1_score_im_bw)
-            gov_2_score = ocr_score(api, gov_2_score_im_bw)
-            gov_3_score = ocr_score(api, gov_3_score_im_bw)
-            gov_4_score = ocr_score(api, gov_4_score_im_bw)
-            gov_5_score = ocr_score(api, gov_5_score_im_bw)
+            gov_1_score = ocr_number(api, gov_1_score_im_bw)
+            gov_2_score = ocr_number(api, gov_2_score_im_bw)
+            gov_3_score = ocr_number(api, gov_3_score_im_bw)
+            gov_4_score = ocr_number(api, gov_4_score_im_bw)
+            gov_5_score = ocr_number(api, gov_5_score_im_bw)
 
         return [
             {"name": gov_1_name, "score": gov_1_score},

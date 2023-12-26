@@ -13,7 +13,7 @@ if current_version < required_version:
     )
     sys.exit(1)
 
-from console import console
+from scanner_utils.console import console
 from rich.table import Table
 from rich.markup import escape
 from openpyxl import Workbook
@@ -22,6 +22,7 @@ from pathlib import Path
 from scanner_utils.adb_utils import *
 from scanner_utils.validator import validate_installation
 from scanner_utils.general_utils import *
+from scanner_utils.ocr_utils import *
 from dummy_root import get_app_root
 import questionary
 import tkinter
@@ -124,38 +125,6 @@ def stopHandler(signum, frame):
     if stop:
         console.print("Scan will aborted after next governor.")
         scan_abort = True
-
-
-def cropToRegion(image, roi):
-    return image[int(roi[1]) : int(roi[1] + roi[3]), int(roi[0]) : int(roi[0] + roi[2])]
-
-
-def cropToTextWithBorder(img, border_size):
-    coords = cv2.findNonZero(cv2.bitwise_not(img))
-    x, y, w, h = cv2.boundingRect(coords)
-
-    roi = img[y : y + h, x : x + w]
-    bordered = cv2.copyMakeBorder(
-        roi,
-        top=border_size,
-        bottom=border_size,
-        left=border_size,
-        right=border_size,
-        borderType=cv2.BORDER_CONSTANT,
-        value=255,
-    )
-
-    return bordered
-
-
-def preprocessImage(image, threshold, border_size, invert=False):
-    im_big = cv2.resize(image, (0, 0), fx=3, fy=3)
-    im_gray = cv2.cvtColor(im_big, cv2.COLOR_BGR2GRAY)
-    if invert:
-        im_gray = cv2.bitwise_not(im_gray)
-    (thresh, im_bw) = cv2.threshold(im_gray, threshold, 255, cv2.THRESH_BINARY)
-    im_bw = cropToTextWithBorder(im_bw, border_size)
-    return im_bw
 
 
 def are_kills_ok(kills_t1, kills_t2, kills_t3, kills_t4, kills_t5, kill_points) -> bool:
@@ -454,21 +423,19 @@ def governor_scan(
         ) as api:
             if scan_options["Power"]:
                 im_gov_power = cropToRegion(image, rok_ui.ocr_regions["power"])
-                im_gov_power_bw = preprocessImage(im_gov_power, 100, 12, True)
+                im_gov_power_bw = preprocessImage(im_gov_power, 3, 100, 12, True)
 
-                api.SetImage(Image.fromarray(im_gov_power_bw))
-                gov_power = api.GetUTF8Text()
-                gov_power = re.sub("[^0-9]", "", gov_power)
+                gov_power = ocr_number(api, im_gov_power_bw)
 
             if scan_options["Killpoints"]:
                 im_gov_killpoints = cropToRegion(
                     image, rok_ui.ocr_regions["killpoints"]
                 )
-                im_gov_killpoints_bw = preprocessImage(im_gov_killpoints, 100, 12, True)
+                im_gov_killpoints_bw = preprocessImage(
+                    im_gov_killpoints, 3, 100, 12, True
+                )
 
-                api.SetImage(Image.fromarray(im_gov_killpoints_bw))
-                gov_killpoints = api.GetUTF8Text()
-                gov_killpoints = re.sub("[^0-9]", "", gov_killpoints)
+                gov_killpoints = ocr_number(api, im_gov_killpoints_bw)
 
             api.SetPageSegMode(PSM.SINGLE_LINE)
             if scan_options["ID"]:
@@ -479,18 +446,15 @@ def governor_scan(
                     im_gov_id_gray, 120, 255, cv2.THRESH_BINARY
                 )
 
-                api.SetImage(Image.fromarray(im_gov_id_bw))
-                gov_id = api.GetUTF8Text()
-                gov_id = re.sub("[^0-9]", "", gov_id)
+                gov_id = ocr_number(api, im_gov_id_bw)
 
             if scan_options["Alliance"]:
                 im_alliance_tag = cropToRegion(
                     image, rok_ui.ocr_regions["alliance_name"]
                 )
-                im_alliance_bw = preprocessImage(im_alliance_tag, 50, 12, True)
+                im_alliance_bw = preprocessImage(im_alliance_tag, 3, 50, 12, True)
 
-                api.SetImage(Image.fromarray(im_alliance_bw))
-                alliance_name = api.GetUTF8Text()
+                alliance_name = ocr_text(api, im_alliance_bw)
 
     if check_page_needed(2):
         # kills tier
@@ -507,99 +471,64 @@ def governor_scan(
         ) as api:
             if scan_options["T1 Kills"]:
                 # tier 1 Kills
-                im_kills_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_kills"])
-                im_kills_tier1_bw = preprocessImage(im_kills_tier1, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kills_tier1_bw))
-                gov_kills_tier1 = api.GetUTF8Text()
-                gov_kills_tier1 = re.sub("[^0-9]", "", gov_kills_tier1)
+                gov_kills_tier1 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t1_kills"]
+                )
 
                 # tier 1 KP
-                im_kp_tier1 = cropToRegion(image2, rok_ui.ocr_regions["t1_killpoints"])
-                im_kp_tier1_bw = preprocessImage(im_kp_tier1, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kp_tier1_bw))
-                gov_kp_tier1 = api.GetUTF8Text()
-                gov_kp_tier1 = re.sub("[^0-9]", "", gov_kp_tier1)
+                gov_kp_tier1 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t1_killpoints"]
+                )
 
             if scan_options["T2 Kills"]:
                 # tier 2 Kills
-                im_kills_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_kills"])
-                im_kills_tier2_bw = preprocessImage(im_kills_tier2, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kills_tier2_bw))
-                gov_kills_tier2 = api.GetUTF8Text()
-                gov_kills_tier2 = re.sub("[^0-9]", "", gov_kills_tier2)
+                gov_kills_tier2 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t2_kills"]
+                )
 
                 # tier 2 KP
-                im_kp_tier2 = cropToRegion(image2, rok_ui.ocr_regions["t2_killpoints"])
-                im_kp_tier2_bw = preprocessImage(im_kp_tier2, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kp_tier2_bw))
-                gov_kp_tier2 = api.GetUTF8Text()
-                gov_kp_tier2 = re.sub("[^0-9]", "", gov_kp_tier2)
+                gov_kp_tier2 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t2_killpoints"]
+                )
 
             if scan_options["T3 Kills"]:
                 # tier 3 Kills
-                im_kills_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_kills"])
-                im_kills_tier3_bw = preprocessImage(im_kills_tier3, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kills_tier3_bw))
-                gov_kills_tier3 = api.GetUTF8Text()
-                gov_kills_tier3 = re.sub("[^0-9]", "", gov_kills_tier3)
+                gov_kills_tier3 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t3_kills"]
+                )
 
                 # tier 3 KP
-                im_kp_tier3 = cropToRegion(image2, rok_ui.ocr_regions["t3_killpoints"])
-                im_kp_tier3_bw = preprocessImage(im_kp_tier3, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kp_tier3_bw))
-                gov_kp_tier3 = api.GetUTF8Text()
-                gov_kp_tier3 = re.sub("[^0-9]", "", gov_kp_tier3)
+                gov_kp_tier3 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t3_killpoints"]
+                )
 
             if scan_options["T4 Kills"]:
-                # tier 4
-                im_kills_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_kills"])
-                im_kills_tier4_bw = preprocessImage(im_kills_tier4, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kills_tier4_bw))
-                gov_kills_tier4 = api.GetUTF8Text()
-                gov_kills_tier4 = re.sub("[^0-9]", "", gov_kills_tier4)
+                # tier 4 Kills
+                gov_kills_tier4 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t4_kills"]
+                )
 
                 # tier 4 KP
-                im_kp_tier4 = cropToRegion(image2, rok_ui.ocr_regions["t4_killpoints"])
-                im_kp_tier4_bw = preprocessImage(im_kp_tier4, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kp_tier4_bw))
-                gov_kp_tier4 = api.GetUTF8Text()
-                gov_kp_tier4 = re.sub("[^0-9]", "", gov_kp_tier4)
+                gov_kp_tier4 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t4_killpoints"]
+                )
 
             if scan_options["T5 Kills"]:
-                # tier 5
-                im_kills_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_kills"])
-                im_kills_tier5_bw = preprocessImage(im_kills_tier5, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kills_tier5_bw))
-                gov_kills_tier5 = api.GetUTF8Text()
-                gov_kills_tier5 = re.sub("[^0-9]", "", gov_kills_tier5)
+                # tier 5 Kills
+                gov_kills_tier5 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t5_kills"]
+                )
 
                 # tier 5 KP
-                im_kp_tier5 = cropToRegion(image2, rok_ui.ocr_regions["t5_killpoints"])
-                im_kp_tier5_bw = preprocessImage(im_kp_tier5, 150, 12)
-
-                api.SetImage(Image.fromarray(im_kp_tier5_bw))
-                gov_kp_tier5 = api.GetUTF8Text()
-                gov_kp_tier5 = re.sub("[^0-9]", "", gov_kp_tier5)
+                gov_kp_tier5 = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["t5_killpoints"]
+                )
 
             if scan_options["Ranged"]:
                 # ranged points
-                im_ranged_points = cropToRegion(
-                    image2, rok_ui.ocr_regions["ranged_points"]
+                gov_ranged_points = preprocess_and_ocr_number(
+                    api, image2, rok_ui.ocr_regions["ranged_points"]
                 )
-                im_ranged_points_bw = preprocessImage(im_ranged_points, 150, 12)
-
-                api.SetImage(Image.fromarray(im_ranged_points_bw))
-                gov_ranged_points = api.GetUTF8Text()
-                gov_ranged_points = re.sub("[^0-9]", "", gov_ranged_points)
 
     if check_page_needed(3):
         # More info tab
@@ -613,40 +542,24 @@ def governor_scan(
             path=str(tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
         ) as api:
             if scan_options["Deads"]:
-                im_dead = cropToRegion(image3, rok_ui.ocr_regions["deads"])
-                im_dead_bw = preprocessImage(im_dead, 150, 12, True)
-
-                api.SetImage(Image.fromarray(im_dead_bw))
-                gov_dead = api.GetUTF8Text()
-                gov_dead = re.sub("[^0-9]", "", gov_dead)
+                gov_dead = preprocess_and_ocr_number(
+                    api, image3, rok_ui.ocr_regions["deads"], True
+                )
 
             if scan_options["Rss Assistance"]:
-                im_rss_assistance = cropToRegion(
-                    image3, rok_ui.ocr_regions["rss_assisted"]
+                gov_rss_assistance = preprocess_and_ocr_number(
+                    api, image3, rok_ui.ocr_regions["rss_assisted"], True
                 )
-                im_rss_assistance_bw = preprocessImage(im_rss_assistance, 150, 12, True)
-
-                api.SetImage(Image.fromarray(im_rss_assistance_bw))
-                gov_rss_assistance = api.GetUTF8Text()
-                gov_rss_assistance = re.sub("[^0-9]", "", gov_rss_assistance)
 
             if scan_options["Rss Gathered"]:
-                im_rss_gathered = cropToRegion(
-                    image3, rok_ui.ocr_regions["rss_gathered"]
+                gov_rss_gathered = preprocess_and_ocr_number(
+                    api, image3, rok_ui.ocr_regions["rss_gathered"], True
                 )
-                im_rss_gathered_bw = preprocessImage(im_rss_gathered, 150, 12, True)
-
-                api.SetImage(Image.fromarray(im_rss_gathered_bw))
-                gov_rss_gathered = api.GetUTF8Text()
-                gov_rss_gathered = re.sub("[^0-9]", "", gov_rss_gathered)
 
             if scan_options["Helps"]:
-                im_helps = cropToRegion(image3, rok_ui.ocr_regions["alliance_helps"])
-                im_helps_bw = preprocessImage(im_helps, 150, 12, True)
-
-                api.SetImage(Image.fromarray(im_helps_bw))
-                gov_helps = api.GetUTF8Text()
-                gov_helps = re.sub("[^0-9]", "", gov_helps)
+                gov_helps = preprocess_and_ocr_number(
+                    api, image3, rok_ui.ocr_regions["alliance_helps"], True
+                )
 
     # Just to check the progress, printing in cmd the result for each governor
     if gov_power == "":
@@ -811,7 +724,7 @@ def scan(
             image = cv2.imread(str(img_path / "currentState.png"))
 
             im_ranking = cropToRegion(image, roi)
-            im_ranking_bw = preprocessImage(im_ranking, 90, 12, True)
+            im_ranking_bw = preprocessImage(im_ranking, 3, 90, 12, True)
 
             ranking = ""
 

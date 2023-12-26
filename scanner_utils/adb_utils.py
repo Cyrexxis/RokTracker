@@ -1,5 +1,5 @@
 from typing import Tuple
-from console import console
+from scanner_utils.console import console
 from PIL.Image import Image, new as NewImage
 from com.dtmilano.android.adb.adbclient import AdbClient
 from pathlib import Path
