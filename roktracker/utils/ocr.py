@@ -1,6 +1,8 @@
 import cv2
-from PIL import Image
 import re
+import tesserocr
+
+from PIL import Image
 
 
 def cropToRegion(image, roi):
@@ -53,3 +55,7 @@ def preprocess_and_ocr_number(api, image, region, invert=False):
     cropped_bw_image = preprocessImage(cropped_image, 3, 150, 12, invert)
 
     return ocr_number(api, cropped_bw_image)
+
+
+def get_supported_langs(path: str) -> str:
+    return str(tesserocr.get_languages(path))  # type: ignore

@@ -1,11 +1,12 @@
 from typing import Tuple
-from scanner_utils.console import console
+from roktracker.utils.console import console
 from PIL.Image import Image, new as NewImage
 from com.dtmilano.android.adb.adbclient import AdbClient
 from pathlib import Path
 import subprocess
 import socket
 import configparser
+import sys
 
 adb_server_port = 0
 device: AdbClient
@@ -75,7 +76,7 @@ def start_adb(port: int):
     except:
         console.log("No device connected, aborting.")
         kill_adb()
-        exit(0)
+        sys.exit(0)
     device = adb_client
 
 

@@ -11,10 +11,9 @@ if current_version < required_version:
         f"Update required: Current Python version is {current_version.major}.{current_version.minor} "
         f"but version {required_version[0]}.{required_version[1]} or higher is needed."
     )
-    sys.exit(1)
 
-from scanner_utils.console import console
-from scanner_utils.adb_utils import *
+from roktracker.utils.console import console
+from roktracker.utils.adb import *
 from rich.console import Console
 from rich.table import Table
 from openpyxl import Workbook
@@ -23,11 +22,11 @@ from openpyxl.drawing.image import Image as OpImage
 from pathlib import Path
 from tesserocr import PyTessBaseAPI, PSM, OEM
 from PIL import Image
-from scanner_utils.validator import validate_installation
-from scanner_utils.adb_utils import get_bluestacks_port
-from scanner_utils.general_utils import *
-from scanner_utils.alliance_mode import mode_data
-from scanner_utils.ocr_utils import *
+from roktracker.utils.validator import validate_installation
+from roktracker.utils.adb import get_bluestacks_port
+from roktracker.utils.general import *
+from roktracker.utils.alliance_mode import mode_data
+from roktracker.utils.ocr import *
 from dummy_root import get_app_root
 import datetime
 import time
@@ -496,7 +495,7 @@ def fast_scan(port: int, kingdom: str, mode: str, amount: int):
 
 def main():
     if not validate_installation():
-        exit(2)
+        sys.exit(2)
     signal.signal(signal.SIGINT, stopHandler)
 
     global run_id
@@ -552,7 +551,7 @@ def main():
 
     fast_scan(int(bluestacks_port), kingdom, scan_mode, int(scan_amount))
 
-    exit(1)
+    sys.exit(1)
 
 
 if __name__ == "__main__":
