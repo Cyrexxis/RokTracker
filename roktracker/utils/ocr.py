@@ -3,13 +3,15 @@ import re
 import tesserocr
 
 from PIL import Image
+from cv2.typing import MatLike
+from typing import Tuple
 
 
-def cropToRegion(image, roi):
+def cropToRegion(image: MatLike, roi: Tuple[int, int, int, int]) -> MatLike:
     return image[int(roi[1]) : int(roi[1] + roi[3]), int(roi[0]) : int(roi[0] + roi[2])]
 
 
-def cropToTextWithBorder(img, border_size):
+def cropToTextWithBorder(img: MatLike, border_size) -> MatLike:
     coords = cv2.findNonZero(cv2.bitwise_not(img))
     x, y, w, h = cv2.boundingRect(coords)
 
@@ -27,7 +29,13 @@ def cropToTextWithBorder(img, border_size):
     return bordered
 
 
-def preprocessImage(image, scale_factor, threshold, border_size, invert=False):
+def preprocessImage(
+    image: MatLike,
+    scale_factor: int,
+    threshold: int,
+    border_size: int,
+    invert: bool = False,
+) -> MatLike:
     im_big = cv2.resize(image, (0, 0), fx=scale_factor, fy=scale_factor)
     im_gray = cv2.cvtColor(im_big, cv2.COLOR_BGR2GRAY)
     if invert:
@@ -37,20 +45,22 @@ def preprocessImage(image, scale_factor, threshold, border_size, invert=False):
     return im_bw
 
 
-def ocr_number(api, image):
+def ocr_number(api, image: MatLike):
     api.SetImage(Image.fromarray(image))
     score = api.GetUTF8Text()
     score = re.sub("[^0-9]", "", score)
     return score
 
 
-def ocr_text(api, image):
+def ocr_text(api, image: MatLike):
     api.SetImage(Image.fromarray(image))
     name = api.GetUTF8Text()
     return name.rstrip("\n")
 
 
-def preprocess_and_ocr_number(api, image, region, invert=False):
+def preprocess_and_ocr_number(
+    api, image: MatLike, region: Tuple[int, int, int, int], invert: bool = False
+):
     cropped_image = cropToRegion(image, region)
     cropped_bw_image = preprocessImage(cropped_image, 3, 150, 12, invert)
 

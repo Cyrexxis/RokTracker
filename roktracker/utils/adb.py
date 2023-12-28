@@ -8,12 +8,8 @@ import socket
 import configparser
 import sys
 
-adb_server_port = 0
-device: AdbClient
-adb_path = ".\\platform-tools\\adb.exe"
 
-
-def get_bluestacks_port(bluestacks_device_name, config):
+def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
     # try to read port from bluestacks config
     try:
         dummy = "AmazingDummy"
@@ -35,91 +31,94 @@ def get_bluestacks_port(bluestacks_device_name, config):
     return 5555
 
 
-def get_free_port():
-    s = socket.socket()
-    s.bind(("", 0))
-    port = s.getsockname()[1]
-    s.close()
-    return port
+class AdvancedAdbClient:
+    def __init__(self, path: str, port: int):
+        self.server_port = 0
+        self.client_port = port
+        self.adb_path = path
+        self.device = self.start_adb()
 
+    def get_free_port(self) -> int:
+        s = socket.socket()
+        s.bind(("", 0))
+        port = s.getsockname()[1]
+        s.close()
+        return port
 
-def set_adb_path(path: str):
-    global adb_path
-    adb_path = path
+    def set_adb_path(self, path: str) -> None:
+        self.adb_path = path
 
-
-def kill_adb():
-    console.print("Killing ADB server...")
-    process = subprocess.run(
-        [adb_path, "-P " + str(adb_server_port), "kill-server"],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-    )
-    console.print(process.stdout)
-
-
-def start_adb(port: int):
-    global adb_server_port
-    global device
-    adb_server_port = get_free_port()
-    console.print("Starting adb server and connecting to adb device...")
-    process = subprocess.run(
-        [adb_path, "-P " + str(adb_server_port), "connect", "localhost:" + str(port)],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-    )
-    console.print(process.stdout)
-    try:
-        adb_client = AdbClient(
-            serialno=".*", hostname="localhost", port=adb_server_port
+    def kill_adb(self) -> None:
+        console.print("Killing ADB server...")
+        process = subprocess.run(
+            [self.adb_path, "-P " + str(self.server_port), "kill-server"],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
         )
-    except:
-        console.log("No device connected, aborting.")
-        kill_adb()
-        sys.exit(0)
-    device = adb_client
+        console.print(process.stdout)
 
-
-def secure_adb_shell(command_to_execute: str, port: int) -> str:
-    result = ""
-    for i in range(3):
+    def start_adb(self) -> AdbClient:
+        global adb_server_port
+        global device
+        self.server_port = self.get_free_port()
+        console.print("Starting adb server and connecting to adb device...")
+        process = subprocess.run(
+            [
+                self.adb_path,
+                "-P " + str(self.server_port),
+                "connect",
+                "localhost:" + str(self.client_port),
+            ],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        console.print(process.stdout)
         try:
-            result = str(device.shell(command_to_execute))
+            adb_client = AdbClient(
+                serialno=".*", hostname="localhost", port=self.server_port
+            )
         except:
-            console.print("[red]ADB crashed[/red]")
-            kill_adb()
-            start_adb(port)
-        else:
-            return result
-    return result
+            console.log("No device connected, aborting.")
+            self.kill_adb()
+            sys.exit(0)
+        return adb_client
 
+    def secure_adb_shell(self, command_to_execute: str) -> str:
+        result = ""
+        for i in range(3):
+            try:
+                result = str(self.device.shell(command_to_execute))
+            except:
+                console.print("[red]ADB crashed[/red]")
+                self.kill_adb()
+                self.start_adb()
+            else:
+                return result
+        return result
 
-def secure_adb_tap(position: Tuple[int, int], port: int):
-    secure_adb_shell(f"input tap {position[0]} {position[1]}", port)
+    def secure_adb_tap(self, position: Tuple[int, int]):
+        self.secure_adb_shell(f"input tap {position[0]} {position[1]}")
 
+    def secure_adb_screencap(self) -> Image:
+        result = NewImage(mode="RGB", size=(1, 1))
+        for i in range(3):
+            try:
+                result = self.device.takeSnapshot(reconnect=True)
+            except:
+                console.print("[red]ADB crashed[/red]")
+                self.kill_adb()
+                self.start_adb()
+            else:
+                return result
+        return result
 
-def secure_adb_screencap(port: int) -> Image:
-    result = NewImage(mode="RGB", size=(1, 1))
-    for i in range(3):
-        try:
-            result = device.takeSnapshot(reconnect=True)
-        except:
-            console.print("[red]ADB crashed[/red]")
-            kill_adb()
-            start_adb(port)
-        else:
-            return result
-    return result
+    def adb_send_events(self, input_device_name: str, event_file: str | Path) -> None:
+        idn = self.secure_adb_shell(
+            f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'",
+        )
+        idn = str(idn).strip()
+        macroFile = open(event_file, "r")
+        lines = macroFile.readlines()
 
-
-def adb_send_events(input_device_name: str, event_file: str | Path, port: int):
-    idn = secure_adb_shell(
-        f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'",
-        port,
-    )
-    idn = str(idn).strip()
-    macroFile = open(event_file, "r")
-    lines = macroFile.readlines()
-
-    for line in lines:
-        secure_adb_shell(f"""sendevent {idn} {line.strip()}""", port)
+        for line in lines:
+            self.secure_adb_shell(f"""sendevent {idn} {line.strip()}""")

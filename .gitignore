@@ -617,5 +617,6 @@ manual_review/
 temp_images/
 scans/
 scans_alliance/
+scans_honor/
 deps/
 !deps/inputs

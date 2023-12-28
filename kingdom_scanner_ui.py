@@ -6,7 +6,7 @@ logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
     encoding="utf-8",
     format="%(asctime)s %(module)s %(levelname)s %(message)s",
-    level=logging.DEBUG,
+    level=logging.INFO,
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
@@ -514,14 +514,15 @@ class App(customtkinter.CTk):
         scan_options = self.scan_options_frame.get()
         options = self.options_frame.get_options()
 
-        self.kingdom_scanner = KingdomScanner(self.config, scan_options)
+        self.kingdom_scanner = KingdomScanner(
+            self.config, scan_options, options["port"]
+        )
         self.kingdom_scanner.set_governor_callback(self.governor_callback)
         self.kingdom_scanner.set_state_callback(self.state_callback)
         self.options_frame.set_uuid(self.kingdom_scanner.run_id)
         Thread(
             target=self.kingdom_scanner.start_scan,
             args=(
-                options["port"],
                 options["name"],
                 options["amount"],
                 options["resume"],

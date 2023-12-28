@@ -38,7 +38,7 @@ def default_output_handler(msg: str) -> None:
 
 
 class KingdomScanner:
-    def __init__(self, config, scan_options):
+    def __init__(self, config, scan_options, port):
         self.run_id = generate_random_id(8)
         self.scan_times = []
         self.start_date = datetime.date.today()
@@ -56,7 +56,7 @@ class KingdomScanner:
         self.tesseract_path = Path(self.root_dir / "deps" / "tessdata")
         self.img_path = Path(self.root_dir / "temp_images")
         self.img_path.mkdir(parents=True, exist_ok=True)
-        self.scan_path = Path(self.root_dir / "scans")
+        self.scan_path = Path(self.root_dir / "scans_kingdom")
         self.scan_path.mkdir(parents=True, exist_ok=True)
         self.inactive_path = Path(
             self.root_dir / "inactives" / str(self.start_date) / str(self.run_id)
@@ -69,6 +69,10 @@ class KingdomScanner:
         self.state_callback = default_state_callback
         self.ask_continue = default_ask_continue
         self.output_handler = default_output_handler
+
+        self.adb_client = AdvancedAdbClient(
+            str(self.root_dir / "deps" / "platform-tools" / "adb.exe"), port
+        )
 
     def set_governor_callback(
         self, cb: Callable[[GovernorData, AdditionalData], None]
@@ -162,7 +166,6 @@ class KingdomScanner:
 
     def scan_governor(
         self,
-        port: int,
         current_player: int,
         track_inactives: bool,
     ) -> GovernorData:
@@ -171,10 +174,9 @@ class KingdomScanner:
 
         self.state_callback("Opening governor")
         # Open governor
-        secure_adb_shell(
+        self.adb_client.secure_adb_shell(
             f"input tap 690 "
-            + str(self.get_gov_position(current_player, self.inactive_players)),
-            port,
+            + str(self.get_gov_position(current_player, self.inactive_players))
         )
         time.sleep(self.timings["gov_open"] + random_delay())
 
@@ -182,7 +184,9 @@ class KingdomScanner:
         count = 0
 
         while not (gov_info):
-            secure_adb_screencap(port).save(self.img_path / "check_more_info.png")
+            self.adb_client.secure_adb_screencap().save(
+                self.img_path / "check_more_info.png"
+            )
 
             image_check = cv2.imread(
                 str(self.img_path / "check_more_info.png"), cv2.IMREAD_GRAYSCALE
@@ -221,20 +225,18 @@ class KingdomScanner:
                         image_inactive_raw,
                     )
                 if self.advanced_scroll:
-                    adb_send_events(
+                    self.adb_client.adb_send_events(
                         "Touch",
                         self.root_dir
                         / "deps"
                         / "inputs"
                         / "kingdom_1_person_scroll.txt",
-                        port,
                     )
                 else:
-                    secure_adb_shell(f"input swipe 690 605 690 540", port)
-                secure_adb_shell(
+                    self.adb_client.secure_adb_shell(f"input swipe 690 605 690 540")
+                self.adb_client.secure_adb_shell(
                     f"input tap 690 "
                     + str(self.get_gov_position(current_player, self.inactive_players)),
-                    port,
                 )
                 count += 1
                 time.sleep(self.timings["gov_open"] + random_delay())
@@ -255,7 +257,9 @@ class KingdomScanner:
                 copy_try = 0
                 while copy_try < 3:
                     try:
-                        secure_adb_tap(rok_ui.tap_positions["name_copy"], port)
+                        self.adb_client.secure_adb_tap(
+                            rok_ui.tap_positions["name_copy"]
+                        )
                         time.sleep(self.timings["copy_wait"])
                         tk_clipboard = tkinter.Tk()
                         governor_data.name = tk_clipboard.clipboard_get()
@@ -268,7 +272,7 @@ class KingdomScanner:
 
             # time.sleep(1.5 + random_delay())
 
-            secure_adb_screencap(port).save(self.img_path / "gov_info.png")
+            self.adb_client.secure_adb_screencap().save(self.img_path / "gov_info.png")
             image = cv2.imread(str(self.img_path / "gov_info.png"))
 
             # 1st image data (ID, Power, Killpoints, Alliance)
@@ -312,11 +316,13 @@ class KingdomScanner:
 
         if self.is_page_needed(2):
             # kills tier
-            secure_adb_tap(rok_ui.tap_positions["open_kills"], port)
+            self.adb_client.secure_adb_tap(rok_ui.tap_positions["open_kills"])
             self.state_callback("Scanning kills page")
             time.sleep(self.timings["kills_open"] + random_delay())
 
-            secure_adb_screencap(port).save(self.img_path / "kills_tier.png")
+            self.adb_client.secure_adb_screencap().save(
+                self.img_path / "kills_tier.png"
+            )
             image2 = cv2.imread(str(self.img_path / "kills_tier.png"))
             image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
 
@@ -386,10 +392,10 @@ class KingdomScanner:
 
         if self.is_page_needed(3):
             # More info tab
-            secure_adb_tap(rok_ui.tap_positions["more_info"], port)
+            self.adb_client.secure_adb_tap(rok_ui.tap_positions["more_info"])
             self.state_callback("Scanning more info page")
             time.sleep(self.timings["info_open"] + random_delay())
-            secure_adb_screencap(port).save(self.img_path / "more_info.png")
+            self.adb_client.secure_adb_screencap().save(self.img_path / "more_info.png")
             image3 = cv2.imread(str(self.img_path / "more_info.png"))
 
             with PyTessBaseAPI(
@@ -420,9 +426,13 @@ class KingdomScanner:
 
         self.state_callback("Closing governor")
         if self.is_page_needed(3):
-            secure_adb_tap(rok_ui.tap_positions["close_info"], port)  # close more info
+            self.adb_client.secure_adb_tap(
+                rok_ui.tap_positions["close_info"]
+            )  # close more info
             time.sleep(self.timings["info_close"] + random_delay())
-        secure_adb_tap(rok_ui.tap_positions["close_gov"], port)  # close governor info
+        self.adb_client.secure_adb_tap(
+            rok_ui.tap_positions["close_gov"]
+        )  # close governor info
         time.sleep(self.timings["gov_close"] + random_delay())
 
         end_time = time.time()
@@ -434,7 +444,6 @@ class KingdomScanner:
 
     def start_scan(
         self,
-        port: int,
         kingdom: str,
         amount: int,
         resume: bool,
@@ -442,10 +451,6 @@ class KingdomScanner:
         validate_kills: bool,
         reconstruct_fails: bool,
     ):
-        # Initialize the connection to adb
-        set_adb_path(str(self.root_dir / "deps" / "platform-tools" / "adb.exe"))
-        start_adb(port)
-
         if track_inactives:
             self.inactive_path.mkdir(parents=True, exist_ok=True)
 
@@ -461,19 +466,9 @@ class KingdomScanner:
         else:
             file_name_prefix = "TOP"
 
-        file_path = str(
-            self.scan_path
-            / (
-                file_name_prefix
-                + str(amount - j)
-                + "-"
-                + str(datetime.date.today())
-                + "-"
-                + kingdom
-                + f"-[{self.run_id}]"
-                + ".xlsx"
-            )
-        )
+        filename = f"{file_name_prefix}{amount - j}-{self.start_date}-{kingdom}-[{self.run_id}].xlsx"
+
+        file_path = str(self.scan_path / filename)
 
         excel = ExcelHandler(self.scan_options, file_path, self.start_date)
 
@@ -509,7 +504,6 @@ class KingdomScanner:
 
             next_gov_to_scan = max(next_gov_to_scan + 1, i)
             gov_data = self.scan_governor(
-                port,
                 next_gov_to_scan,
                 track_inactives,
             )
@@ -517,7 +511,9 @@ class KingdomScanner:
             # Check for duplicate governor
             if excel.sheet["A" + str(i + 1 - j)].value == to_int_check(gov_data.id):
                 roi = (196, 698, 52, 27)
-                secure_adb_screencap(port).save(self.img_path / "currentState.png")
+                self.adb_client.secure_adb_screencap().save(
+                    self.img_path / "currentState.png"
+                )
                 image = cv2.imread(str(self.img_path / "currentState.png"))
 
                 im_ranking = cropToRegion(image, roi)
@@ -544,9 +540,7 @@ class KingdomScanner:
                     )
 
                     # repeat scan with next governor
-                    gov_data = self.scan_governor(
-                        port, next_gov_to_scan, track_inactives
-                    )
+                    gov_data = self.scan_governor(next_gov_to_scan, track_inactives)
                 else:
                     if not last_two:
                         last_two = True
@@ -560,9 +554,7 @@ class KingdomScanner:
                         )
 
                         # repeat scan with next governor
-                        gov_data = self.scan_governor(
-                            port, next_gov_to_scan, track_inactives
-                        )
+                        gov_data = self.scan_governor(next_gov_to_scan, track_inactives)
                     else:
                         self.output_handler(
                             "Reached final governor on the screen. Scan complete."
@@ -627,7 +619,7 @@ class KingdomScanner:
         excel.save()
         self.output_handler("Reached the target amount of people. Scan complete.")
         logging.log(logging.INFO, "Reached the target amount of people. Scan complete.")
-        kill_adb()  # make sure to clean up adb server
+        self.adb_client.kill_adb()  # make sure to clean up adb server
         self.state_callback("Scan finished")
         return
 

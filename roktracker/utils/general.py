@@ -40,7 +40,7 @@ def random_delay() -> float:
     return random.random() * 0.1
 
 
-def format_timedelta_to_HHMMSS(td: datetime.timedelta):
+def format_timedelta_to_HHMMSS(td: datetime.timedelta) -> str:
     td_in_seconds = td.total_seconds()
     hours, remainder = divmod(td_in_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)

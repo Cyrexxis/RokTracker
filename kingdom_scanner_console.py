@@ -6,7 +6,7 @@ logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
     encoding="utf-8",
     format="%(asctime)s %(module)s %(levelname)s %(message)s",
-    level=logging.DEBUG,
+    level=logging.INFO,
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
@@ -310,7 +310,7 @@ def main():
         console.log("User abort. Exiting scanner.")
         sys.exit(3)
 
-    kingdom_scanner = KingdomScanner(config, scan_options)
+    kingdom_scanner = KingdomScanner(config, scan_options, bluestacks_port)
     kingdom_scanner.set_continue_handler(ask_continue)
     kingdom_scanner.set_governor_callback(print_gov_state)
 
@@ -322,7 +322,6 @@ def main():
     signal.signal(signal.SIGINT, lambda _, __: ask_abort(kingdom_scanner))
 
     kingdom_scanner.start_scan(
-        bluestacks_port,
         kingdom,
         scan_amount,
         resume_scan,
