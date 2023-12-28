@@ -618,5 +618,6 @@ temp_images/
 scans/
 scans_alliance/
 scans_honor/
+scans_kingdom/
 deps/
 !deps/inputs
