@@ -7,8 +7,8 @@ from roktracker.alliance.additional_data import AdditionalData
 from roktracker.alliance.excel_handler import ExcelHandler
 from roktracker.alliance.governor_data import GovernorData
 from roktracker.alliance.governor_image_group import GovImageGroup
+from roktracker.honor.ui_settings import HonorUI
 from roktracker.utils.adb import *
-from roktracker.utils.alliance_mode import mode_data
 from roktracker.utils.general import *
 from roktracker.utils.ocr import *
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore
@@ -63,21 +63,21 @@ class HonorScanner:
 
     def process_honor_screen(self, image: MatLike, position: int) -> GovImageGroup:
         # fmt: off
-        gov_name_im = cropToRegion(image, mode_data["honor"]["name_pos"][position])
+        gov_name_im = cropToRegion(image, HonorUI.name[position])
         gov_name_im_bw = preprocessImage(
-            gov_name_im,3,mode_data["honor"]["threshold"],
-            12,mode_data["honor"]["invert"],
+            gov_name_im, 3, HonorUI.misc.threshold,
+            12, HonorUI.misc.invert,
         )
 
         gov_name_im_bw_small = preprocessImage(
-            gov_name_im, 1, mode_data["honor"]["threshold"],
-            4, mode_data["honor"]["invert"],
+            gov_name_im, 1, HonorUI.misc.threshold,
+            4, HonorUI.misc.invert,
         )
 
-        gov_score_im = cropToRegion(image, mode_data["honor"]["score_pos"][position])
+        gov_score_im = cropToRegion(image, HonorUI.score[position])
         gov_score_im_bw = preprocessImage(
-            gov_score_im,3,mode_data["honor"]["threshold"],
-            12,mode_data["honor"]["invert"],
+            gov_score_im, 3, HonorUI.misc.threshold,
+            12, HonorUI.misc.invert,
         )
         # fmt: on
 
@@ -128,11 +128,8 @@ class HonorScanner:
 
             start_time = time.time()
             governors = self.scan_screen(i)
-
-            self.adb_client.adb_send_events("Touch", mode_data["honor"]["script"])
-            time.sleep(1 + random.random())
-
             end_time = time.time()
+
             self.scan_times.append(end_time - start_time)
 
             additional_data = AdditionalData(
@@ -151,6 +148,9 @@ class HonorScanner:
 
             if self.reached_bottom:
                 break
+            else:
+                self.adb_client.adb_send_events("Touch", HonorUI.misc.script)
+                time.sleep(1 + random.random())
 
         excel.save()
         self.adb_client.kill_adb()  # make sure to clean up adb server

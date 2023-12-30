@@ -7,8 +7,8 @@ from roktracker.alliance.additional_data import AdditionalData
 from roktracker.alliance.excel_handler import ExcelHandler
 from roktracker.alliance.governor_data import GovernorData
 from roktracker.alliance.governor_image_group import GovImageGroup
+from roktracker.alliance.ui_settings import AllianceUI
 from roktracker.utils.adb import *
-from roktracker.utils.alliance_mode import mode_data
 from roktracker.utils.general import *
 from roktracker.utils.ocr import *
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore
@@ -64,40 +64,40 @@ class AllianceScanner:
     def process_alliance_screen(self, image: MatLike, position: int) -> GovImageGroup:
         if not self.reached_bottom:
             # fmt: off
-            gov_name_im = cropToRegion(image, mode_data["alliance"]["normal"]["name_pos"][position])
+            gov_name_im = cropToRegion(image, AllianceUI.name_normal[position])
             gov_name_im_bw = preprocessImage(
-                gov_name_im,3,mode_data["alliance"]["threshold"],
-                12,mode_data["alliance"]["invert"],
+                gov_name_im, 3, AllianceUI.misc.threshold,
+                12, AllianceUI.misc.invert,
             )
 
             gov_name_im_bw_small = preprocessImage(
-                gov_name_im, 1, mode_data["alliance"]["threshold"],
-                4, mode_data["alliance"]["invert"],
+                gov_name_im, 1, AllianceUI.misc.threshold,
+                4, AllianceUI.misc.invert,
             )
 
-            gov_score_im = cropToRegion(image, mode_data["alliance"]["normal"]["score_pos"][position])
+            gov_score_im = cropToRegion(image, AllianceUI.score_normal[position])
             gov_score_im_bw = preprocessImage(
-                gov_score_im,3,mode_data["alliance"]["threshold"],
-                12,mode_data["alliance"]["invert"],
+                gov_score_im,3,AllianceUI.misc.threshold,
+                12,AllianceUI.misc.invert,
             )
             # fmt: on
         else:
             # fmt: off
-            gov_name_im = cropToRegion(image, mode_data["alliance"]["last"]["name_pos"][position])
+            gov_name_im = cropToRegion(image, AllianceUI.name_last[position])
             gov_name_im_bw = preprocessImage(
-                gov_name_im,3,mode_data["alliance"]["threshold"],
-                12,mode_data["alliance"]["invert"],
+                gov_name_im,3,AllianceUI.misc.threshold,
+                12,AllianceUI.misc.invert,
             )
 
             gov_name_im_bw_small = preprocessImage(
-                gov_name_im, 1, mode_data["alliance"]["threshold"],
-                4, mode_data["alliance"]["invert"],
+                gov_name_im, 1, AllianceUI.misc.threshold,
+                4, AllianceUI.misc.invert,
             )
 
-            gov_score_im = cropToRegion(image, mode_data["alliance"]["last"]["score_pos"][position])
+            gov_score_im = cropToRegion(image, AllianceUI.score_last[position])
             gov_score_im_bw = preprocessImage(
-                gov_score_im,3,mode_data["alliance"]["threshold"],
-                12,mode_data["alliance"]["invert"],
+                gov_score_im,3,AllianceUI.misc.threshold,
+                12,AllianceUI.misc.invert,
             )
             # fmt: on
 
@@ -113,10 +113,10 @@ class AllianceScanner:
             path=str(self.tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
         ) as api:
             # fmt: off
-            test_score_im = cropToRegion(image, mode_data["alliance"]["normal"]["score_pos"][0])
+            test_score_im = cropToRegion(image, AllianceUI.score_normal[0])
             test_score_im_bw = preprocessImage(
-                test_score_im,3,mode_data["alliance"]["threshold"],
-                12,mode_data["alliance"]["invert"],
+                test_score_im,3,AllianceUI.misc.threshold,
+                12,AllianceUI.misc.invert,
             )
             # fmt: on
 
@@ -167,11 +167,8 @@ class AllianceScanner:
 
             start_time = time.time()
             governors = self.scan_screen(i)
-
-            self.adb_client.adb_send_events("Touch", mode_data["alliance"]["script"])
-            time.sleep(1 + random.random())
-
             end_time = time.time()
+
             self.scan_times.append(end_time - start_time)
 
             additional_data = AdditionalData(
@@ -190,6 +187,9 @@ class AllianceScanner:
 
             if self.reached_bottom:
                 break
+            else:
+                self.adb_client.adb_send_events("Touch", AllianceUI.misc.script)
+                time.sleep(1 + random.random())
 
         excel.save()
         self.adb_client.kill_adb()  # make sure to clean up adb server
