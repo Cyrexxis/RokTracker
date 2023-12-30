@@ -1,9 +1,12 @@
 import logging
 from dummy_root import get_app_root
+from roktracker.alliance.additional_data import AdditionalData
+from roktracker.alliance.governor_data import GovernorData
+from roktracker.honor.scanner import HonorScanner
 from roktracker.utils.check_python import check_py_version
 
 logging.basicConfig(
-    filename=str(get_app_root() / "kingdom-scanner.log"),
+    filename=str(get_app_root() / "honor-scanner.log"),
     encoding="utf-8",
     format="%(asctime)s %(module)s %(levelname)s %(message)s",
     level=logging.INFO,
@@ -18,9 +21,6 @@ import logging
 import sys
 
 from dummy_root import get_app_root
-from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.governor_data import GovernorData
-from roktracker.kingdom.scanner import KingdomScanner
 from roktracker.utils.validator import validate_installation
 from roktracker.utils.adb import get_bluestacks_port
 from threading import Thread
@@ -153,96 +153,6 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
 
-        self.resume_scan_label = customtkinter.CTkLabel(
-            self, text="Resume scan:", height=1
-        )
-        self.resume_scan_label.grid(row=5, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.resume_scan_checkbox = customtkinter.CTkCheckBox(
-            self, text="", onvalue=True, offvalue=False
-        )
-        self.resume_scan_checkbox.grid(
-            row=5, column=1, padx=10, pady=(10, 0), sticky="w"
-        )
-
-        if config["scan"]["resume"]:
-            self.resume_scan_checkbox.select()
-
-        self.new_scroll_label = customtkinter.CTkLabel(
-            self, text="Advanced scroll:", height=1
-        )
-        self.new_scroll_label.grid(row=6, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.new_scroll_switch = customtkinter.CTkSwitch(
-            self, text="", onvalue=True, offvalue=False
-        )
-        self.new_scroll_switch.grid(row=6, column=1, padx=10, pady=(10, 0), sticky="w")
-
-        if config["scan"]["advanced_scroll"]:
-            self.new_scroll_switch.select()
-
-        self.track_inactives_label = customtkinter.CTkLabel(
-            self, text="Track inactives:", height=1
-        )
-        self.track_inactives_label.grid(
-            row=7, column=0, padx=10, pady=(10, 0), sticky="w"
-        )
-        self.track_inactives_switch = customtkinter.CTkSwitch(
-            self, text="", onvalue=True, offvalue=False
-        )
-        self.track_inactives_switch.grid(
-            row=7, column=1, padx=10, pady=(10, 0), sticky="w"
-        )
-
-        if config["scan"]["track_inactives"]:
-            self.track_inactives_switch.select()
-
-        self.validate_kills_label = customtkinter.CTkLabel(
-            self, text="Validate kills:", height=1
-        )
-        self.validate_kills_label.grid(
-            row=8, column=0, padx=10, pady=(10, 0), sticky="w"
-        )
-        self.validate_kills_switch = customtkinter.CTkSwitch(
-            self, text="", onvalue=True, offvalue=False
-        )
-        self.validate_kills_switch.grid(
-            row=8, column=1, padx=10, pady=(10, 0), sticky="w"
-        )
-
-        if config["scan"]["validate_kills"]:
-            self.validate_kills_switch.select()
-
-        self.reconstruct_fails_label = customtkinter.CTkLabel(
-            self, text="Reconstruct kills:", height=1
-        )
-        self.reconstruct_fails_label.grid(
-            row=9, column=0, padx=10, pady=(10, 0), sticky="w"
-        )
-        self.reconstruct_fails_switch = customtkinter.CTkSwitch(
-            self, text="", onvalue=True, offvalue=False
-        )
-        self.reconstruct_fails_switch.grid(
-            row=9, column=1, padx=10, pady=(10, 0), sticky="w"
-        )
-
-        if config["scan"]["reconstruct_kills"]:
-            self.reconstruct_fails_switch.select()
-
-        self.info_close_label = customtkinter.CTkLabel(
-            self, text="More info wait:", height=1
-        )
-        self.info_close_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.info_close_text = customtkinter.CTkEntry(self)  # TODO: add validation
-        self.info_close_text.grid(row=10, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.info_close_text.insert(0, str(config["scan"]["timings"]["info_close"]))
-
-        self.gov_close_label = customtkinter.CTkLabel(
-            self, text="Governor wait:", height=1
-        )
-        self.gov_close_label.grid(row=11, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.gov_close_text = customtkinter.CTkEntry(self)  # TODO: add validation
-        self.gov_close_text.grid(row=11, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.gov_close_text.insert(0, str(config["scan"]["timings"]["gov_close"]))
-
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)
 
@@ -263,13 +173,6 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             "name": self.scan_name_text.get(),
             "port": int(self.adb_port_text.get()),
             "amount": int(self.scan_amount_text.get()),
-            "resume": self.resume_scan_checkbox.get(),
-            "adv_scroll": self.new_scroll_switch.get(),
-            "inactives": self.track_inactives_switch.get(),
-            "validate": self.validate_kills_switch.get(),
-            "reconstruct": self.reconstruct_fails_switch.get(),
-            "info_time": float(self.info_close_text.get()),
-            "gov_time": float(self.gov_close_text.get()),
         }
 
 
@@ -312,12 +215,10 @@ class AdditionalStatusInfo(customtkinter.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
-        self.gov_number_var = customtkinter.StringVar(value="550 of 600")
+        self.gov_number_var = customtkinter.StringVar(value="24 to 30 of 30")
         self.values.update({"govs": self.gov_number_var})
         self.approx_time_remaining_var = customtkinter.StringVar(value="0:16:34")
         self.values.update({"eta": self.approx_time_remaining_var})
-        self.govs_skipped_var = customtkinter.StringVar(value="Skipped: 20")
-        self.values.update({"skipped": self.govs_skipped_var})
         self.last_time_var = customtkinter.StringVar(value="13:55:30")
         self.values.update({"time": self.last_time_var})
 
@@ -341,22 +242,16 @@ class AdditionalStatusInfo(customtkinter.CTkFrame):
         )
         self.gov_number_text.grid(row=0, column=1, pady=5, sticky="ew")
 
-        self.govs_skipped_text = customtkinter.CTkLabel(
-            self, textvariable=self.govs_skipped_var, height=1
-        )
-        self.govs_skipped_text.grid(row=1, column=1, pady=5)
-
     def set_var(self, key, value):
         if key in self.values:
             self.values[key].set(value)
 
 
-class LastGovernorInfo(customtkinter.CTkFrame):
-    def __init__(self, master, values):
+class LastBatchInfo(customtkinter.CTkFrame):
+    def __init__(self, master, govs_per_batch):
         super().__init__(master)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
-        self.values = values
         self.entries: List[customtkinter.CTkLabel] = []
         self.labels: List[customtkinter.CTkLabel] = []
         self.variables: Dict[str, customtkinter.StringVar] = {}
@@ -368,27 +263,29 @@ class LastGovernorInfo(customtkinter.CTkFrame):
 
         offset = 1
 
-        for i, value in enumerate(self.values):
-            variable = customtkinter.StringVar(master=self, name=value["name"])
-            label = customtkinter.CTkLabel(self, text=value["name"], height=1)
-            entry = customtkinter.CTkLabel(self, textvariable=variable, height=1)
+        for i in range(0, govs_per_batch):
+            label_variable = customtkinter.StringVar(master=self, name=f"name-{i}")
+            label = customtkinter.CTkLabel(self, textvariable=label_variable, height=1)
+            entry_variable = customtkinter.StringVar(master=self, name=f"score-{i}")
+            entry = customtkinter.CTkLabel(self, textvariable=entry_variable, height=1)
 
             label.grid(
                 row=i + offset,  # % ceil(len(values) / 2),
-                column=value["col"],
+                column=0,
                 padx=10,
                 pady=2,
                 sticky="w",
             )
             entry.grid(
                 row=i + offset,  # % ceil(len(values) / 2),
-                column=value["col"] + 1,
+                column=0 + 1,
                 padx=(10, 30),
                 pady=2,
                 sticky="w",
             )
 
-            self.variables.update({value["name"]: variable})
+            self.variables.update({f"name-{i}": label_variable})
+            self.variables.update({f"score-{i}": entry_variable})
             self.labels.append(label)
             self.entries.append(entry)
 
@@ -416,154 +313,88 @@ class App(customtkinter.CTk):
         self.config = json.load(config_file)
         config_file.close()
 
-        self.title("Kingdom Scanner by Cyrexxis")
-        self.geometry("760x535")
+        self.title("Honor Scanner by Cyrexxis")
+        self.geometry("560x290")
         self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
         self.grid_rowconfigure(0, weight=1)
 
         self.options_frame = BasicOptionsFame(self, self.config)
-        self.options_frame.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn")
+        self.options_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ewsn")
 
-        self.scan_options_frame = ScanOptionsFrame(
-            self,
-            [
-                {"name": "ID", "default": True, "group": "First Screen"},
-                {"name": "Name", "default": True, "group": "First Screen"},
-                {"name": "Power", "default": True, "group": "First Screen"},
-                {"name": "Killpoints", "default": True, "group": "First Screen"},
-                {"name": "Alliance", "default": True, "group": "First Screen"},
-                {"name": "T1 Kills", "default": True, "group": "Second Screen"},
-                {"name": "T2 Kills", "default": True, "group": "Second Screen"},
-                {"name": "T3 Kills", "default": True, "group": "Second Screen"},
-                {"name": "T4 Kills", "default": True, "group": "Second Screen"},
-                {"name": "T5 Kills", "default": True, "group": "Second Screen"},
-                {"name": "Ranged", "default": True, "group": "Second Screen"},
-                {"name": "Deads", "default": True, "group": "Third Screen"},
-                {"name": "Rss Assistance", "default": True, "group": "Third Screen"},
-                {"name": "Rss Gathered", "default": True, "group": "Third Screen"},
-                {"name": "Helps", "default": True, "group": "Third Screen"},
-            ],
-        )
-        self.scan_options_frame.grid(
-            row=0, column=0, padx=10, pady=10, sticky="ewsn", rowspan=3
-        )
+        self.last_batch_frame = LastBatchInfo(self, 5)
 
-        self.last_gov_frame = LastGovernorInfo(
-            self,
-            [
-                {"name": "ID", "col": 0},
-                {"name": "Name", "col": 0},
-                {"name": "Power", "col": 0},
-                {"name": "Killpoints", "col": 0},
-                {"name": "T1 Kills", "col": 0},
-                {"name": "T2 Kills", "col": 0},
-                {"name": "T3 Kills", "col": 0},
-                {"name": "T4 Kills", "col": 0},
-                {"name": "T5 Kills", "col": 0},
-                {"name": "T4+5 Kills", "col": 0},
-                {"name": "Total Kills", "col": 0},
-                {"name": "Ranged", "col": 0},
-                {"name": "Dead", "col": 0},
-                {"name": "Rss Assistance", "col": 0},
-                {"name": "Rss Gathered", "col": 0},
-                {"name": "Helps", "col": 0},
-                {"name": "Alliance", "col": 0},
-            ],
-        )
-
-        self.last_gov_frame.set(
+        self.last_batch_frame.set(
             {
-                "ID": "12345678",
-                "Name": "Super Governor",
-                "Power": 100000000,
-                "Killpoints": 3000000000,
-                "T1 Kills": 0,
-                "T2 Kills": 0,
-                "T3 Kills": 0,
-                "T4 Kills": 0,
-                "T5 Kills": 10000000,
-                "T4+5 Kills": 10000000,
-                "Total Kills": 10000000,
-                "Ranged": 200000,
-                "Dead": 1000000,
-                "Rss Assistance": 9000000000,
-                "Helps": 90000,
-                "Alliance": "Biggest Alliance ever!",
+                "name-0": "Super Governor 1",
+                "score-0": "1000",
+                "name-1": "Super Governor 2",
+                "score-1": "500",
+                "name-2": "Super Governor 3",
+                "score-2": "250",
+                "name-3": "Super Governor 4",
+                "score-3": "125",
+                "name-4": "Super Governor 5",
+                "score-4": "64",
             }
         )
 
-        self.last_gov_frame.grid(
-            row=0, column=2, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
+        self.last_batch_frame.grid(
+            row=0, column=1, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
         )
 
         self.start_scan_button = customtkinter.CTkButton(
             self, text="Start scan", command=self.start_scan
         )
-        self.start_scan_button.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+        self.start_scan_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
         self.end_scan_button = customtkinter.CTkButton(
             self, text="End scan", command=self.end_scan
         )
-        self.end_scan_button.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        self.end_scan_button.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
         self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
-        self.current_state.grid(row=2, column=2, padx=10, pady=(10, 0), sticky="ewns")
+        self.current_state.grid(row=2, column=1, padx=10, pady=(10, 0), sticky="ewns")
 
     def start_scan(self):
-        scan_options = self.scan_options_frame.get()
         options = self.options_frame.get_options()
         self.state_callback("Initializing")
         self.update_idletasks()
 
-        self.kingdom_scanner = KingdomScanner(
-            self.config, scan_options, options["port"]
-        )
-        self.kingdom_scanner.set_governor_callback(self.governor_callback)
-        self.kingdom_scanner.set_state_callback(self.state_callback)
-        self.options_frame.set_uuid(self.kingdom_scanner.run_id)
+        self.honor_scanner = HonorScanner(options["port"])
+        self.honor_scanner.set_batch_callback(self.governor_callback)
+        self.honor_scanner.set_state_callback(self.state_callback)
+        self.options_frame.set_uuid(self.honor_scanner.run_id)
         Thread(
-            target=self.kingdom_scanner.start_scan,
+            target=self.honor_scanner.start_scan,
             args=(
                 options["name"],
                 options["amount"],
-                options["resume"],
-                options["inactives"],
-                options["validate"],
-                options["reconstruct"],
             ),
         ).start()
 
     def end_scan(self):
-        self.kingdom_scanner.end_scan()
+        self.honor_scanner.end_scan()
 
-    def governor_callback(self, gov_data: GovernorData, extra_data: AdditionalData):
+    def governor_callback(
+        self, gov_data: List[GovernorData], extra_data: AdditionalData
+    ):
         # self.last_gov_frame.set(gov_info)
-        self.last_gov_frame.set(
+
+        batch_data: Dict[str, str | int] = {}
+        for index, gov in enumerate(gov_data):
+            batch_data.update({f"name-{index}": gov.name})
+            batch_data.update({f"score-{index}": to_int_or(gov.score, "Unknown")})
+
+        batch_data.update(
             {
-                "ID": gov_data.id,
-                "Name": gov_data.name,
-                "Power": to_int_or(gov_data.power, "Unknown"),
-                "Killpoints": to_int_or(gov_data.killpoints, "Unknown"),
-                "Dead": to_int_or(gov_data.dead, "Unknown"),
-                "T1 Kills": to_int_or(gov_data.t1_kills, "Unknown"),
-                "T2 Kills": to_int_or(gov_data.t2_kills, "Unknown"),
-                "T3 Kills": to_int_or(gov_data.t3_kills, "Unknown"),
-                "T4 Kills": to_int_or(gov_data.t4_kills, "Unknown"),
-                "T5 Kills": to_int_or(gov_data.t5_kills, "Unknown"),
-                "T4+5 Kills": to_int_or(gov_data.t45_kills(), "Unknown"),
-                "Total Kills": to_int_or(gov_data.total_kills(), "Unknown"),
-                "Ranged": to_int_or(gov_data.ranged_points, "Unknown"),
-                "Rss Assistance": to_int_or(gov_data.rss_assistance, "Unknown"),
-                "Rss Gathered": to_int_or(gov_data.rss_gathered, "Unknown"),
-                "Helps": to_int_or(gov_data.helps, "Unknown"),
-                "Alliance": gov_data.alliance,
-                "govs": f"{extra_data.current_governor} of {extra_data.target_governor}",
-                "skipped": extra_data.skipped_governors,
+                "govs": f"{extra_data.current_page * extra_data.govs_per_page} to {(extra_data.current_page + 1) * extra_data.govs_per_page} of {extra_data.target_governor}",
                 "time": extra_data.current_time,
                 "eta": extra_data.eta(),
             }
         )
+
+        self.last_batch_frame.set(batch_data)
 
     def state_callback(self, state):
         self.current_state.configure(text=state)

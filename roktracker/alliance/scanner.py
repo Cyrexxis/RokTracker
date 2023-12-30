@@ -19,6 +19,10 @@ def default_batch_callback(govs: List[GovernorData], extra: AdditionalData) -> N
     pass
 
 
+def default_state_callback(msg: str) -> None:
+    pass
+
+
 def default_output_handler(msg: str) -> None:
     console.log(msg)
     pass
@@ -44,6 +48,7 @@ class AllianceScanner:
         self.scan_path.mkdir(parents=True, exist_ok=True)
 
         self.batch_callback = default_batch_callback
+        self.state_callback = default_state_callback
         self.output_handler = default_output_handler
 
         self.adb_client = AdvancedAdbClient(
@@ -54,6 +59,9 @@ class AllianceScanner:
         self, cb: Callable[[List[GovernorData], AdditionalData], None]
     ) -> None:
         self.batch_callback = cb
+
+    def set_state_callback(self, cb: Callable[[str], None]):
+        self.state_callback = cb
 
     def set_output_handler(self, cb: Callable[[str], None]):
         self.output_handler = cb
@@ -141,7 +149,7 @@ class AllianceScanner:
                 gov_score = ocr_number(api, gov.score_img)
 
                 # fmt: off
-                gov_img_path = str(self.img_path / f"gov_name_{(6 * screen_number) + 1}.png")
+                gov_img_path = str(self.img_path / f"gov_name_{(6 * screen_number) + gov_number}.png")
                 cv2.imwrite(gov_img_path, gov.name_img_small)
                 # fmt: on
 
@@ -150,6 +158,7 @@ class AllianceScanner:
         return govs
 
     def start_scan(self, kingdom: str, amount: int):
+        self.state_callback("Initializing")
         self.screens_needed = int(math.ceil(amount / self.govs_per_screen))
 
         filename = f"Alliance{amount}-{self.start_date}-{kingdom}-[{self.run_id}].xlsx"
@@ -159,6 +168,8 @@ class AllianceScanner:
             str(self.scan_path / filename),
             self.start_date,
         )
+
+        self.state_callback("Scanning")
 
         for i in range(0, self.screens_needed):
             if self.stop_scan:
@@ -196,6 +207,8 @@ class AllianceScanner:
 
         for p in self.img_path.glob("gov_name*.png"):
             p.unlink()
+
+        self.state_callback("Scan finished")
 
         return
 
