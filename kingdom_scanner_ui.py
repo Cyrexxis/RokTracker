@@ -513,6 +513,8 @@ class App(customtkinter.CTk):
     def start_scan(self):
         scan_options = self.scan_options_frame.get()
         options = self.options_frame.get_options()
+        self.state_callback("Initializing")
+        self.update_idletasks()
 
         self.kingdom_scanner = KingdomScanner(
             self.config, scan_options, options["port"]

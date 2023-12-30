@@ -358,6 +358,8 @@ class App(customtkinter.CTk):
 
     def start_scan(self):
         options = self.options_frame.get_options()
+        self.state_callback("Initializing")
+        self.update_idletasks()
 
         self.honor_scanner = HonorScanner(options["port"])
         self.honor_scanner.set_batch_callback(self.governor_callback)

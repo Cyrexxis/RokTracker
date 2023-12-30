@@ -360,6 +360,8 @@ class App(customtkinter.CTk):
 
     def start_scan(self):
         options = self.options_frame.get_options()
+        self.state_callback("Initializing")
+        self.update_idletasks()
 
         self.alliance_scanner = AllianceScanner(options["port"])
         self.alliance_scanner.set_batch_callback(self.governor_callback)
