@@ -568,4 +568,5 @@ class App(customtkinter.CTk):
 
 
 app = App()
+app.report_callback_exception = handle_exception
 app.mainloop()
