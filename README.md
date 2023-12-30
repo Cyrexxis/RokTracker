@@ -62,7 +62,7 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 3. To use tesserocr you also need to download the trained tesseract models [https://github.com/tesseract-ocr/tessdata](https://github.com/tesseract-ocr/tessdata)
 4. Adb Platform Tools Download and Extract(See Important Notes) [https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip](https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip)
 5. On Windows "Microsoft Build Tools für C++" might be required for some of the python packages [https://visualstudio.microsoft.com/de/visual-cpp-build-tools/](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/)
-6. Tested on Windows 10 and 11, could work on Windows 7
+6. Tested on Windows 10 and 11, could work on Windows 7. Tested with Python 3.11.0 and 3.11.7.
 
 ## Setup
 

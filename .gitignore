@@ -127,7 +127,7 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
+venv*/
 ENV/
 env.bak/
 venv.bak/
@@ -613,5 +613,11 @@ platform-tools/
 alliance.jpeg
 gov_info.png
 position_images/
-tmp/
 manual_review/
+temp_images/
+scans/
+scans_alliance/
+scans_honor/
+scans_kingdom/
+deps/
+!deps/inputs

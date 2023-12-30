@@ -1,32 +1,44 @@
-from typing import Dict, List, Optional, Tuple, Union
-from pathlib import Path
-from validator import validate_installation
+import logging
+from dummy_root import get_app_root
+from roktracker.utils.check_python import check_py_version
+
+logging.basicConfig(
+    filename=str(get_app_root() / "kingdom-scanner.log"),
+    encoding="utf-8",
+    format="%(asctime)s %(module)s %(levelname)s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+check_py_version((3, 11))
+
 import customtkinter
 import json
+import logging
 import sys
-from rok_scanner import (
-    generate_random_id,
-    start_from_gui,
-    end_scan,
-    get_bluestacks_port,
-)
+
+from dummy_root import get_app_root
+from roktracker.kingdom.additional_data import AdditionalData
+from roktracker.kingdom.governor_data import GovernorData
+from roktracker.kingdom.scanner import KingdomScanner
+from roktracker.utils.validator import validate_installation
+from roktracker.utils.adb import get_bluestacks_port
 from threading import Thread
+from typing import Dict, List
 
-if not validate_installation():
-    exit(2)
 
-if getattr(sys, "frozen", False):
-    # If the application is run as a bundle, the PyInstaller bootloader
-    # extends the sys module by a flag frozen=True and sets the app
-    # path into variable _MEIPASS'.
-    print("Bundle detected!")
-    root_dir = Path(sys.executable).parent
-else:
-    root_dir = Path(__file__).parent
+logger = logging.getLogger(__name__)
 
-config_file = open(root_dir / "config.json")
-config = json.load(config_file)
-config_file.close()
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+
+sys.excepthook = handle_exception
 
 customtkinter.set_appearance_mode(
     "system"
@@ -64,7 +76,7 @@ class CheckboxFrame(customtkinter.CTkTabview):
             ],
         )
         self.add(groupName)
-        self.values = list(filter(lambda x: x["group"] == groupName, values))
+        self.values = list(filter(lambda x: x["group"] == groupName, values))  # type: ignore
         self.checkboxes: List[customtkinter.CTkCheckBox] = []
 
         for i, value in enumerate(self.values):
@@ -92,8 +104,10 @@ class CheckboxFrame(customtkinter.CTkTabview):
 
 
 class BasicOptionsFame(customtkinter.CTkFrame):
-    def __init__(self, master):
+    def __init__(self, master, config):
         super().__init__(master)
+        self.config = config
+
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=2)
         self.scan_uuid_label = customtkinter.CTkLabel(self, text="Scan UUID:", height=1)
@@ -236,10 +250,10 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_text.delete(0, len(self.adb_port_text.get()))
 
         if name != "":
-            self.adb_port_text.insert(0, get_bluestacks_port(name))
+            self.adb_port_text.insert(0, get_bluestacks_port(name, self.config))
         else:
             self.adb_port_text.insert(
-                0, get_bluestacks_port(self.bluestacks_instance_text.get())
+                0, get_bluestacks_port(self.bluestacks_instance_text.get(), self.config)
             )
         return True
 
@@ -395,15 +409,20 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("RoK Tracker by Cyrexxis")
+        if not validate_installation():
+            sys.exit(2)
+
+        config_file = open(get_app_root() / "config.json")
+        self.config = json.load(config_file)
+        config_file.close()
+
+        self.title("Kingdom Scanner by Cyrexxis")
         self.geometry("760x535")
         self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
         self.grid_rowconfigure(0, weight=1)
 
-        self.options_frame = BasicOptionsFame(
-            self,
-        )
+        self.options_frame = BasicOptionsFame(self, self.config)
         self.options_frame.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn")
 
         self.scan_options_frame = ScanOptionsFrame(
@@ -492,42 +511,55 @@ class App(customtkinter.CTk):
         self.current_state.grid(row=2, column=2, padx=10, pady=(10, 0), sticky="ewns")
 
     def start_scan(self):
-        self.options_frame.set_uuid(generate_random_id(8))
-        options = self.options_frame.get_options()
         scan_options = self.scan_options_frame.get()
+        options = self.options_frame.get_options()
+
+        self.kingdom_scanner = KingdomScanner(
+            self.config, scan_options, options["port"]
+        )
+        self.kingdom_scanner.set_governor_callback(self.governor_callback)
+        self.kingdom_scanner.set_state_callback(self.state_callback)
+        self.options_frame.set_uuid(self.kingdom_scanner.run_id)
         Thread(
-            target=start_from_gui,
-            args=(options, scan_options, self.governor_callback, self.state_callback),
+            target=self.kingdom_scanner.start_scan,
+            args=(
+                options["name"],
+                options["amount"],
+                options["resume"],
+                options["inactives"],
+                options["validate"],
+                options["reconstruct"],
+            ),
         ).start()
 
     def end_scan(self):
-        end_scan()
+        self.kingdom_scanner.end_scan()
 
-    def governor_callback(self, gov_info):
+    def governor_callback(self, gov_data: GovernorData, extra_data: AdditionalData):
         # self.last_gov_frame.set(gov_info)
         self.last_gov_frame.set(
             {
-                "ID": gov_info["id"],
-                "Name": gov_info["name"],
-                "Power": to_int_or(gov_info["power"], "Unknown"),
-                "Killpoints": to_int_or(gov_info["killpoints"], "Unknown"),
-                "Dead": to_int_or(gov_info["dead"], "Unknown"),
-                "T1 Kills": to_int_or(gov_info["kills_t1"], "Unknown"),
-                "T2 Kills": to_int_or(gov_info["kills_t2"], "Unknown"),
-                "T3 Kills": to_int_or(gov_info["kills_t3"], "Unknown"),
-                "T4 Kills": to_int_or(gov_info["kills_t4"], "Unknown"),
-                "T5 Kills": to_int_or(gov_info["kills_t5"], "Unknown"),
-                "T4+5 Kills": to_int_or(gov_info["kills_t45"], "Unknown"),
-                "Total Kills": to_int_or(gov_info["kills_total"], "Unknown"),
-                "Ranged": to_int_or(gov_info["ranged_points"], "Unknown"),
-                "Rss Assistance": to_int_or(gov_info["rss_assistance"], "Unknown"),
-                "Rss Gathered": to_int_or(gov_info["rss_gathered"], "Unknown"),
-                "Helps": to_int_or(gov_info["helps"], "Unknown"),
-                "Alliance": gov_info["alliance"].rstrip(),
-                "govs": gov_info["govs"],
-                "skipped": gov_info["skipped"],
-                "time": gov_info["time"],
-                "eta": gov_info["eta"],
+                "ID": gov_data.id,
+                "Name": gov_data.name,
+                "Power": to_int_or(gov_data.power, "Unknown"),
+                "Killpoints": to_int_or(gov_data.killpoints, "Unknown"),
+                "Dead": to_int_or(gov_data.dead, "Unknown"),
+                "T1 Kills": to_int_or(gov_data.t1_kills, "Unknown"),
+                "T2 Kills": to_int_or(gov_data.t2_kills, "Unknown"),
+                "T3 Kills": to_int_or(gov_data.t3_kills, "Unknown"),
+                "T4 Kills": to_int_or(gov_data.t4_kills, "Unknown"),
+                "T5 Kills": to_int_or(gov_data.t5_kills, "Unknown"),
+                "T4+5 Kills": to_int_or(gov_data.t45_kills(), "Unknown"),
+                "Total Kills": to_int_or(gov_data.total_kills(), "Unknown"),
+                "Ranged": to_int_or(gov_data.ranged_points, "Unknown"),
+                "Rss Assistance": to_int_or(gov_data.rss_assistance, "Unknown"),
+                "Rss Gathered": to_int_or(gov_data.rss_gathered, "Unknown"),
+                "Helps": to_int_or(gov_data.helps, "Unknown"),
+                "Alliance": gov_data.alliance,
+                "govs": f"{extra_data.current_governor} of {extra_data.target_governor}",
+                "skipped": extra_data.skipped_governors,
+                "time": extra_data.current_time,
+                "eta": extra_data.eta(),
             }
         )
 
@@ -536,4 +568,5 @@ class App(customtkinter.CTk):
 
 
 app = App()
+app.report_callback_exception = handle_exception
 app.mainloop()
