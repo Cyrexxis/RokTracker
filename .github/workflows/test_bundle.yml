@@ -1,9 +1,7 @@
-name: Package Application with Pyinstaller and Release
+name: Package Application with Pyinstaller
 
-on:
-  push:
-    tags:
-      - "v*.*.*"
+on: 
+    workflow_dispatch:
 
 jobs:
   build-win64:
@@ -56,20 +54,3 @@ jobs:
         with:
           name: RoK Tracker
           path: "RoK Tracker.zip"
-
-  release:
-    runs-on: ubuntu-latest
-    needs:
-      - build-win64
-
-    steps:
-      - name: Get compiled executables
-        uses: actions/download-artifact@v3
-        with:
-          name: RoK Tracker
-
-      - name: Release
-        uses: softprops/action-gh-release@v0.1.15
-        with:
-          files: |
-            RoK Tracker.zip
