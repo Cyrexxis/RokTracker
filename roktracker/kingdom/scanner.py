@@ -451,6 +451,8 @@ class KingdomScanner:
         validate_kills: bool,
         reconstruct_fails: bool,
     ):
+        self.state_callback("Initializing")
+        self.adb_client.start_adb()
         if track_inactives:
             self.inactive_path.mkdir(parents=True, exist_ok=True)
 
@@ -581,28 +583,10 @@ class KingdomScanner:
                     else:
                         self.save_failed(gov_data, False)
 
-            # fmt: off
             # Write results in excel file
             current_row = i + 2 - j
-            excel.setCell("ID", current_row, to_int_check(gov_data.id))
-            excel.setCell("Name", current_row, gov_data.name)
-            excel.setCell("Power", current_row, to_int_check(gov_data.power))
-            excel.setCell("Killpoints", current_row, to_int_check(gov_data.killpoints))
-            excel.setCell("Deads", current_row, to_int_check(gov_data.dead))
-            excel.setCell("T1 Kills", current_row, to_int_check(gov_data.t1_kills))
-            excel.setCell("T2 Kills", current_row, to_int_check(gov_data.t2_kills))
-            excel.setCell("T3 Kills", current_row, to_int_check(gov_data.t3_kills))
-            excel.setCell("T4 Kills", current_row, to_int_check(gov_data.t4_kills))
-            excel.setCell("T5 Kills", current_row, to_int_check(gov_data.t5_kills))
-            excel.setCell("Total Kills", current_row, to_int_check(gov_data.total_kills()))
-            excel.setCell("T45 Kills", current_row, to_int_check(gov_data.t45_kills()))
-            excel.setCell("Ranged", current_row, to_int_check(gov_data.ranged_points))
-            excel.setCell("Rss Gathered", current_row, to_int_check(gov_data.rss_gathered))
-            excel.setCell("Rss Assistance", current_row, to_int_check(gov_data.rss_assistance))
-            excel.setCell("Helps", current_row, to_int_check(gov_data.helps))
-            excel.setCell("Alliance", current_row, gov_data.alliance.rstrip())
-            # fmt: on
 
+            excel.write_governor(current_row, gov_data)
             excel.save()
 
             additional_info = AdditionalData(

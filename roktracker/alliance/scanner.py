@@ -159,6 +159,7 @@ class AllianceScanner:
 
     def start_scan(self, kingdom: str, amount: int):
         self.state_callback("Initializing")
+        self.adb_client.start_adb()
         self.screens_needed = int(math.ceil(amount / self.govs_per_screen))
 
         filename = f"Alliance{amount}-{self.start_date}-{kingdom}-[{self.run_id}].xlsx"
