@@ -145,7 +145,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_text = customtkinter.CTkEntry(
             self,
             validate="all",
-            validatecommand=(self.int_validation, "%P"),
+            validatecommand=(self.int_validation, "%P", True),
         )
         self.adb_port_text.grid(row=3, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.bluestacks_instance_text.configure(
@@ -160,7 +160,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_amount_text = customtkinter.CTkEntry(
             self,
             validate="all",
-            validatecommand=(self.int_validation, "%P"),
+            validatecommand=(self.int_validation, "%P", True),
         )
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))

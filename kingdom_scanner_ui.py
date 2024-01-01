@@ -146,7 +146,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_text = customtkinter.CTkEntry(
             self,
             validate="all",
-            validatecommand=(self.int_validation, "%P"),
+            validatecommand=(self.int_validation, "%P", True),
         )
         self.adb_port_text.grid(row=3, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.bluestacks_instance_text.configure(
@@ -161,7 +161,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_amount_text = customtkinter.CTkEntry(
             self,
             validate="all",
-            validatecommand=(self.int_validation, "%P"),
+            validatecommand=(self.int_validation, "%P", True),
         )
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
@@ -247,7 +247,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.info_close_text = customtkinter.CTkEntry(
             self,
             validate="all",
-            validatecommand=(self.float_validation, "%P"),
+            validatecommand=(self.float_validation, "%P", True),
         )
         self.info_close_text.grid(row=10, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.info_close_text.insert(0, str(config["scan"]["timings"]["info_close"]))
@@ -259,7 +259,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.gov_close_text = customtkinter.CTkEntry(
             self,
             validate="all",
-            validatecommand=(self.float_validation, "%P"),
+            validatecommand=(self.float_validation, "%P", True),
         )
         self.gov_close_text.grid(row=11, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.gov_close_text.insert(0, str(config["scan"]["timings"]["gov_close"]))
@@ -582,6 +582,9 @@ class App(customtkinter.CTk):
         self.start_scan_button.configure(state="disabled")
         scan_options = self.scan_options_frame.get()
         options = self.options_frame.get_options()
+
+        self.config["scan"]["timings"]["info_close"] = options["info_time"]
+        self.config["scan"]["timings"]["gov_close"] = options["gov_time"]
 
         self.kingdom_scanner = KingdomScanner(
             self.config, scan_options, options["port"]

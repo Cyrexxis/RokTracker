@@ -11,7 +11,10 @@ def to_int_check(element) -> int:
         return int(0)
 
 
-def is_string_int(element: str) -> bool:
+def is_string_int(element: str, allow_empty=False) -> bool:
+    if allow_empty and element == "":
+        return True
+
     try:
         _ = int(element)
         return True
@@ -19,7 +22,10 @@ def is_string_int(element: str) -> bool:
         return False
 
 
-def is_string_float(element: str) -> bool:
+def is_string_float(element: str, allow_empty=False) -> bool:
+    if allow_empty and element == "":
+        return True
+
     try:
         _ = float(element)
         return True
