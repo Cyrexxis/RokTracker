@@ -1,14 +1,24 @@
+from dataclasses import dataclass
 import os
 import sys
 import glob
 import logging
 from pathlib import Path
+from typing import List
 from dummy_root import get_app_root
+from roktracker.utils.console import console
 
 logger = logging.getLogger(__name__)
 
 
-def validate_installation() -> bool:
+@dataclass
+class ValidationResult:
+    success: bool
+    messages: List[str]
+
+
+def validate_installation() -> ValidationResult:
+    result: List[str] = []
     root_dir = get_app_root()
 
     tess_dir = root_dir / "deps" / "tessdata"
@@ -21,47 +31,51 @@ def validate_installation() -> bool:
         tessdata_present = True
         available_trainingdata = glob.glob(str(tess_dir / "*.traineddata"))
         if len(available_trainingdata) == 0:
-            print("Tess dir found, but no training data is present")
-            logger.critical("Tess dir found, but no training data is present")
-            print(
-                f"It is expected that you put the training files for tesseract in this folder: {tess_dir}"
-            )
-            logger.info(
-                f"It is expected that you put the training files for tesseract in this folder: {tess_dir}"
-            )
+            title = "Tess dir found, but no training data is present"
+            result.append(title)
+            console.log(title)
+            logger.critical(title)
+
+            message = f"It is expected that you put the training files for tesseract in this folder: {tess_dir}"
+            result.append(message)
+            console.log(message)
+            logger.info(message)
             tessdata_present = False
     else:
-        print("Tess dir is missing")
-        logger.critical("Tess dir is missing")
-        print(
-            f"It is expected that you create the folder ({tess_dir}) and put the training files for tesseract in it."
-        )
-        logger.info(
-            f"It is expected that you create the folder ({tess_dir}) and put the training files for tesseract in it."
-        )
+        title = "Tess dir is missing"
+        result.append(title)
+        console.log(title)
+        logger.critical(title)
+
+        message = f"It is expected that you create the folder ({tess_dir}) and put the training files for tesseract in it."
+        result.append(message)
+        console.log(message)
+        logger.info(message)
         tessdata_present = False
 
     if os.path.exists(adb_dir):
         adb_present = True
         if not os.path.isfile(adb_dir / "adb.exe"):
-            print("Adb dir found, but adb.exe missing")
-            logger.critical("Adb dir found, but adb.exe missing")
-            print(
-                f"It is expected that your adb.exe file is located in this folder: {adb_dir}"
-            )
-            logger.info(
-                f"It is expected that your adb.exe file is located in this folder: {adb_dir}"
-            )
+            title = "Adb dir found, but adb.exe missing"
+            result.append(title)
+            console.log(title)
+            logger.critical(title)
+
+            message = f"It is expected that your adb.exe file is located in this folder: {adb_dir}"
+            result.append(message)
+            console.log(message)
+            logger.info(message)
             adb_present = False
     else:
-        print("Adb dir is missing")
-        logger.critical("Adb dir is missing")
-        print(
-            f"It is expected that you create the folder ({adb_dir}) and put extract the downloaded platform tools into it."
-        )
-        logger.info(
-            f"It is expected that you create the folder ({adb_dir}) and put extract the downloaded platform tools into it."
-        )
+        title = "Adb dir is missing"
+        result.append(title)
+        console.log(title)
+        logger.critical(title)
+
+        message = f"It is expected that you create the folder ({adb_dir}) and put extract the downloaded platform tools into it."
+        result.append(message)
+        console.log(message)
+        logger.info(message)
         adb_present = False
 
-    return tessdata_present and adb_present
+    return ValidationResult(tessdata_present and adb_present, result)

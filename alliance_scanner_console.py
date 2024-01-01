@@ -52,7 +52,7 @@ def ask_abort(alliance_scanner: AllianceScanner) -> None:
 
 
 def main():
-    if not validate_installation():
+    if not validate_installation().success:
         sys.exit(2)
 
     root_dir = get_app_root()

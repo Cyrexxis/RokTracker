@@ -4,6 +4,7 @@ from roktracker.alliance.additional_data import AdditionalData
 from roktracker.alliance.governor_data import GovernorData
 from roktracker.honor.scanner import HonorScanner
 from roktracker.utils.check_python import check_py_version
+from roktracker.utils.gui import InfoDialog
 
 logging.basicConfig(
     filename=str(get_app_root() / "honor-scanner.log"),
@@ -306,8 +307,15 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        if not validate_installation():
-            sys.exit(2)
+        file_validation = validate_installation()
+        if not file_validation.success:
+            self.withdraw()
+            InfoDialog(
+                "Validation failed",
+                "\n".join(file_validation.messages),
+                "760x200",
+                self.close_program,
+            )
 
         config_file = open(get_app_root() / "config.json")
         self.config = json.load(config_file)
@@ -355,6 +363,9 @@ class App(customtkinter.CTk):
 
         self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
         self.current_state.grid(row=2, column=1, padx=10, pady=(10, 0), sticky="ewns")
+
+    def close_program(self):
+        self.quit()
 
     def start_scan(self):
         Thread(

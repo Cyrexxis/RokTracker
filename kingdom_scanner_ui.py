@@ -1,6 +1,7 @@
 import logging
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
+from roktracker.utils.gui import ConfirmDialog, InfoDialog
 
 logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
@@ -409,8 +410,15 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        if not validate_installation():
-            sys.exit(2)
+        file_validation = validate_installation()
+        if not file_validation.success:
+            self.withdraw()
+            InfoDialog(
+                "Validation failed",
+                "\n".join(file_validation.messages),
+                "760x200",
+                self.close_program,
+            )
 
         config_file = open(get_app_root() / "config.json")
         self.config = json.load(config_file)
@@ -510,6 +518,14 @@ class App(customtkinter.CTk):
         self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
         self.current_state.grid(row=2, column=2, padx=10, pady=(10, 0), sticky="ewns")
 
+    def ask_confirm(self, msg) -> bool:
+        result = ConfirmDialog("No Governor found", msg, "200x110").get_input()
+        self.focus()
+        return result
+
+    def close_program(self):
+        self.quit()
+
     def start_scan(self):
         Thread(
             target=self.launch_scanner,
@@ -524,6 +540,7 @@ class App(customtkinter.CTk):
         )
         self.kingdom_scanner.set_governor_callback(self.governor_callback)
         self.kingdom_scanner.set_state_callback(self.state_callback)
+        self.kingdom_scanner.set_continue_handler(self.ask_confirm)
         self.options_frame.set_uuid(self.kingdom_scanner.run_id)
         self.kingdom_scanner.start_scan(
             options["name"],
