@@ -511,10 +511,13 @@ class App(customtkinter.CTk):
         self.current_state.grid(row=2, column=2, padx=10, pady=(10, 0), sticky="ewns")
 
     def start_scan(self):
+        Thread(
+            target=self.launch_scanner,
+        ).start()
+
+    def launch_scanner(self):
         scan_options = self.scan_options_frame.get()
         options = self.options_frame.get_options()
-        self.state_callback("Initializing")
-        self.update_idletasks()
 
         self.kingdom_scanner = KingdomScanner(
             self.config, scan_options, options["port"]
@@ -522,20 +525,23 @@ class App(customtkinter.CTk):
         self.kingdom_scanner.set_governor_callback(self.governor_callback)
         self.kingdom_scanner.set_state_callback(self.state_callback)
         self.options_frame.set_uuid(self.kingdom_scanner.run_id)
-        Thread(
-            target=self.kingdom_scanner.start_scan,
-            args=(
-                options["name"],
-                options["amount"],
-                options["resume"],
-                options["inactives"],
-                options["validate"],
-                options["reconstruct"],
-            ),
-        ).start()
+        self.kingdom_scanner.start_scan(
+            options["name"],
+            options["amount"],
+            options["resume"],
+            options["inactives"],
+            options["validate"],
+            options["reconstruct"],
+        )
+
+        # Reset end scan button
+        self.end_scan_button.configure(state="normal", text="End scan")
 
     def end_scan(self):
         self.kingdom_scanner.end_scan()
+        self.end_scan_button.configure(
+            state="disabled", text="Abort after next governor"
+        )
 
     def governor_callback(self, gov_data: GovernorData, extra_data: AdditionalData):
         # self.last_gov_frame.set(gov_info)

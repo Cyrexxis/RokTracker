@@ -1,6 +1,7 @@
 from openpyxl import Workbook
 from openpyxl.styles import Font
-from roktracker.utils.general import next_alpha
+from roktracker.kingdom.governor_data import GovernorData
+from roktracker.utils.general import next_alpha, to_int_check
 
 
 class ExcelHandler:
@@ -103,6 +104,29 @@ class ExcelHandler:
     def setCell(self, name, row, value):
         if name in self.colNames:
             self.sheet[str(self.colNames[name]) + str(row)] = value
+
+    def write_governor(self, row: int, gov_data: GovernorData) -> None:
+        # fmt: off
+        # Write results in excel file
+        self.setCell("ID", row, to_int_check(gov_data.id))
+        self.setCell("Name", row, gov_data.name)
+        self.setCell("Power", row, to_int_check(gov_data.power))
+        self.setCell("Killpoints", row, to_int_check(gov_data.killpoints))
+        self.setCell("Deads", row, to_int_check(gov_data.dead))
+        self.setCell("T1 Kills", row, to_int_check(gov_data.t1_kills))
+        self.setCell("T2 Kills", row, to_int_check(gov_data.t2_kills))
+        self.setCell("T3 Kills", row, to_int_check(gov_data.t3_kills))
+        self.setCell("T4 Kills", row, to_int_check(gov_data.t4_kills))
+        self.setCell("T5 Kills", row, to_int_check(gov_data.t5_kills))
+        self.setCell("Total Kills", row, to_int_check(gov_data.total_kills()))
+        self.setCell("T45 Kills", row, to_int_check(gov_data.t45_kills()))
+        self.setCell("Ranged", row, to_int_check(gov_data.ranged_points))
+        self.setCell("Rss Gathered", row, to_int_check(gov_data.rss_gathered))
+        self.setCell("Rss Assistance", row, to_int_check(gov_data.rss_assistance))
+        self.setCell("Helps", row, to_int_check(gov_data.helps))
+        self.setCell("Alliance", row, gov_data.alliance.rstrip())
+
+    # fmt: on
 
     def save(self):
         self.wb.save(self.save_path)

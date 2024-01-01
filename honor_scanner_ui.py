@@ -357,24 +357,31 @@ class App(customtkinter.CTk):
         self.current_state.grid(row=2, column=1, padx=10, pady=(10, 0), sticky="ewns")
 
     def start_scan(self):
+        Thread(
+            target=self.launch_scanner,
+        ).start()
+
+    def launch_scanner(self):
         options = self.options_frame.get_options()
-        self.state_callback("Initializing")
-        self.update_idletasks()
 
         self.honor_scanner = HonorScanner(options["port"])
         self.honor_scanner.set_batch_callback(self.governor_callback)
         self.honor_scanner.set_state_callback(self.state_callback)
         self.options_frame.set_uuid(self.honor_scanner.run_id)
-        Thread(
-            target=self.honor_scanner.start_scan,
-            args=(
-                options["name"],
-                options["amount"],
-            ),
-        ).start()
+
+        self.honor_scanner.start_scan(
+            options["name"],
+            options["amount"],
+        )
+
+        # Reset end scan button
+        self.end_scan_button.configure(state="normal", text="End scan")
 
     def end_scan(self):
         self.honor_scanner.end_scan()
+        self.end_scan_button.configure(
+            state="disabled", text="Abort after next governor"
+        )
 
     def governor_callback(
         self, gov_data: List[GovernorData], extra_data: AdditionalData

@@ -32,11 +32,14 @@ def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
 
 
 class AdvancedAdbClient:
-    def __init__(self, path: str, port: int):
+    def __init__(self, path: str, port: int, start_immediately=False):
         self.server_port = 0
         self.client_port = port
         self.adb_path = path
-        self.device = self.start_adb()
+        self.started = start_immediately
+
+        if start_immediately:
+            self.start_adb()
 
     def get_free_port(self) -> int:
         s = socket.socket()
@@ -57,9 +60,7 @@ class AdvancedAdbClient:
         )
         console.print(process.stdout)
 
-    def start_adb(self) -> AdbClient:
-        global adb_server_port
-        global device
+    def start_adb(self) -> None:
         self.server_port = self.get_free_port()
         console.print("Starting adb server and connecting to adb device...")
         process = subprocess.run(
@@ -81,7 +82,7 @@ class AdvancedAdbClient:
             console.log("No device connected, aborting.")
             self.kill_adb()
             sys.exit(0)
-        return adb_client
+        self.device = adb_client
 
     def secure_adb_shell(self, command_to_execute: str) -> str:
         result = ""
