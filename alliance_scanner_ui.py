@@ -26,7 +26,7 @@ import threading
 from dummy_root import get_app_root
 from roktracker.utils.validator import validate_installation
 from roktracker.utils.adb import get_bluestacks_port
-from threading import Thread
+from threading import ExceptHookArgs, Thread
 from typing import Dict, List
 
 
@@ -46,8 +46,12 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     )
 
 
+def handle_thread_exception(exc: ExceptHookArgs):
+    handle_exception(exc.exc_type, exc.exc_value, exc.exc_traceback)
+
+
 sys.excepthook = handle_exception
-threading.excepthook = handle_exception
+threading.excepthook = handle_thread_exception
 
 customtkinter.set_appearance_mode(
     "system"
