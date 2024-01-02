@@ -55,7 +55,7 @@ def ask_continue(msg: str) -> bool:
 
 
 def main():
-    if not validate_installation():
+    if not validate_installation().success:
         sys.exit(2)
     root_dir = get_app_root()
     config_file = open(root_dir / "config.json")

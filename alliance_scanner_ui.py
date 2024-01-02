@@ -4,6 +4,8 @@ from roktracker.alliance.additional_data import AdditionalData
 from roktracker.alliance.governor_data import GovernorData
 from roktracker.alliance.scanner import AllianceScanner
 from roktracker.utils.check_python import check_py_version
+from roktracker.utils.general import is_string_int
+from roktracker.utils.gui import InfoDialog
 
 logging.basicConfig(
     filename=str(get_app_root() / "alliance-scanner.log"),
@@ -108,6 +110,8 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         super().__init__(master)
         self.config = config
 
+        self.int_validation = self.register(is_string_int)
+
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=2)
         self.scan_uuid_label = customtkinter.CTkLabel(self, text="Scan UUID:", height=1)
@@ -138,7 +142,11 @@ class BasicOptionsFame(customtkinter.CTkFrame):
 
         self.adb_port_label = customtkinter.CTkLabel(self, text="Adb port:", height=1)
         self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.adb_port_text = customtkinter.CTkEntry(self)  # TODO: add validation
+        self.adb_port_text = customtkinter.CTkEntry(
+            self,
+            validate="all",
+            validatecommand=(self.int_validation, "%P", True),
+        )
         self.adb_port_text.grid(row=3, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.bluestacks_instance_text.configure(
             validatecommand=(self.register(self.update_port), "%P"), validate="key"
@@ -149,7 +157,11 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="People to scan:", height=1
         )
         self.scan_amount_label.grid(row=4, column=0, padx=10, pady=(10, 0), sticky="w")
-        self.scan_amount_text = customtkinter.CTkEntry(self)  # TODO: add validation
+        self.scan_amount_text = customtkinter.CTkEntry(
+            self,
+            validate="all",
+            validatecommand=(self.int_validation, "%P", True),
+        )
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
 
@@ -174,6 +186,24 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             "port": int(self.adb_port_text.get()),
             "amount": int(self.scan_amount_text.get()),
         }
+
+    def options_valid(self) -> bool:
+        val_errors: List[str] = []
+
+        if not is_string_int(self.adb_port_text.get()):
+            val_errors.append("Adb port invalid")
+
+        if not is_string_int(self.scan_amount_text.get()):
+            val_errors.append("People to scan invalid")
+
+        if len(val_errors) > 0:
+            InfoDialog(
+                "Invalid input",
+                "\n".join(val_errors),
+                f"200x{100 + len(val_errors) * 12}",
+            )
+
+        return len(val_errors) == 0
 
 
 class ScanOptionsFrame(customtkinter.CTkFrame):
@@ -306,8 +336,15 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        if not validate_installation():
-            sys.exit(2)
+        file_validation = validate_installation()
+        if not file_validation.success:
+            self.withdraw()
+            InfoDialog(
+                "Validation failed",
+                "\n".join(file_validation.messages),
+                "760x200",
+                self.close_program,
+            )
 
         config_file = open(get_app_root() / "config.json")
         self.config = json.load(config_file)
@@ -358,14 +395,21 @@ class App(customtkinter.CTk):
         self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
         self.current_state.grid(row=2, column=1, padx=10, pady=(10, 0), sticky="ewns")
 
+    def close_program(self):
+        self.quit()
+
     def start_scan(self):
         Thread(
             target=self.launch_scanner,
         ).start()
 
     def launch_scanner(self):
+        if not self.options_frame.options_valid():
+            return
+
+        self.start_scan_button.configure(state="disabled")
         options = self.options_frame.get_options()
-        
+
         self.alliance_scanner = AllianceScanner(options["port"])
         self.alliance_scanner.set_batch_callback(self.governor_callback)
         self.alliance_scanner.set_state_callback(self.state_callback)
