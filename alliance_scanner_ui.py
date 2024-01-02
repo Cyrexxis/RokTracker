@@ -21,6 +21,7 @@ import customtkinter
 import json
 import logging
 import sys
+import threading
 
 from dummy_root import get_app_root
 from roktracker.utils.validator import validate_installation
@@ -38,9 +39,15 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         return
 
     logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+    InfoDialog(
+        "Error",
+        "An error occured, see the log file for more info.\nYou probably have to restart this application.",
+        "300x140",
+    )
 
 
 sys.excepthook = handle_exception
+threading.excepthook = handle_exception
 
 customtkinter.set_appearance_mode(
     "system"

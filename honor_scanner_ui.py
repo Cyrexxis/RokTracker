@@ -1,4 +1,5 @@
 import logging
+import threading
 from dummy_root import get_app_root
 from roktracker.alliance.additional_data import AdditionalData
 from roktracker.alliance.governor_data import GovernorData
@@ -25,7 +26,7 @@ import sys
 from dummy_root import get_app_root
 from roktracker.utils.validator import validate_installation
 from roktracker.utils.adb import get_bluestacks_port
-from threading import Thread
+from threading import ExceptHookArgs, Thread
 from typing import Dict, List
 
 
@@ -38,9 +39,19 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         return
 
     logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+    InfoDialog(
+        "Error",
+        "An error occured, see the log file for more info.\nYou probably have to restart this application.",
+        "300x140",
+    )
+
+
+def handle_thread_exception(exc: ExceptHookArgs):
+    handle_exception(exc.exc_type, exc.exc_value, exc.exc_traceback)
 
 
 sys.excepthook = handle_exception
+threading.excepthook = handle_thread_exception
 
 customtkinter.set_appearance_mode(
     "system"
