@@ -399,6 +399,7 @@ class App(customtkinter.CTk):
 
         # Reset end scan button
         self.end_scan_button.configure(state="normal", text="End scan")
+        self.start_scan_button.configure(state="normal")
 
     def end_scan(self):
         self.honor_scanner.end_scan()

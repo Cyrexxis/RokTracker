@@ -21,7 +21,7 @@ def print_batch(govs: List[GovernorData], extra: AdditionalData) -> None:
         show_header=True,
         show_footer=True,
     )
-    table.add_column("Governor Name", "Approx time remaining\nSkipped", style="magenta")
+    table.add_column("Governor Name", "Approx time remaining", style="magenta")
     table.add_column("Score", extra.eta(), style="cyan")
 
     for governor in govs:

@@ -624,7 +624,10 @@ class App(customtkinter.CTk):
         )
 
     def governor_callback(self, gov_data: GovernorData, extra_data: AdditionalData):
-        # self.last_gov_frame.set(gov_info)
+        skipped_text = f"{extra_data.skipped_governors} skips"
+        if extra_data.skipped_governors == 1:
+            skipped_text = f"{extra_data.skipped_governors} skip"
+
         self.last_gov_frame.set(
             {
                 "ID": gov_data.id,
@@ -645,7 +648,7 @@ class App(customtkinter.CTk):
                 "Helps": to_int_or(gov_data.helps, "Unknown"),
                 "Alliance": gov_data.alliance,
                 "govs": f"{extra_data.current_governor} of {extra_data.target_governor}",
-                "skipped": extra_data.skipped_governors,
+                "skipped": skipped_text,
                 "time": extra_data.current_time,
                 "eta": extra_data.eta(),
             }
