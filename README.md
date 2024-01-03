@@ -1,9 +1,12 @@
-# RokTracker
+# Rok Tracker
 
-**Version 3 is now released! The biggest new feature is a brand new graphical user interface as well as better configurability. The alliance and honor scan scripts are currently not maintained and are still the same as version 1.**
+## Latest Changes
+* Updated Alliance and Honor scanner and added GUI for those
+* Improved GUI by showing the user messages if something isn't right
+* Now checking if all files are at the expected places
+* Improved logging to make error finding easier
 
-> [!IMPORTANT]  
-> There are now two ways to run the scanner. One way is to download the compiled exe file and the other is the old way to run the python script manually. Also, you will have to move some of the dependencies to a different folder if you are updating.
+## Summary
 
 Open Source Rise of Kingdoms Stats Management Tool. Track TOP X Players in kingdom / alliance / honor leaderboard. Depending on what you scan the resulting .xlsx will look different:
 
@@ -13,7 +16,10 @@ For the honor and alliance rankings only the governor name and the score will be
 
 This is a heavily modified version of the original tool from [nikolakis1919](https://github.com/nikolakis1919) in the repository [https://github.com/nikolakis1919/RokTracker](https://github.com/nikolakis1919/RokTracker)
 
-# Simple installation (with or without GUI)
+There are two ways of installing and using the scanner. The first is an exe file with no need for other software to be installed. This approach is described under [simple installation](#simple-installation).
+The second way of using the scanner is by using the python files directly. However, for that approach you need to have a running python installation and have to install the dependencies manually. This is explained under [advanced installation](#advanced-installation).
+
+# Simple installation
 
 ## Required
 
@@ -24,18 +30,21 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 
 ## Setup
 
-1. Download the latest release for your system here: [Latest Release](https://github.com/Cyrexxis/RokTracker/releases/latest) (choose the console or GUI version)
+1. Download the latest release for your system here: [Latest Release](https://github.com/Cyrexxis/RokTracker/releases/latest) (choose RoK Tracker.zip)
 2. Extract the zip in the folder where you want the scanner to be installed in
 3. Download the requirements 2 (tessdata) and 3 (platform-tools) and extract them in the deps folder
+   - tesseract needs to go into `deps/tessdata/`
+   - platform-tools need to go into `deps/platform-tools`
+   - complete tree how the folder should look like are [here](#simple-filefolder-structure)
 4. Configure your Bluestacks instance according to the [instructions](#bluestacks-5-settings)
 
 ## Usage
 
 1. Adjust the default options in the `config.json` file to your liking
 2. Double-click the exe like any normal program and enjoy the scanner
-3. The results of the scans can be found in the `scans` folder
+3. The results of the scans can be found in the `scans-*` folder, where * is the type of scan you are doing
 
-## Folder/File Structure
+## Simple File/Folder Structure
 
 ```
 ./
@@ -50,10 +59,10 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 │ │ ├─ adb.exe
 │ │ ├─ ...
 ├─ config.json
-├─ RoK Tracker.exe
+├─ *.exe
 ```
 
-# Advanced installation (with or without GUI)
+# Advanced installation
 
 ## Required
 
@@ -69,6 +78,9 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 1. Download the latest release for your system here: [Latest Release](https://github.com/Cyrexxis/RokTracker/releases/latest) (choose the source code option)
 2. Download and install Python and Build Tools for C++
 3. Download the requirements 3 (tessdata) and 4 (platform-tools) and extract them in the deps folder
+   - tesseract needs to go into `deps/tessdata/`
+   - platform-tools need to go into `deps/platform-tools`
+   - complete tree how the folder should look like are [here](#simple-filefolder-structure)
 4. Open your terminal in this folder and create a venv via `python -m venv venv`
 5. Activate that venv via `./venv/Scripts/activate`
 6. Install the python requirements via `pip install -r requirements_win64.txt`
@@ -78,10 +90,14 @@ This is a heavily modified version of the original tool from [nikolakis1919](htt
 
 1. Open a terminal in your rok tracker folder
 2. Activate the venv via `./venv/Scripts/activate`
-3. Start the scanner either with `python rok_scanner.py` for the console version or with `python graphics_scanner.py` for the GUI version
-4. The results of the scans can be found in the `scans` folder
-
-As an alternative you can also simply double-click either `run_scanner.bat` for the console version or `run_scanner_ui.bat` for the GUI version.
+3. Start the scanner:
+   - `python kingdom_scanner_console.py` for the CLI version of the kingdom scanner
+   - `python kingdom_scanner_ui.py` for the GUI version of the kingdom scanner
+   - `python alliance_scanner_console.py` for the CLI version of the alliance scanner
+   - `python alliance_scanner_ui.py` for the GUI version of the alliance scanner
+   - `python honor_scanner_console.py` for the CLI version of the honor scanner
+   - `python honor_scanner_ui.py` for the GUI version of the honor scanner
+4. The results of the scans can be found in the `scans-*` folder, where * is the type of scan you are doing
 
 ## Folder/File Structure
 
@@ -96,15 +112,14 @@ As an alternative you can also simply double-click either `run_scanner.bat` for 
 │ │ ├─ adb.exe
 │ │ ├─ ...
 ├─ config.json
-├─ rok_scanner.py
-├─ graphic_scanner.py
-├─ run_scanner.bat
+├─ *_scanner_console.py
+├─ *_scanner_ui.py
 ├─ ...
 ```
 
 # Features
 
-## RoK Tracker
+## Kingdom Scanner
 
 - Complete kingdom ranking scan
 - Detection for wrong kills based on if kills to kill points are correct
@@ -115,13 +130,15 @@ As an alternative you can also simply double-click either `run_scanner.bat` for 
   - an inactive account is an account that cannot be clicked in the kingdom rankings
   - those are skipped automatically, and it is optionally possible to save a screenshot of the name in the `inactives`-folder.
 
-## Alliance Scanner (currently unmaintained)
+## Alliance and Honor Scanner
 
 - complete alliance ranking scan
 - complete personal honor ranking scan
-- due to how the game works the names are very inaccurate, and it is not possible to track the governor id
+- due to how the game works the names are very inaccurate, and it is not possible to track the governor ID
 
 # Bluestacks 5 Settings
+
+## Main configuration
 
 - Display Tab ([Screenshot](images/bluestacks-display.png))
   - Resolution: 1600x900
@@ -129,7 +146,11 @@ As an alternative you can also simply double-click either `run_scanner.bat` for 
 - Advanced Tab ([Screenshot](images/bluestacks-advanced.png))
   - Android Debug Bride: Turned on
 
-The scanner script tries to find the current debugging port by reading the bluestacks config. For that to work the emulator used for scanning should have the instance name "RoK Tracker" and you need to change the config location in the config.json file to match your Bluestacks installation. If the auto-detect fails it will default to 5555, and you can input the actual port to overwrite it.
+## Configuration for automatic port detection
+- Change the entry `bluestacks_config` in the `config.json` file of the scanner to match the location of your conf file
+  - This file is located in your Bluestacks installation folder. If you don't know where you installed it, chances are good that it is located at `C:\ProgramData\Bluestacks_nxt\bluestacks.conf`
+- Make sure to use the correct instance name. The scanner asks for a Bluestacks name and looks for that name in the config file
+- If you don't find a `bluestacks.conf` file chances are high that your installation always uses the same port. The default should be 5555, that's also what the scanner assumes. If you change the port you have to manually change it in the scanner.
 
 # Important Notes
 
@@ -142,7 +163,7 @@ The scanner script tries to find the current debugging port by reading the blues
 5. BE CAREFUL to always copy the .xlsx file from the RokTracker folder when it is created, because in the next capture, there is a chance for it to get overwritten (very low chance).
 6. Chinese letters might not be shown properly in CMD, but they are visible in the final .xlsx file.
 7. You can do whatever you want in your computer when tool is scanning. Only be warned that copying can result in wrong governor names if it coincides with the name copy of the script.
-8. Game Language should be English. Anything else will cause trouble in detecting inactive governors. Change it only for scan, if yours is different and then switch back.
+8. Game Language has to be English. Anything else will cause trouble in detecting inactive governors. Change it only for scan, if yours is different and then switch back.
 
 ## Scan
 
