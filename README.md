@@ -70,7 +70,7 @@ The second way of using the scanner is by using the python files directly. Howev
 2. Python 3.11 Installation [https://www.python.org/downloads/release/python-3110/](https://www.python.org/downloads/release/python-3110/)
 3. To use tesserocr you also need to download the trained tesseract models [https://github.com/tesseract-ocr/tessdata](https://github.com/tesseract-ocr/tessdata)
 4. Adb Platform Tools Download and Extract(See Important Notes) [https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip](https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip)
-5. On Windows "Microsoft Build Tools für C++" might be required for some of the python packages [https://visualstudio.microsoft.com/de/visual-cpp-build-tools/](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/)
+5. On Windows "Microsoft Build Tools für C++" might be required for some python packages [https://visualstudio.microsoft.com/de/visual-cpp-build-tools/](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/)
 6. Tested on Windows 10 and 11, could work on Windows 7. Tested with Python 3.11.0 and 3.11.7.
 
 ## Setup
@@ -160,7 +160,7 @@ The second way of using the scanner is by using the python files directly. Howev
 2. The scanner does not need admin privilege to run
 3. Make sure your folder structure matches the expected structure
 4. Bluestacks settings must be the same as in pictures above. THIS IS VERY IMPORTANT!
-5. BE CAREFUL to always copy the .xlsx file from the RokTracker folder when it is created, because in the next capture, there is a chance for it to get overwritten (very low chance).
+5. BE CAREFUL to always copy the .xlsx file from the scans folder when it is finished, because in the next capture, there is a chance for it to get overwritten (very low chance).
 6. Chinese letters might not be shown properly in CMD, but they are visible in the final .xlsx file.
 7. You can do whatever you want in your computer when tool is scanning. Only be warned that copying can result in wrong governor names if it coincides with the name copy of the script.
 8. Game Language has to be English. Anything else will cause trouble in detecting inactive governors. Change it only for scan, if yours is different and then switch back.
@@ -171,3 +171,14 @@ The second way of using the scanner is by using the python files directly. Howev
 2. The view before running the program should be at the top of power rankings or at the top of kill points rankings for the `rok-scanner.py` or at the top of an alliance leader board of your choice or at top of the personal honor rank for the `alliance-scanner.py`. No move should be made in this window until scanning is done.
 3. [Only for kingdom scan] Account must be lower in ranks than the amount of players you want to scan. e.g. Cannot scan top 100 when character's rank is 85. Use a farm account instead.
 4. [Only for kingdom scan] Resume Scan option starts scanning the middle governor that is displayed in screen. The 4th in order. So before starting the tool make sure that you are in the correct view in bluestacks.
+
+# Error reporting / help
+Recently people started to random guess my discord name. So I'll just make it public here, it's simply cyrexxis same as my Github username.
+
+I try my best to help those people, but I will set up some rules for help requests:
+* Send me a message request (I am on the official RoK Server and the Chisgule server)
+* In this message request explain your problem and post your log file.
+  * Simply saying it doesn't work is not enough, and you will get ignored
+* If you respect that you should get an answer from me. But there is no guarantee, because I am doing this project fully in my free time.
+
+A second way I will set up is Github discussions. The advantage with that is that other people see the mistakes and errors, maybe it helps them to fix them by their own.
