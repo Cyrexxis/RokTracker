@@ -64,6 +64,7 @@ class KingdomScanner:
         self.review_path = Path(
             self.root_dir / "manual_review" / str(self.start_date) / str(self.run_id)
         )
+        self.created_review_path = False
 
         self.gov_callback = default_gov_callback
         self.state_callback = default_state_callback
@@ -104,6 +105,10 @@ class KingdomScanner:
                 logging.WARNING,
                 f"""Kills for {gov_data.name} ({to_int_check(gov_data.id)}) don't check out, manually need to look at them!""",
             )
+
+        if not self.created_review_path:
+            self.review_path.mkdir(parents=True, exist_ok=True)
+            self.created_review_path = True
 
         shutil.copy(
             Path(self.img_path / "gov_info.png"),
