@@ -23,7 +23,7 @@ from roktracker.utils.adb import *
 from roktracker.utils.console import console
 from roktracker.utils.general import *
 from roktracker.utils.ocr import get_supported_langs
-from roktracker.utils.validator import validate_installation
+from roktracker.utils.validator import sanitize_scanname, validate_installation
 
 
 logger = logging.getLogger(__name__)
@@ -103,6 +103,14 @@ def main():
             message="Kingdom name (used for file name):",
             default=config["scan"]["kingdom_name"],
         ).unsafe_ask()
+
+        validated_name = sanitize_scanname(kingdom)
+        while not validated_name.valid:
+            kingdom = questionary.text(
+                message="Kingdom name (Previous name was invalid):",
+                default=validated_name.result,
+            ).unsafe_ask()
+            validated_name = sanitize_scanname(kingdom)
 
         scan_amount = int(
             questionary.text(

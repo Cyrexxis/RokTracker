@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List
 from dummy_root import get_app_root
 from roktracker.utils.console import console
+from pathvalidate import sanitize_filename, ValidationError, validate_filename
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,13 @@ logger = logging.getLogger(__name__)
 class ValidationResult:
     success: bool
     messages: List[str]
+
+
+@dataclass
+class SanitizationResult:
+    valid: bool
+    messages: List[str]
+    result: str
 
 
 def validate_installation() -> ValidationResult:
@@ -79,3 +87,32 @@ def validate_installation() -> ValidationResult:
         adb_present = False
 
     return ValidationResult(tessdata_present and adb_present, result)
+
+
+def sanitize_scanname(filename: str) -> SanitizationResult:
+    if filename == "":
+        return SanitizationResult(True, [], "")
+
+    valid = True
+    result = ""
+    errors: List[str] = []
+
+    try:
+        validate_filename(filename)
+    except ValidationError as e:
+        valid = False
+        message = f"Scan name validatation error: {e}"
+        errors.append(message)
+        console.log(message)
+        logger.info(message)
+
+    try:
+        result = str(sanitize_filename(filename))
+    except ValidationError as e:
+        valid = False
+        message = f"Scan name validatation error: {e}"
+        errors.append(message)
+        console.log(message)
+        logger.info(message)
+
+    return SanitizationResult(valid, errors, result)
