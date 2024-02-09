@@ -24,7 +24,7 @@ from dummy_root import get_app_root
 from roktracker.kingdom.additional_data import AdditionalData
 from roktracker.kingdom.governor_data import GovernorData
 from roktracker.kingdom.scanner import KingdomScanner
-from roktracker.utils.validator import validate_installation
+from roktracker.utils.validator import validate_installation, sanitize_scanname
 from roktracker.utils.adb import get_bluestacks_port
 from threading import ExceptHookArgs, Thread
 from typing import Dict, List
@@ -326,7 +326,18 @@ class BasicOptionsFame(customtkinter.CTkFrame):
                 f"200x{100 + len(val_errors) * 12}",
             )
 
-        return len(val_errors) == 0
+        name_valitation = sanitize_scanname(self.scan_name_text.get())
+        if not name_valitation.valid:
+            InfoDialog(
+                "Name is not valid",
+                f"Name is not valid and got changed to:\n{name_valitation.result}\n"
+                + f"Please check the new name and press start again.",
+                f"400x{100 + 3 * 12}",
+            )
+            self.scan_name_text.delete(0, customtkinter.END)
+            self.scan_name_text.insert(0, name_valitation.result)
+
+        return len(val_errors) == 0 and name_valitation.valid
 
 
 class ScanOptionsFrame(customtkinter.CTkFrame):
