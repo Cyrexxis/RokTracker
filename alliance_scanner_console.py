@@ -1,6 +1,8 @@
 import logging
+import threading
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
+from roktracker.utils.exception_handling import ConsoleExceptionHander
 
 logging.basicConfig(
     filename=str(get_app_root() / "alliance-scanner.log"),
@@ -28,6 +30,11 @@ from roktracker.utils.validator import sanitize_scanname, validate_installation
 
 
 logger = logging.getLogger(__name__)
+ex_handler = ConsoleExceptionHander(logger)
+
+
+sys.excepthook = ex_handler.handle_exception
+threading.excepthook = ex_handler.handle_thread_exception
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -103,16 +110,26 @@ def main():
         console.log("User abort. Exiting scanner.")
         sys.exit(3)
 
-    alliance_scanner = AllianceScanner(bluestacks_port)
-    alliance_scanner.set_batch_callback(print_batch)
+    try:
+        alliance_scanner = AllianceScanner(bluestacks_port)
+        alliance_scanner.set_batch_callback(print_batch)
 
-    console.print(
-        f"The UUID of this scan is [green]{alliance_scanner.run_id}[/green]",
-        highlight=False,
-    )
-    signal.signal(signal.SIGINT, lambda _, __: ask_abort(alliance_scanner))
+        console.print(
+            f"The UUID of this scan is [green]{alliance_scanner.run_id}[/green]",
+            highlight=False,
+        )
+        signal.signal(signal.SIGINT, lambda _, __: ask_abort(alliance_scanner))
 
-    alliance_scanner.start_scan(kingdom, scan_amount)
+        alliance_scanner.start_scan(kingdom, scan_amount)
+    except AdbError as error:
+        logger.error(
+            "An error with the adb connection occured (probably wrong port). Exact message: "
+            + str(error)
+        )
+        console.print(
+            "An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+            + str(error)
+        )
 
 
 if __name__ == "__main__":
