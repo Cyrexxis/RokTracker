@@ -1,6 +1,8 @@
 import logging
+import threading
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
+from roktracker.utils.exception_handling import ConsoleExceptionHander
 
 logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
@@ -27,17 +29,11 @@ from roktracker.utils.validator import sanitize_scanname, validate_installation
 
 
 logger = logging.getLogger(__name__)
+ex_handler = ConsoleExceptionHander(logger)
 
 
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-
-    logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-
-
-sys.excepthook = handle_exception
+sys.excepthook = ex_handler.handle_exception
+threading.excepthook = ex_handler.handle_thread_exception
 
 
 def ask_abort(kingdom_scanner: KingdomScanner) -> None:
@@ -318,25 +314,35 @@ def main():
         console.log("User abort. Exiting scanner.")
         sys.exit(3)
 
-    kingdom_scanner = KingdomScanner(config, scan_options, bluestacks_port)
-    kingdom_scanner.set_continue_handler(ask_continue)
-    kingdom_scanner.set_governor_callback(print_gov_state)
+    try:
+        kingdom_scanner = KingdomScanner(config, scan_options, bluestacks_port)
+        kingdom_scanner.set_continue_handler(ask_continue)
+        kingdom_scanner.set_governor_callback(print_gov_state)
 
-    console.print(
-        f"The UUID of this scan is [green]{kingdom_scanner.run_id}[/green]",
-        highlight=False,
-    )
+        console.print(
+            f"The UUID of this scan is [green]{kingdom_scanner.run_id}[/green]",
+            highlight=False,
+        )
 
-    signal.signal(signal.SIGINT, lambda _, __: ask_abort(kingdom_scanner))
+        signal.signal(signal.SIGINT, lambda _, __: ask_abort(kingdom_scanner))
 
-    kingdom_scanner.start_scan(
-        kingdom,
-        scan_amount,
-        resume_scan,
-        track_inactives,
-        validate_kills,
-        reconstruct_fails,
-    )
+        kingdom_scanner.start_scan(
+            kingdom,
+            scan_amount,
+            resume_scan,
+            track_inactives,
+            validate_kills,
+            reconstruct_fails,
+        )
+    except AdbError as error:
+        logger.error(
+            "An error with the adb connection occured (probably wrong port). Exact message: "
+            + str(error)
+        )
+        console.print(
+            "An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+            + str(error)
+        )
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ from roktracker.alliance.additional_data import AdditionalData
 from roktracker.alliance.governor_data import GovernorData
 from roktracker.honor.scanner import HonorScanner
 from roktracker.utils.check_python import check_py_version
+from roktracker.utils.exception_handling import GuiExceptionHandler
+from roktracker.utils.exceptions import AdbError
 from roktracker.utils.general import is_string_int
 from roktracker.utils.gui import InfoDialog
 
@@ -21,6 +23,7 @@ check_py_version((3, 11))
 import customtkinter
 import json
 import logging
+import os
 import sys
 
 from dummy_root import get_app_root
@@ -31,27 +34,10 @@ from typing import Dict, List
 
 
 logger = logging.getLogger(__name__)
+ex_handler = GuiExceptionHandler(logger)
 
-
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-
-    logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-    InfoDialog(
-        "Error",
-        "An error occured, see the log file for more info.\nYou probably have to restart this application.",
-        "300x140",
-    )
-
-
-def handle_thread_exception(exc: ExceptHookArgs):
-    handle_exception(exc.exc_type, exc.exc_value, exc.exc_traceback)
-
-
-sys.excepthook = handle_exception
-threading.excepthook = handle_thread_exception
+sys.excepthook = ex_handler.handle_exception
+threading.excepthook = ex_handler.handle_thread_exception
 
 customtkinter.set_appearance_mode(
     "system"
@@ -398,19 +384,32 @@ class App(customtkinter.CTk):
         self.start_scan_button.configure(state="disabled")
         options = self.options_frame.get_options()
 
-        self.honor_scanner = HonorScanner(options["port"])
-        self.honor_scanner.set_batch_callback(self.governor_callback)
-        self.honor_scanner.set_state_callback(self.state_callback)
-        self.options_frame.set_uuid(self.honor_scanner.run_id)
+        try:
+            self.honor_scanner = HonorScanner(options["port"])
+            self.honor_scanner.set_batch_callback(self.governor_callback)
+            self.honor_scanner.set_state_callback(self.state_callback)
+            self.options_frame.set_uuid(self.honor_scanner.run_id)
 
-        self.honor_scanner.start_scan(
-            options["name"],
-            options["amount"],
-        )
-
-        # Reset end scan button
-        self.end_scan_button.configure(state="normal", text="End scan")
-        self.start_scan_button.configure(state="normal")
+            self.honor_scanner.start_scan(
+                options["name"],
+                options["amount"],
+            )
+        except AdbError as error:
+            logger.error(
+                "An error with the adb connection occured (probably wrong port). Exact message: "
+                + str(error)
+            )
+            InfoDialog(
+                "Error",
+                "An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+                + str(error),
+                "300x160",
+            )
+            self.state_callback("Not started")
+        finally:
+            # Reset end scan button
+            self.end_scan_button.configure(state="normal", text="End scan")
+            self.start_scan_button.configure(state="normal")
 
     def end_scan(self):
         self.honor_scanner.end_scan()
@@ -443,5 +442,8 @@ class App(customtkinter.CTk):
 
 
 app = App()
-app.report_callback_exception = handle_exception
+app.report_callback_exception = ex_handler.handle_exception
+f = open(os.devnull, "w")
+sys.stdout = f
+sys.stderr = f
 app.mainloop()

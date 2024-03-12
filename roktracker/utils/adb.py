@@ -8,12 +8,14 @@ import socket
 import configparser
 import sys
 
+from roktracker.utils.exceptions import AdbError
+
 
 def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
     # try to read port from bluestacks config
     try:
         dummy = "AmazingDummy"
-        with open(config["general"]["bluestacks_config"]) as config_file:
+        with open(config["general"]["bluestacks_config"], "r") as config_file:
             file_content = "[" + dummy + "]\n" + config_file.read()
         bluestacks_config = configparser.RawConfigParser()
         bluestacks_config.read_string(file_content)
@@ -78,10 +80,10 @@ class AdvancedAdbClient:
             adb_client = AdbClient(
                 serialno=".*", hostname="localhost", port=self.server_port
             )
-        except:
+        except RuntimeError as error:
             console.log("No device connected, aborting.")
             self.kill_adb()
-            sys.exit(0)
+            raise AdbError(str(error))
         self.device = adb_client
 
     def secure_adb_shell(self, command_to_execute: str) -> str:
