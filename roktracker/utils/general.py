@@ -1,6 +1,12 @@
 import datetime
+from os import PathLike
 import random
 import string
+import cv2
+import numpy as np
+
+from typing import Any
+from cv2.typing import MatLike
 
 
 def to_int_check(element) -> int:
@@ -58,3 +64,19 @@ def format_timedelta_to_HHMMSS(td: datetime.timedelta) -> str:
     if seconds < 10:
         seconds = "0{}".format(seconds)
     return "{}:{}:{}".format(hours, minutes, seconds)
+
+
+# This workaroud is needed because cv2 doesn't support UTF-8 paths
+def load_cv2_img(path: str | PathLike[Any], flags: int) -> MatLike:
+    return cv2.imdecode(
+        np.fromfile(file=path, dtype=np.uint8),
+        flags,
+    )
+
+
+# This workaroud is needed because cv2 doesn't support UTF-8 paths
+def write_cv2_img(img: MatLike, path: str | PathLike[Any], filetype: str) -> None:
+    is_success, im_buf_arr = cv2.imencode("." + filetype, img)
+
+    if is_success:
+        im_buf_arr.tofile(path)

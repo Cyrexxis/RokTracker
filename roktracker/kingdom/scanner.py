@@ -4,6 +4,7 @@ import roktracker.utils.rok_ui_positions as rok_ui
 import shutil
 import time
 import tkinter
+import numpy as np
 
 from dummy_root import get_app_root
 from pathlib import Path
@@ -193,9 +194,10 @@ class KingdomScanner:
                 self.img_path / "check_more_info.png"
             )
 
-            image_check = cv2.imread(
-                str(self.img_path / "check_more_info.png"), cv2.IMREAD_GRAYSCALE
+            image_check = load_cv2_img(
+                self.img_path / "check_more_info.png", cv2.IMREAD_GRAYSCALE
             )
+
             # Checking for more info
             im_check_more_info = cropToRegion(
                 image_check, rok_ui.ocr_regions["more_info"]
@@ -211,9 +213,10 @@ class KingdomScanner:
             if "MoreInfo" not in check_more_info:
                 self.inactive_players += 1
                 if track_inactives:
-                    image_check_inactive = cv2.imread(
-                        str(self.img_path / "check_more_info.png")
+                    image_check_inactive = load_cv2_img(
+                        self.img_path / "check_more_info.png", cv2.IMREAD_UNCHANGED
                     )
+
                     roiInactive = (
                         0,
                         self.get_gov_position(current_player, self.inactive_players - 1)
@@ -222,13 +225,12 @@ class KingdomScanner:
                         200,
                     )
                     image_inactive_raw = cropToRegion(image_check_inactive, roiInactive)
-                    cv2.imwrite(
-                        str(
-                            self.inactive_path
-                            / f"inactive {self.inactive_players:03}.png"
-                        ),
+                    write_cv2_img(
                         image_inactive_raw,
+                        self.inactive_path / f"inactive {self.inactive_players:03}.png",
+                        "png",
                     )
+
                 if self.advanced_scroll:
                     self.adb_client.adb_send_events(
                         "Touch",
@@ -278,7 +280,7 @@ class KingdomScanner:
             # time.sleep(1.5 + random_delay())
 
             self.adb_client.secure_adb_screencap().save(self.img_path / "gov_info.png")
-            image = cv2.imread(str(self.img_path / "gov_info.png"))
+            image = load_cv2_img(self.img_path / "gov_info.png", cv2.IMREAD_UNCHANGED)
 
             # 1st image data (ID, Power, Killpoints, Alliance)
             with PyTessBaseAPI(
@@ -328,7 +330,9 @@ class KingdomScanner:
             self.adb_client.secure_adb_screencap().save(
                 self.img_path / "kills_tier.png"
             )
-            image2 = cv2.imread(str(self.img_path / "kills_tier.png"))
+            image2 = load_cv2_img(
+                self.img_path / "kills_tier.png", cv2.IMREAD_UNCHANGED
+            )
             image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
 
             with PyTessBaseAPI(
@@ -401,7 +405,7 @@ class KingdomScanner:
             self.state_callback("Scanning more info page")
             time.sleep(self.timings["info_open"] + random_delay())
             self.adb_client.secure_adb_screencap().save(self.img_path / "more_info.png")
-            image3 = cv2.imread(str(self.img_path / "more_info.png"))
+            image3 = load_cv2_img(self.img_path / "more_info.png", cv2.IMREAD_UNCHANGED)
 
             with PyTessBaseAPI(
                 path=str(self.tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
@@ -521,7 +525,9 @@ class KingdomScanner:
                 self.adb_client.secure_adb_screencap().save(
                     self.img_path / "currentState.png"
                 )
-                image = cv2.imread(str(self.img_path / "currentState.png"))
+                image = load_cv2_img(
+                    self.img_path / "currentState.png", cv2.IMREAD_UNCHANGED
+                )
 
                 im_ranking = cropToRegion(image, roi)
                 im_ranking_bw = preprocessImage(im_ranking, 3, 90, 12, True)
