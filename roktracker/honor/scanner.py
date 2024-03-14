@@ -94,7 +94,7 @@ class HonorScanner:
     def scan_screen(self, screen_number: int) -> List[GovernorData]:
         # Take screenshot to process
         self.adb_client.secure_adb_screencap().save(self.img_path / "currentState.png")
-        image = cv2.imread(str(self.img_path / "currentState.png"))
+        image = load_cv2_img(self.img_path / "currentState.png", cv2.IMREAD_UNCHANGED)
 
         # Actual scanning
         govs = []
@@ -111,8 +111,12 @@ class HonorScanner:
 
                 # fmt: off
                 gov_img_path = str(self.img_path / f"gov_name_{(6 * screen_number) + gov_number}.png")
-                cv2.imwrite(gov_img_path, gov.name_img_small)
                 # fmt: on
+                write_cv2_img(
+                    gov.name_img_small,
+                    gov_img_path,
+                    "png",
+                )
 
                 govs.append(GovernorData(gov_img_path, gov_name, gov_score))
 
