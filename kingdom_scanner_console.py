@@ -127,6 +127,7 @@ def main():
             auto_enter=False,
             default=config["scan"]["advanced_scroll"],
         ).unsafe_ask()
+        config["scan"]["advanced_scroll"] = new_scroll
 
         track_inactives = questionary.confirm(
             message="Screenshot inactives:",
@@ -295,6 +296,20 @@ def main():
                 default=config["scan"]["reconstruct_kills"],
             ).unsafe_ask()
 
+        validate_power = questionary.confirm(
+            message="Validate power (only works in power ranking):",
+            auto_enter=False,
+            default=config["scan"]["validate_power"],
+        ).unsafe_ask()
+
+        power_threshold = int(
+            questionary.text(
+                message="Power threshold to trigger warning:",
+                validate=lambda pt: is_string_int(pt),
+                default=config["scan"]["power_threshold"],
+            ).unsafe_ask()
+        )
+
         config["scan"]["timings"]["info_close"] = float(
             questionary.text(
                 message="Time to wait after more info close:",
@@ -333,6 +348,8 @@ def main():
             track_inactives,
             validate_kills,
             reconstruct_fails,
+            validate_power,
+            power_threshold,
         )
     except AdbError as error:
         logger.error(

@@ -18,38 +18,34 @@ def print_gov_state(gov_data: GovernorData, extra: AdditionalData) -> None:
         show_footer=True,
     )
 
-    if bool(extra.kills_ok):
-        table.add_column(
-            "Entry",
-            "Approx time remaining\nSkipped\nKills check out",
-            style="magenta",
-        )
-        table.add_column(
-            "Value",
-            str(extra.eta())
-            + "\n"
-            + str(extra.skipped_governors)
-            + "\n"
-            + str(extra.kills_ok),
-            style="cyan",
-        )
-    else:
-        table.add_column(
-            "Entry",
-            "Approx time remaining\nSkipped\nKills check out\nReconstruct success",
-            style="magenta",
-        )
-        table.add_column(
-            "Value",
-            str(extra.eta())
-            + "\n"
-            + str(extra.skipped_governors)
-            + "\n"
-            + str(extra.kills_ok)
-            + "\n"
-            + str(extra.reconstruction_success),
-            style="cyan",
-        )
+    first_title = "Entry"
+    second_title = "Value"
+
+    first_footer = "Approx time remaining\nSkipped\n"
+    second_footer = str(extra.eta()) + "\n" + str(extra.skipped_governors) + "\n"
+
+    if extra.power_ok != "Not Checked":
+        first_footer += "Power ok\n"
+        second_footer += str(extra.power_ok) + "\n"
+
+    if extra.kills_ok != "Not Checked":
+        first_footer += "Kills check out\n"
+        second_footer += str(extra.kills_ok) + "\n"
+
+        if (not extra.kills_ok) and extra.reconstruction_success != "Not Checked":
+            first_footer += "Reconstruct success\n"
+            second_footer += str(extra.reconstruction_success) + "\n"
+
+    table.add_column(
+        first_title,
+        first_footer.rstrip(),
+        style="magenta",
+    )
+    table.add_column(
+        second_title,
+        second_footer.rstrip(),
+        style="cyan",
+    )
 
     table.add_row("Governor ID", gov_data.id)
     table.add_row("Governor Name", gov_data.name)

@@ -93,18 +93,28 @@ class KingdomScanner:
     def get_remaining_time(self, remaining_govs: int) -> float:
         return (sum(self.scan_times, start=0) / len(self.scan_times)) * remaining_govs
 
-    def save_failed(self, gov_data: GovernorData, reconstructed: bool):
-        if reconstructed:
-            pre = "R"
-            logging.log(
-                logging.INFO,
-                f"""Kills for {gov_data.name} ({to_int_check(gov_data.id)}) reconstructed, t1 might be off by up to 4 kills.""",
-            )
-        else:
-            pre = "F"
+    def save_failed(
+        self, fail_type: str, gov_data: GovernorData, reconstructed: bool = False
+    ):
+        pre = "Unset"
+        if fail_type == "kills":
+            if reconstructed:
+                pre = "R"
+                logging.log(
+                    logging.INFO,
+                    f"""Kills for {gov_data.name} ({to_int_check(gov_data.id)}) reconstructed, t1 might be off by up to 4 kills.""",
+                )
+            else:
+                pre = "F"
+                logging.log(
+                    logging.WARNING,
+                    f"""Kills for {gov_data.name} ({to_int_check(gov_data.id)}) don't check out, manually need to look at them!""",
+                )
+        elif fail_type == "power":
+            pre = "P"
             logging.log(
                 logging.WARNING,
-                f"""Kills for {gov_data.name} ({to_int_check(gov_data.id)}) don't check out, manually need to look at them!""",
+                f"""Power for {gov_data.name} ({to_int_check(gov_data.id)}) is higher then previous governor, manually need to look at it!""",
             )
 
         if not self.created_review_path:
@@ -115,10 +125,11 @@ class KingdomScanner:
             Path(self.img_path / "gov_info.png"),
             Path(self.review_path / f"""{pre}{gov_data.id}-profile.png"""),
         )
-        shutil.copy(
-            Path(self.img_path / "kills_tier.png"),
-            Path(self.review_path / f"""{pre}{gov_data.id}-kills.png"""),
-        )
+        if fail_type == "kills":
+            shutil.copy(
+                Path(self.img_path / "kills_tier.png"),
+                Path(self.review_path / f"""{pre}{gov_data.id}-kills.png"""),
+            )
 
     def get_gov_position(self, current_position, skips):
         # Positions for next governor to check
@@ -459,6 +470,8 @@ class KingdomScanner:
         track_inactives: bool,
         validate_kills: bool,
         reconstruct_fails: bool,
+        validate_power: bool,
+        power_threshold: int,
     ):
         self.state_callback("Initializing")
         self.adb_client.start_adb()
@@ -507,6 +520,7 @@ class KingdomScanner:
 
         last_two = False
         next_gov_to_scan = -1
+        last_gov_power = -1
 
         for i in range(j, amount):
             if self.stop_scan:
@@ -590,9 +604,25 @@ class KingdomScanner:
                     reconstruction_success = gov_data.reconstruct_kills()
 
                     if reconstruction_success:
-                        self.save_failed(gov_data, True)
+                        self.save_failed("kills", gov_data, True)
                     else:
-                        self.save_failed(gov_data, False)
+                        self.save_failed("kills", gov_data, False)
+
+            power_ok = "Not Checked"
+            if validate_power:
+                gov_power = to_int_check(gov_data.power)
+                if gov_power == 0:
+                    gov_power = -1
+
+                power_ok = (gov_power != -1) and (
+                    (last_gov_power == -1)
+                    or (to_int_check(gov_data.power) < last_gov_power)
+                )
+
+                if power_ok:
+                    last_gov_power = gov_power
+                else:
+                    self.save_failed("power", gov_data)
 
             # Write results in excel file
             current_row = i + 2 - j
@@ -604,6 +634,7 @@ class KingdomScanner:
                 i + 1,
                 amount,
                 self.inactive_players,
+                str(power_ok),
                 str(kills_ok),
                 str(reconstruction_success),
                 self.get_remaining_time(amount - i),
