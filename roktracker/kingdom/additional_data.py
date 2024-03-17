@@ -10,6 +10,7 @@ class AdditionalData:
     current_governor: int
     target_governor: int
     skipped_governors: int
+    power_ok: str
     kills_ok: str
     reconstruction_success: str
     remaining_sec: float

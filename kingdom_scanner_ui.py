@@ -236,28 +236,60 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         if config["scan"]["reconstruct_kills"]:
             self.reconstruct_fails_switch.select()
 
+        self.validate_power_label = customtkinter.CTkLabel(
+            self, text="Validate power:", height=1
+        )
+        self.validate_power_label.grid(
+            row=10, column=0, padx=10, pady=(10, 0), sticky="w"
+        )
+        self.validate_power_switch = customtkinter.CTkSwitch(
+            self, text="", onvalue=True, offvalue=False
+        )
+        self.validate_power_switch.grid(
+            row=10, column=1, padx=10, pady=(10, 0), sticky="w"
+        )
+
+        if config["scan"]["validate_power"]:
+            self.validate_power_switch.select()
+
+        self.power_threshold_label = customtkinter.CTkLabel(
+            self, text="Power tolerance:", height=1
+        )
+        self.power_threshold_label.grid(
+            row=11, column=0, padx=10, pady=(10, 0), sticky="w"
+        )
+        self.power_threshold_text = customtkinter.CTkEntry(
+            self,
+            validate="all",
+            validatecommand=(self.float_validation, "%P", True),
+        )
+        self.power_threshold_text.grid(
+            row=11, column=1, padx=10, pady=(10, 0), sticky="ew"
+        )
+        self.power_threshold_text.insert(0, str(config["scan"]["power_threshold"]))
+
         self.info_close_label = customtkinter.CTkLabel(
             self, text="More info wait:", height=1
         )
-        self.info_close_label.grid(row=10, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.info_close_label.grid(row=12, column=0, padx=10, pady=(10, 0), sticky="w")
         self.info_close_text = customtkinter.CTkEntry(
             self,
             validate="all",
             validatecommand=(self.float_validation, "%P", True),
         )
-        self.info_close_text.grid(row=10, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.info_close_text.grid(row=12, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.info_close_text.insert(0, str(config["scan"]["timings"]["info_close"]))
 
         self.gov_close_label = customtkinter.CTkLabel(
             self, text="Governor wait:", height=1
         )
-        self.gov_close_label.grid(row=11, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.gov_close_label.grid(row=13, column=0, padx=10, pady=(10, 0), sticky="w")
         self.gov_close_text = customtkinter.CTkEntry(
             self,
             validate="all",
             validatecommand=(self.float_validation, "%P", True),
         )
-        self.gov_close_text.grid(row=11, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.gov_close_text.grid(row=13, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.gov_close_text.insert(0, str(config["scan"]["timings"]["gov_close"]))
 
     def set_uuid(self, uuid):
@@ -283,8 +315,10 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             "resume": self.resume_scan_checkbox.get(),
             "adv_scroll": self.new_scroll_switch.get(),
             "inactives": self.track_inactives_switch.get(),
-            "validate": self.validate_kills_switch.get(),
+            "validate_kills": self.validate_kills_switch.get(),
             "reconstruct": self.reconstruct_fails_switch.get(),
+            "validate_power": self.validate_power_switch.get(),
+            "power_threshold": self.power_threshold_text.get(),
             "info_time": float(self.info_close_text.get()),
             "gov_time": float(self.gov_close_text.get()),
         }
@@ -303,6 +337,11 @@ class BasicOptionsFame(customtkinter.CTkFrame):
 
         if not is_string_float(self.gov_close_text.get()):
             val_errors.append("Governor timing invalid")
+
+        if (
+            not is_string_int(self.power_threshold_text.get())
+        ) and self.validate_power_switch.get():
+            val_errors.append("Power tolerance invalid")
 
         if len(val_errors) > 0:
             InfoDialog(
@@ -562,7 +601,7 @@ class App(customtkinter.CTk):
         self.start_scan_button.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
 
         self.end_scan_button = customtkinter.CTkButton(
-            self, text="End scan", command=self.end_scan
+            self, text="End scan", command=self.end_scan, state="disabled"
         )
         self.end_scan_button.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
 
@@ -594,6 +633,9 @@ class App(customtkinter.CTk):
         self.config["scan"]["timings"]["gov_close"] = options["gov_time"]
 
         try:
+            # Activate end scan button
+            self.end_scan_button.configure(state="normal", text="End scan")
+
             self.kingdom_scanner = KingdomScanner(
                 self.config, scan_options, options["port"]
             )
@@ -606,9 +648,12 @@ class App(customtkinter.CTk):
                 options["amount"],
                 options["resume"],
                 options["inactives"],
-                options["validate"],
+                options["validate_kills"],
                 options["reconstruct"],
+                options["validate_power"],
+                options["power_threshold"],
             )
+
         except AdbError as error:
             logger.error(
                 "An error with the adb connection occured (probably wrong port). Exact message: "
@@ -624,7 +669,7 @@ class App(customtkinter.CTk):
 
         finally:
             # Reset scan buttons
-            self.end_scan_button.configure(state="normal", text="End scan")
+            self.end_scan_button.configure(state="disabled", text="End scan")
             self.start_scan_button.configure(state="normal")
 
     def end_scan(self):

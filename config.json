@@ -5,6 +5,8 @@
     "resume": false,
     "advanced_scroll": true,
     "track_inactives": false,
+    "validate_power": false,
+    "power_threshold": 100000,
     "validate_kills": true,
     "reconstruct_kills": true,
     "timings": {
