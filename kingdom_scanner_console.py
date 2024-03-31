@@ -3,6 +3,7 @@ import threading
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exception_handling import ConsoleExceptionHander
+from roktracker.utils.output_formats import OutputFormats
 
 logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
@@ -306,7 +307,7 @@ def main():
             questionary.text(
                 message="Power threshold to trigger warning:",
                 validate=lambda pt: is_string_int(pt),
-                default=config["scan"]["power_threshold"],
+                default=str(config["scan"]["power_threshold"]),
             ).unsafe_ask()
         )
 
@@ -325,6 +326,34 @@ def main():
                 default=str(config["scan"]["timings"]["gov_close"]),
             ).unsafe_ask()
         )
+
+        save_formats = OutputFormats()
+        save_formats_tmp = questionary.checkbox(
+            "In what format should the result be saved?",
+            choices=[
+                questionary.Choice(
+                    "Excel (xlsx)",
+                    value="xlsx",
+                    checked=config["scan"]["formats"]["xlsx"],
+                ),
+                questionary.Choice(
+                    "Comma seperated values (csv)",
+                    value="csv",
+                    checked=config["scan"]["formats"]["csv"],
+                ),
+                questionary.Choice(
+                    "JSON Lines (jsonl)",
+                    value="jsonl",
+                    checked=config["scan"]["formats"]["jsonl"],
+                ),
+            ],
+        ).unsafe_ask()
+
+        if save_formats_tmp == [] or save_formats_tmp == None:
+            console.print("Exiting, no formats selected.")
+            return
+        else:
+            save_formats.from_list(save_formats_tmp)
     except:
         console.log("User abort. Exiting scanner.")
         sys.exit(3)
@@ -350,6 +379,7 @@ def main():
             reconstruct_fails,
             validate_power,
             power_threshold,
+            save_formats,
         )
     except AdbError as error:
         logger.error(

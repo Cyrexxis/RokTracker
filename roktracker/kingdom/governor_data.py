@@ -1,7 +1,7 @@
 import math
 
 from dataclasses import dataclass
-from roktracker.utils.general import to_int_check
+from roktracker.utils.general import is_string_int, to_int_check
 
 
 @dataclass
@@ -101,6 +101,17 @@ class GovernorData:
 
         if self.helps == "":
             self.helps = "Unknown"
+
+    @staticmethod
+    def intify_value(value: str) -> int:
+        if value == "Unknown":
+            return -1
+        elif value == "Skipped":
+            return -2
+        elif not is_string_int(value):
+            return -3
+        else:
+            return int(value)
 
     def validate_kills(self) -> bool:
         expectedKp = (

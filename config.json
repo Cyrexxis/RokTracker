@@ -16,6 +16,11 @@
       "info_open": 1,
       "info_close": 0.5,
       "gov_close": 1
+    },
+    "formats": {
+      "xlsx": true,
+      "csv": false,
+      "jsonl": false
     }
   },
   "general": {
