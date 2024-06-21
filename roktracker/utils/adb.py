@@ -9,9 +9,11 @@ import configparser
 import sys
 
 from roktracker.utils.exceptions import AdbError
+from roktracker.utils.general import to_int_or
 
 
 def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
+    default_port = to_int_or(config["general"]["adb_port"], 5555)
     # try to read port from bluestacks config
     try:
         dummy = "AmazingDummy"
@@ -29,8 +31,7 @@ def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
         console.print(
             "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
         )
-        return 5555
-    return 5555
+    return default_port
 
 
 class AdvancedAdbClient:
