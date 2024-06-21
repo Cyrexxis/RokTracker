@@ -17,6 +17,14 @@ def to_int_check(element) -> int:
         return int(0)
 
 
+def to_int_or(element: Any, fallback: int) -> int:
+    try:
+        return int(element)
+    except ValueError:
+        # return dummy 0
+        return int(fallback)
+
+
 def is_string_int(element: str, allow_empty=False) -> bool:
     if allow_empty and element == "":
         return True
