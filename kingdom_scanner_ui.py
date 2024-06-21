@@ -4,6 +4,7 @@ from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exceptions import AdbError
 from roktracker.utils.general import is_string_float, is_string_int, to_int_check
 from roktracker.utils.gui import ConfirmDialog, InfoDialog
+from roktracker.utils.output_formats import OutputFormats
 
 logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
@@ -101,6 +102,66 @@ class CheckboxFrame(customtkinter.CTkTabview):
         return values
 
 
+class HorizontalCheckboxFrame(customtkinter.CTkTabview):
+    def __init__(self, master, values, groupName, options_per_row):
+        super().__init__(
+            master,
+            state="disabled",
+            width=0,
+            height=0,
+            segmented_button_fg_color=customtkinter.ThemeManager.theme["CTkFrame"][
+                "fg_color"
+            ],
+            segmented_button_selected_color=customtkinter.ThemeManager.theme[
+                "CTkFrame"
+            ]["fg_color"],
+            text_color_disabled=customtkinter.ThemeManager.theme["CTkLabel"][
+                "text_color"
+            ],
+        )
+        self.add(groupName)
+        self.values = list(filter(lambda x: x["group"] == groupName, values))  # type: ignore
+        self.checkboxes: List[Dict[str, customtkinter.CTkCheckBox]] = []
+
+        for i in range(0, options_per_row):
+            self.tab(groupName).columnconfigure(i, weight=1)
+
+        cur_row = 0
+        for i, value in enumerate(self.values):
+            cur_col = i % options_per_row
+            label = customtkinter.CTkLabel(
+                self.tab(groupName), text=value["name"], height=1
+            )
+            label.grid(row=cur_row, column=cur_col, padx=10, pady=2)
+
+            checkbox = customtkinter.CTkCheckBox(
+                self.tab(groupName),
+                text="",
+                onvalue=True,
+                offvalue=False,
+                checkbox_height=20,
+                checkbox_width=20,
+                height=20,
+                width=20,
+            )
+            checkbox.grid(row=cur_row + 1, column=cur_col, padx=10, pady=2)
+
+            if value["default"]:
+                checkbox.select()
+
+            self.checkboxes.append({value["name"]: checkbox})
+
+            if (i + 1) % options_per_row == 0:
+                cur_row += 2
+
+    def get(self):
+        values = {}
+        for checkbox in self.checkboxes:
+            for k, v in checkbox.items():
+                values.update({k: bool(v.get())})
+        return values
+
+
 class BasicOptionsFame(customtkinter.CTkFrame):
     def __init__(self, master, config):
         super().__init__(master)
@@ -112,39 +173,39 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=2)
         self.scan_uuid_label = customtkinter.CTkLabel(self, text="Scan UUID:", height=1)
-        self.scan_uuid_label.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.scan_uuid_label.grid(row=0, column=0, padx=10, pady=(5, 0), sticky="w")
         self.scan_uuid_var = customtkinter.StringVar(self, "---")
         self.scan_uuid_label_2 = customtkinter.CTkLabel(
             self, textvariable=self.scan_uuid_var, height=1, anchor="w"
         )
-        self.scan_uuid_label_2.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.scan_uuid_label_2.grid(row=0, column=1, padx=10, pady=(5, 0), sticky="ew")
 
         self.scan_name_label = customtkinter.CTkLabel(self, text="Scan name:", height=1)
-        self.scan_name_label.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.scan_name_label.grid(row=1, column=0, padx=10, pady=(5, 0), sticky="w")
         self.scan_name_text = customtkinter.CTkEntry(self)
-        self.scan_name_text.grid(row=1, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.scan_name_text.grid(row=1, column=1, padx=10, pady=(5, 0), sticky="ew")
         self.scan_name_text.insert(0, config["scan"]["kingdom_name"])
 
         self.bluestacks_instance_label = customtkinter.CTkLabel(
             self, text="Bluestacks name:", height=1
         )
         self.bluestacks_instance_label.grid(
-            row=2, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=2, column=0, padx=10, pady=(5, 0), sticky="w"
         )
         self.bluestacks_instance_text = customtkinter.CTkEntry(self)
         self.bluestacks_instance_text.grid(
-            row=2, column=1, padx=10, pady=(10, 0), sticky="ew"
+            row=2, column=1, padx=10, pady=(5, 0), sticky="ew"
         )
         self.bluestacks_instance_text.insert(0, config["general"]["bluestacks_name"])
 
         self.adb_port_label = customtkinter.CTkLabel(self, text="Adb port:", height=1)
-        self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.adb_port_label.grid(row=3, column=0, padx=10, pady=(5, 0), sticky="w")
         self.adb_port_text = customtkinter.CTkEntry(
             self,
             validate="all",
             validatecommand=(self.int_validation, "%P", True),
         )
-        self.adb_port_text.grid(row=3, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.adb_port_text.grid(row=3, column=1, padx=10, pady=(5, 0), sticky="ew")
         self.bluestacks_instance_text.configure(
             validatecommand=(self.register(self.update_port), "%P"), validate="key"
         )
@@ -153,24 +214,24 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_amount_label = customtkinter.CTkLabel(
             self, text="People to scan:", height=1
         )
-        self.scan_amount_label.grid(row=4, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.scan_amount_label.grid(row=4, column=0, padx=10, pady=(5, 0), sticky="w")
         self.scan_amount_text = customtkinter.CTkEntry(
             self,
             validate="all",
             validatecommand=(self.int_validation, "%P", True),
         )
-        self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(5, 0), sticky="ew")
         self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
 
         self.resume_scan_label = customtkinter.CTkLabel(
             self, text="Resume scan:", height=1
         )
-        self.resume_scan_label.grid(row=5, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.resume_scan_label.grid(row=5, column=0, padx=10, pady=(5, 0), sticky="w")
         self.resume_scan_checkbox = customtkinter.CTkCheckBox(
             self, text="", onvalue=True, offvalue=False
         )
         self.resume_scan_checkbox.grid(
-            row=5, column=1, padx=10, pady=(10, 0), sticky="w"
+            row=5, column=1, padx=10, pady=(5, 0), sticky="w"
         )
 
         if config["scan"]["resume"]:
@@ -179,11 +240,11 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.new_scroll_label = customtkinter.CTkLabel(
             self, text="Advanced scroll:", height=1
         )
-        self.new_scroll_label.grid(row=6, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.new_scroll_label.grid(row=6, column=0, padx=10, pady=(5, 0), sticky="w")
         self.new_scroll_switch = customtkinter.CTkSwitch(
             self, text="", onvalue=True, offvalue=False
         )
-        self.new_scroll_switch.grid(row=6, column=1, padx=10, pady=(10, 0), sticky="w")
+        self.new_scroll_switch.grid(row=6, column=1, padx=10, pady=(5, 0), sticky="w")
 
         if config["scan"]["advanced_scroll"]:
             self.new_scroll_switch.select()
@@ -192,13 +253,13 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="Track inactives:", height=1
         )
         self.track_inactives_label.grid(
-            row=7, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=7, column=0, padx=10, pady=(5, 0), sticky="w"
         )
         self.track_inactives_switch = customtkinter.CTkSwitch(
             self, text="", onvalue=True, offvalue=False
         )
         self.track_inactives_switch.grid(
-            row=7, column=1, padx=10, pady=(10, 0), sticky="w"
+            row=7, column=1, padx=10, pady=(5, 0), sticky="w"
         )
 
         if config["scan"]["track_inactives"]:
@@ -208,13 +269,13 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="Validate kills:", height=1
         )
         self.validate_kills_label.grid(
-            row=8, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=8, column=0, padx=10, pady=(5, 0), sticky="w"
         )
         self.validate_kills_switch = customtkinter.CTkSwitch(
             self, text="", onvalue=True, offvalue=False
         )
         self.validate_kills_switch.grid(
-            row=8, column=1, padx=10, pady=(10, 0), sticky="w"
+            row=8, column=1, padx=10, pady=(5, 0), sticky="w"
         )
 
         if config["scan"]["validate_kills"]:
@@ -224,13 +285,13 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="Reconstruct kills:", height=1
         )
         self.reconstruct_fails_label.grid(
-            row=9, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=9, column=0, padx=10, pady=(5, 0), sticky="w"
         )
         self.reconstruct_fails_switch = customtkinter.CTkSwitch(
             self, text="", onvalue=True, offvalue=False
         )
         self.reconstruct_fails_switch.grid(
-            row=9, column=1, padx=10, pady=(10, 0), sticky="w"
+            row=9, column=1, padx=10, pady=(5, 0), sticky="w"
         )
 
         if config["scan"]["reconstruct_kills"]:
@@ -240,13 +301,13 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="Validate power:", height=1
         )
         self.validate_power_label.grid(
-            row=10, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=10, column=0, padx=10, pady=(5, 0), sticky="w"
         )
         self.validate_power_switch = customtkinter.CTkSwitch(
             self, text="", onvalue=True, offvalue=False
         )
         self.validate_power_switch.grid(
-            row=10, column=1, padx=10, pady=(10, 0), sticky="w"
+            row=10, column=1, padx=10, pady=(5, 0), sticky="w"
         )
 
         if config["scan"]["validate_power"]:
@@ -256,7 +317,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             self, text="Power tolerance:", height=1
         )
         self.power_threshold_label.grid(
-            row=11, column=0, padx=10, pady=(10, 0), sticky="w"
+            row=11, column=0, padx=10, pady=(5, 0), sticky="w"
         )
         self.power_threshold_text = customtkinter.CTkEntry(
             self,
@@ -264,33 +325,57 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             validatecommand=(self.float_validation, "%P", True),
         )
         self.power_threshold_text.grid(
-            row=11, column=1, padx=10, pady=(10, 0), sticky="ew"
+            row=11, column=1, padx=10, pady=(5, 0), sticky="ew"
         )
         self.power_threshold_text.insert(0, str(config["scan"]["power_threshold"]))
 
         self.info_close_label = customtkinter.CTkLabel(
             self, text="More info wait:", height=1
         )
-        self.info_close_label.grid(row=12, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.info_close_label.grid(row=12, column=0, padx=10, pady=(5, 0), sticky="w")
         self.info_close_text = customtkinter.CTkEntry(
             self,
             validate="all",
             validatecommand=(self.float_validation, "%P", True),
         )
-        self.info_close_text.grid(row=12, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.info_close_text.grid(row=12, column=1, padx=10, pady=(5, 0), sticky="ew")
         self.info_close_text.insert(0, str(config["scan"]["timings"]["info_close"]))
 
         self.gov_close_label = customtkinter.CTkLabel(
             self, text="Governor wait:", height=1
         )
-        self.gov_close_label.grid(row=13, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.gov_close_label.grid(row=13, column=0, padx=10, pady=(5, 0), sticky="w")
         self.gov_close_text = customtkinter.CTkEntry(
             self,
             validate="all",
             validatecommand=(self.float_validation, "%P", True),
         )
-        self.gov_close_text.grid(row=13, column=1, padx=10, pady=(10, 0), sticky="ew")
+        self.gov_close_text.grid(row=13, column=1, padx=10, pady=(5, 0), sticky="ew")
         self.gov_close_text.insert(0, str(config["scan"]["timings"]["gov_close"]))
+
+        output_values = [
+            {
+                "name": "xlsx",
+                "default": config["scan"]["formats"]["xlsx"],
+                "group": "Output Format",
+            },
+            {
+                "name": "csv",
+                "default": config["scan"]["formats"]["csv"],
+                "group": "Output Format",
+            },
+            {
+                "name": "jsonl",
+                "default": config["scan"]["formats"]["jsonl"],
+                "group": "Output Format",
+            },
+        ]
+        self.output_options = HorizontalCheckboxFrame(
+            self, output_values, "Output Format", 3
+        )
+        self.output_options.grid(
+            row=14, column=0, padx=10, pady=(5, 0), sticky="ew", columnspan=2
+        )
 
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)
@@ -307,6 +392,8 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         return True
 
     def get_options(self):
+        formats = OutputFormats()
+        formats.from_dict(self.output_options.get())
         return {
             "uuid": self.scan_uuid_var.get(),
             "name": self.scan_name_text.get(),
@@ -321,6 +408,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             "power_threshold": self.power_threshold_text.get(),
             "info_time": float(self.info_close_text.get()),
             "gov_time": float(self.gov_close_text.get()),
+            "formats": formats,
         }
 
     def options_valid(self) -> bool:
@@ -342,6 +430,11 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             not is_string_int(self.power_threshold_text.get())
         ) and self.validate_power_switch.get():
             val_errors.append("Power tolerance invalid")
+
+        if all(value == False for value in self.output_options.get().values()):
+            val_errors.append("No output format checked")
+
+        print(self.output_options.get())
 
         if len(val_errors) > 0:
             InfoDialog(
@@ -515,13 +608,17 @@ class App(customtkinter.CTk):
         config_file.close()
 
         self.title("Kingdom Scanner by Cyrexxis")
-        self.geometry("760x535")
-        self.grid_columnconfigure(0, weight=4)
+        self.geometry("800x590")
+        self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=2)
+        self.grid_columnconfigure(2, weight=2)
+        self.grid_columnconfigure(3, weight=5)
         self.grid_rowconfigure(0, weight=1)
 
         self.options_frame = BasicOptionsFame(self, self.config)
-        self.options_frame.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn")
+        self.options_frame.grid(
+            row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn", columnspan=2
+        )
 
         self.scan_options_frame = ScanOptionsFrame(
             self,
@@ -544,7 +641,7 @@ class App(customtkinter.CTk):
             ],
         )
         self.scan_options_frame.grid(
-            row=0, column=0, padx=10, pady=10, sticky="ewsn", rowspan=3
+            row=0, column=0, padx=10, pady=10, sticky="ewsn", rowspan=2
         )
 
         self.last_gov_frame = LastGovernorInfo(
@@ -592,7 +689,7 @@ class App(customtkinter.CTk):
         )
 
         self.last_gov_frame.grid(
-            row=0, column=2, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
+            row=0, column=3, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
         )
 
         self.start_scan_button = customtkinter.CTkButton(
@@ -603,10 +700,10 @@ class App(customtkinter.CTk):
         self.end_scan_button = customtkinter.CTkButton(
             self, text="End scan", command=self.end_scan, state="disabled"
         )
-        self.end_scan_button.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
+        self.end_scan_button.grid(row=1, column=2, padx=10, pady=10, sticky="ew")
 
         self.current_state = customtkinter.CTkLabel(self, text="Not started", height=1)
-        self.current_state.grid(row=2, column=2, padx=10, pady=(10, 0), sticky="ewns")
+        self.current_state.grid(row=1, column=3, padx=10, pady=(10, 0), sticky="ewns")
 
     def ask_confirm(self, msg) -> bool:
         result = ConfirmDialog("No Governor found", msg, "200x110").get_input()
@@ -652,6 +749,7 @@ class App(customtkinter.CTk):
                 options["reconstruct"],
                 options["validate_power"],
                 options["power_threshold"],
+                options["formats"]
             )
 
         except AdbError as error:

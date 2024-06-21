@@ -16,10 +16,15 @@
       "info_open": 1,
       "info_close": 0.5,
       "gov_close": 1
+    },
+    "formats": {
+      "xlsx": true,
+      "csv": false,
+      "jsonl": false
     }
   },
   "general": {
     "bluestacks_name": "RoK Tracker",
-    "bluestacks_config": "D:\\Other\\bluestacks\\BlueStacks_nxt\\bluestacks.conf"
+    "bluestacks_config": "C:\\ProgramData\\BlueStacks_nxt\\bluestacks.conf"
   }
 }

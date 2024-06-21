@@ -9,6 +9,7 @@ from roktracker.utils.exception_handling import GuiExceptionHandler
 from roktracker.utils.exceptions import AdbError
 from roktracker.utils.general import is_string_int
 from roktracker.utils.gui import InfoDialog
+from roktracker.utils.output_formats import OutputFormats
 
 logging.basicConfig(
     filename=str(get_app_root() / "honor-scanner.log"),
@@ -102,6 +103,66 @@ class CheckboxFrame(customtkinter.CTkTabview):
         return values
 
 
+class HorizontalCheckboxFrame(customtkinter.CTkTabview):
+    def __init__(self, master, values, groupName, options_per_row):
+        super().__init__(
+            master,
+            state="disabled",
+            width=0,
+            height=0,
+            segmented_button_fg_color=customtkinter.ThemeManager.theme["CTkFrame"][
+                "fg_color"
+            ],
+            segmented_button_selected_color=customtkinter.ThemeManager.theme[
+                "CTkFrame"
+            ]["fg_color"],
+            text_color_disabled=customtkinter.ThemeManager.theme["CTkLabel"][
+                "text_color"
+            ],
+        )
+        self.add(groupName)
+        self.values = list(filter(lambda x: x["group"] == groupName, values))  # type: ignore
+        self.checkboxes: List[Dict[str, customtkinter.CTkCheckBox]] = []
+
+        for i in range(0, options_per_row):
+            self.tab(groupName).columnconfigure(i, weight=1)
+
+        cur_row = 0
+        for i, value in enumerate(self.values):
+            cur_col = i % options_per_row
+            label = customtkinter.CTkLabel(
+                self.tab(groupName), text=value["name"], height=1
+            )
+            label.grid(row=cur_row, column=cur_col, padx=10, pady=2)
+
+            checkbox = customtkinter.CTkCheckBox(
+                self.tab(groupName),
+                text="",
+                onvalue=True,
+                offvalue=False,
+                checkbox_height=20,
+                checkbox_width=20,
+                height=20,
+                width=20,
+            )
+            checkbox.grid(row=cur_row + 1, column=cur_col, padx=10, pady=2)
+
+            if value["default"]:
+                checkbox.select()
+
+            self.checkboxes.append({value["name"]: checkbox})
+
+            if (i + 1) % options_per_row == 0:
+                cur_row += 2
+
+    def get(self):
+        values = {}
+        for checkbox in self.checkboxes:
+            for k, v in checkbox.items():
+                values.update({k: bool(v.get())})
+        return values
+
+
 class BasicOptionsFame(customtkinter.CTkFrame):
     def __init__(self, master, config):
         super().__init__(master)
@@ -162,6 +223,30 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
         self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
 
+        output_values = [
+            {
+                "name": "xlsx",
+                "default": config["scan"]["formats"]["xlsx"],
+                "group": "Output Format",
+            },
+            {
+                "name": "csv",
+                "default": config["scan"]["formats"]["csv"],
+                "group": "Output Format",
+            },
+            {
+                "name": "jsonl",
+                "default": config["scan"]["formats"]["jsonl"],
+                "group": "Output Format",
+            },
+        ]
+        self.output_options = HorizontalCheckboxFrame(
+            self, output_values, "Output Format", 3
+        )
+        self.output_options.grid(
+            row=5, column=0, padx=10, pady=(5, 0), sticky="ew", columnspan=2
+        )
+
     def set_uuid(self, uuid):
         self.scan_uuid_var.set(uuid)
 
@@ -177,11 +262,14 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         return True
 
     def get_options(self):
+        formats = OutputFormats()
+        formats.from_dict(self.output_options.get())
         return {
             "uuid": self.scan_uuid_var.get(),
             "name": self.scan_name_text.get(),
             "port": int(self.adb_port_text.get()),
             "amount": int(self.scan_amount_text.get()),
+            "formats": formats,
         }
 
     def options_valid(self) -> bool:
@@ -192,6 +280,9 @@ class BasicOptionsFame(customtkinter.CTkFrame):
 
         if not is_string_int(self.scan_amount_text.get()):
             val_errors.append("People to scan invalid")
+
+        if all(value == False for value in self.output_options.get().values()):
+            val_errors.append("No output format checked")
 
         if len(val_errors) > 0:
             InfoDialog(
@@ -327,7 +418,7 @@ class App(customtkinter.CTk):
         config_file.close()
 
         self.title("Honor Scanner by Cyrexxis")
-        self.geometry("560x290")
+        self.geometry("560x390")
         self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
         self.grid_rowconfigure(0, weight=1)
@@ -393,6 +484,7 @@ class App(customtkinter.CTk):
             self.honor_scanner.start_scan(
                 options["name"],
                 options["amount"],
+                options["formats"],
             )
         except AdbError as error:
             logger.error(

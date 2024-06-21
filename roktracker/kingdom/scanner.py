@@ -1,5 +1,7 @@
 import datetime
 import logging
+from roktracker.kingdom.pandas_handler import PandasHandler
+from roktracker.utils.output_formats import OutputFormats
 import roktracker.utils.rok_ui_positions as rok_ui
 import shutil
 import time
@@ -12,7 +14,6 @@ from roktracker.utils.adb import *
 from roktracker.utils.general import *
 from roktracker.utils.ocr import *
 from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.excel_handler import ExcelHandler
 from roktracker.kingdom.governor_data import GovernorData
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore (tesserocr has no type defs)
 from typing import Callable
@@ -472,6 +473,7 @@ class KingdomScanner:
         reconstruct_fails: bool,
         validate_power: bool,
         power_threshold: int,
+        formats: OutputFormats,
     ):
         self.state_callback("Initializing")
         self.adb_client.start_adb()
@@ -490,30 +492,8 @@ class KingdomScanner:
         else:
             file_name_prefix = "TOP"
 
-        filename = f"{file_name_prefix}{amount - j}-{self.start_date}-{kingdom}-[{self.run_id}].xlsx"
-
-        file_path = str(self.scan_path / filename)
-
-        excel = ExcelHandler(self.scan_options, file_path, self.start_date)
-
-        # Initialize Excel Sheet Headers
-        excel.createHeader("Governor ID", "ID")
-        excel.createHeader("Governor Name", "Name")
-        excel.createHeader("Power", "Power")
-        excel.createHeader("Kill Points", "Killpoints")
-        excel.createHeader("Deaths", "Deads")
-        excel.createHeader("T1", "T1 Kills")
-        excel.createHeader("T2", "T2 Kills")
-        excel.createHeader("T3", "T3 Kills")
-        excel.createHeader("T4", "T4 Kills")
-        excel.createHeader("T5", "T5 Kills")
-        excel.createHeader("Kills", "Total Kills")
-        excel.createHeader("Kills (T4+)", "T45 Kills")
-        excel.createHeader("Ranged Points", "Ranged")
-        excel.createHeader("RSS Gathered", "Rss Gathered")
-        excel.createHeader("RSS Assistance", "Rss Assistance")
-        excel.createHeader("Helps", "Helps")
-        excel.createHeader("Alliance", "Alliance")
+        filename = f"{file_name_prefix}{amount - j}-{self.start_date}-{kingdom}-[{self.run_id}]"
+        data_handler = PandasHandler(self.scan_path, filename, formats)
 
         # The loop in TOP XXX Governors in kingdom - It works both for power and killpoints Rankings
         # MUST have the tab opened to the 1st governor(Power or Killpoints)
@@ -534,7 +514,7 @@ class KingdomScanner:
             )
 
             # Check for duplicate governor
-            if excel.sheet["A" + str(i + 1 - j)].value == to_int_check(gov_data.id):
+            if data_handler.is_duplicate(to_int_check(gov_data.id)):
                 roi = (196, 698, 52, 27)
                 self.adb_client.secure_adb_screencap().save(
                     self.img_path / "currentState.png"
@@ -610,6 +590,7 @@ class KingdomScanner:
 
             power_ok = "Not Checked"
             if validate_power:
+                # TODO: Respect threshold here
                 gov_power = to_int_check(gov_data.power)
                 if gov_power == 0:
                     gov_power = -1
@@ -625,10 +606,8 @@ class KingdomScanner:
                     self.save_failed("power", gov_data)
 
             # Write results in excel file
-            current_row = i + 2 - j
-
-            excel.write_governor(current_row, gov_data)
-            excel.save()
+            data_handler.write_governor(gov_data)
+            data_handler.save()
 
             additional_info = AdditionalData(
                 i + 1,
@@ -642,7 +621,7 @@ class KingdomScanner:
 
             self.gov_callback(gov_data, additional_info)
 
-        excel.save()
+        data_handler.save()
         self.output_handler("Reached the target amount of people. Scan complete.")
         logging.log(logging.INFO, "Reached the target amount of people. Scan complete.")
         self.adb_client.kill_adb()  # make sure to clean up adb server

@@ -4,15 +4,17 @@ import time
 from cv2.typing import MatLike
 from dummy_root import get_app_root
 from roktracker.alliance.additional_data import AdditionalData
-from roktracker.alliance.excel_handler import ExcelHandler
 from roktracker.alliance.governor_data import GovernorData
 from roktracker.alliance.governor_image_group import GovImageGroup
+from roktracker.alliance.pandas_handler import PandasHandler
 from roktracker.honor.ui_settings import HonorUI
 from roktracker.utils.adb import *
 from roktracker.utils.general import *
 from roktracker.utils.ocr import *
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore
 from typing import Callable, List
+
+from roktracker.utils.output_formats import OutputFormats
 
 
 def default_batch_callback(govs: List[GovernorData], extra: AdditionalData) -> None:
@@ -122,18 +124,13 @@ class HonorScanner:
 
         return govs
 
-    def start_scan(self, kingdom: str, amount: int):
+    def start_scan(self, kingdom: str, amount: int, formats: OutputFormats):
         self.state_callback("Initializing")
         self.adb_client.start_adb()
         self.screens_needed = int(math.ceil(amount / self.govs_per_screen))
 
         filename = f"Honor{amount}-{self.start_date}-{kingdom}-[{self.run_id}].xlsx"
-
-        ######Excel Formatting
-        excel = ExcelHandler(
-            str(self.scan_path / filename),
-            self.start_date,
-        )
+        data_handler = PandasHandler(self.scan_path, filename, formats)
 
         self.state_callback("Scanning")
 
@@ -158,9 +155,9 @@ class HonorScanner:
             self.batch_callback(governors, additional_data)
 
             self.reached_bottom = (
-                excel.add_results_to_sheet(governors, i) or self.reached_bottom
+                data_handler.write_governors(governors) or self.reached_bottom
             )
-            excel.save()
+            data_handler.save()
 
             if self.reached_bottom:
                 break
@@ -168,7 +165,7 @@ class HonorScanner:
                 self.adb_client.adb_send_events("Touch", HonorUI.misc.script)
                 time.sleep(1 + random.random())
 
-        excel.save()
+        data_handler.save()
         self.adb_client.kill_adb()  # make sure to clean up adb server
 
         for p in self.img_path.glob("gov_name*.png"):
