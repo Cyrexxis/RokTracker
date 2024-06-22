@@ -619,5 +619,6 @@ scans/
 scans_alliance/
 scans_honor/
 scans_kingdom/
+scans_seed/
 deps/
 !deps/inputs
