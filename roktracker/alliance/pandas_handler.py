@@ -75,10 +75,20 @@ class PandasHandler:
 
         return False
 
-    def save(self):
+    def save(self, trimm_to=0, sum_total=False):
         frame = pd.DataFrame(self.data_list)
+        # do trimming
+        if trimm_to > 0:
+            frame = frame.head(trimm_to)
+
         # strip the image path
         frame_stripped = frame.drop("Image", axis=1)
+        frame_stripped = frame_stripped.set_index("Name", drop=False)
+
+        # add sum
+        if sum_total:
+            frame_stripped.loc["Total"] = frame_stripped.sum(numeric_only=True, axis=0)
+            frame_stripped.at["Total", "Name"] = "Total"
 
         if self.formats.csv:
             frame_stripped.to_csv(self.path / (self.name + ".csv"), index=False)

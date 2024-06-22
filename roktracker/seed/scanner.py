@@ -203,7 +203,7 @@ class SeedScanner:
                 self.adb_client.adb_send_events("Touch", KingdomUI.misc.script)
                 time.sleep(1 + random.random())
 
-        data_handler.save()
+        data_handler.save(amount, True)
         self.adb_client.kill_adb()  # make sure to clean up adb server
 
         for p in self.img_path.glob("gov_name*.png"):
