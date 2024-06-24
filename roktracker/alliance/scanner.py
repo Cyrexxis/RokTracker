@@ -30,7 +30,7 @@ def default_output_handler(msg: str) -> None:
 
 
 class AllianceScanner:
-    def __init__(self, port):
+    def __init__(self, port, config):
         self.run_id = generate_random_id(8)
         self.start_date = datetime.date.today()
         self.stop_scan = False
@@ -53,7 +53,10 @@ class AllianceScanner:
         self.output_handler = default_output_handler
 
         self.adb_client = AdvancedAdbClient(
-            str(self.root_dir / "deps" / "platform-tools" / "adb.exe"), port
+            str(self.root_dir / "deps" / "platform-tools" / "adb.exe"),
+            port,
+            config["general"]["emulator"],
+            self.root_dir / "deps" / "inputs",
         )
 
     def set_batch_callback(

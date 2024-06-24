@@ -620,5 +620,5 @@ scans_alliance/
 scans_honor/
 scans_kingdom/
 scans_seed/
-deps/
-!deps/inputs
+deps/tessdata
+deps/*.whl

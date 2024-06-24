@@ -139,7 +139,7 @@ def main():
         sys.exit(3)
 
     try:
-        honor_scanner = HonorScanner(bluestacks_port)
+        honor_scanner = HonorScanner(bluestacks_port, config)
         honor_scanner.set_batch_callback(print_batch)
 
         console.print(

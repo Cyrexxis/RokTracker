@@ -196,7 +196,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.bluestacks_instance_text.grid(
             row=2, column=1, padx=10, pady=(10, 0), sticky="ew"
         )
-        self.bluestacks_instance_text.insert(0, config["general"]["bluestacks_name"])
+        self.bluestacks_instance_text.insert(0, config["general"]["bluestacks"]["name"])
 
         self.adb_port_label = customtkinter.CTkLabel(self, text="Adb port:", height=1)
         self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
@@ -510,7 +510,7 @@ class App(customtkinter.CTk):
         options = self.options_frame.get_options()
 
         try:
-            self.alliance_scanner = AllianceScanner(options["port"])
+            self.alliance_scanner = AllianceScanner(options["port"], self.config)
             self.alliance_scanner.set_batch_callback(self.governor_callback)
             self.alliance_scanner.set_state_callback(self.state_callback)
             self.options_frame.set_uuid(self.alliance_scanner.run_id)
