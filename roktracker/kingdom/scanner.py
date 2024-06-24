@@ -74,7 +74,10 @@ class KingdomScanner:
         self.output_handler = default_output_handler
 
         self.adb_client = AdvancedAdbClient(
-            str(self.root_dir / "deps" / "platform-tools" / "adb.exe"), port
+            str(self.root_dir / "deps" / "platform-tools" / "adb.exe"),
+            port,
+            config["general"]["emulator"],
+            self.root_dir / "deps" / "inputs",
         )
 
     def set_governor_callback(
@@ -246,10 +249,7 @@ class KingdomScanner:
                 if self.advanced_scroll:
                     self.adb_client.adb_send_events(
                         "Touch",
-                        self.root_dir
-                        / "deps"
-                        / "inputs"
-                        / "kingdom_1_person_scroll.txt",
+                        "kingdom_1_person_scroll.txt",
                     )
                 else:
                     self.adb_client.secure_adb_shell(f"input swipe 690 605 690 540")

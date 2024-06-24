@@ -76,7 +76,7 @@ def main():
     try:
         bluestacks_device_name = questionary.text(
             message="Name of your bluestacks instance:",
-            default=config["general"]["bluestacks_name"],
+            default=config["general"]["bluestacks"]["name"],
         ).unsafe_ask()
 
         bluestacks_port = int(
@@ -140,7 +140,7 @@ def main():
         sys.exit(3)
 
     try:
-        alliance_scanner = AllianceScanner(bluestacks_port)
+        alliance_scanner = AllianceScanner(bluestacks_port, config)
         alliance_scanner.set_batch_callback(print_batch)
 
         console.print(

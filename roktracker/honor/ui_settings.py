@@ -7,7 +7,7 @@ from dummy_root import get_app_root
 class HonorMisc:
     threshold: int = 150
     invert: bool = False
-    script: str = str(get_app_root() / "deps/inputs/honor_5_person_scroll.txt")
+    script: str = "honor_5_person_scroll.txt"
 
 
 class HonorUI:

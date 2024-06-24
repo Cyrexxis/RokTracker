@@ -140,7 +140,7 @@ def main():
         sys.exit(3)
 
     try:
-        alliance_scanner = SeedScanner(bluestacks_port)
+        alliance_scanner = SeedScanner(bluestacks_port, config)
         alliance_scanner.set_batch_callback(print_batch)
 
         console.print(

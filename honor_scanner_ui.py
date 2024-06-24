@@ -476,7 +476,7 @@ class App(customtkinter.CTk):
         options = self.options_frame.get_options()
 
         try:
-            self.honor_scanner = HonorScanner(options["port"])
+            self.honor_scanner = HonorScanner(options["port"], self.config)
             self.honor_scanner.set_batch_callback(self.governor_callback)
             self.honor_scanner.set_state_callback(self.state_callback)
             self.options_frame.set_uuid(self.honor_scanner.run_id)

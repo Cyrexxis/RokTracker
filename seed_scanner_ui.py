@@ -510,7 +510,7 @@ class App(customtkinter.CTk):
         options = self.options_frame.get_options()
 
         try:
-            self.alliance_scanner = SeedScanner(options["port"])
+            self.alliance_scanner = SeedScanner(options["port"], self.config)
             self.alliance_scanner.set_batch_callback(self.governor_callback)
             self.alliance_scanner.set_state_callback(self.state_callback)
             self.options_frame.set_uuid(self.alliance_scanner.run_id)

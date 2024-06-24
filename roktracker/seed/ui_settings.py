@@ -7,7 +7,7 @@ from dummy_root import get_app_root
 class KingdomMisc:
     threshold: int = 90
     invert: bool = True
-    script: str = str(get_app_root() / "deps/inputs/alliance_6_person_scroll.txt")
+    script: str = "alliance_6_person_scroll.txt"
 
 
 class KingdomUI:

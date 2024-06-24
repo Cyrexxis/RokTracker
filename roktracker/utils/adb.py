@@ -15,31 +15,41 @@ from roktracker.utils.general import to_int_or
 def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
     default_port = to_int_or(config["general"]["adb_port"], 5555)
     # try to read port from bluestacks config
-    try:
-        dummy = "AmazingDummy"
-        with open(config["general"]["bluestacks_config"], "r") as config_file:
-            file_content = "[" + dummy + "]\n" + config_file.read()
-        bluestacks_config = configparser.RawConfigParser()
-        bluestacks_config.read_string(file_content)
+    if config["general"]["emulator"] == "bluestacks":
+        try:
+            dummy = "AmazingDummy"
+            with open(config["general"]["bluestacks"]["config"], "r") as config_file:
+                file_content = "[" + dummy + "]\n" + config_file.read()
+            bluestacks_config = configparser.RawConfigParser()
+            bluestacks_config.read_string(file_content)
 
-        for key, value in bluestacks_config.items(dummy):
-            if value == f'"{bluestacks_device_name}"':
-                key_port = key.replace("display_name", "status.adb_port")
-                port = bluestacks_config.get(dummy, key_port)
-                return int(port.strip('"'))
-    except:
-        console.print(
-            "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
-        )
+            for key, value in bluestacks_config.items(dummy):
+                if value == f'"{bluestacks_device_name}"':
+                    key_port = key.replace("display_name", "status.adb_port")
+                    port = bluestacks_config.get(dummy, key_port)
+                    return int(port.strip('"'))
+        except:
+            console.print(
+                "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
+            )
     return default_port
 
 
 class AdvancedAdbClient:
-    def __init__(self, path: str, port: int, start_immediately=False):
+    def __init__(
+        self,
+        adb_path: str,
+        port: int,
+        player: str,
+        script_base: str | Path,
+        start_immediately=False,
+    ):
         self.server_port = 0
         self.client_port = port
-        self.adb_path = path
+        self.adb_path = adb_path
         self.started = start_immediately
+        self.player = player
+        self.script_base = Path(script_base)
 
         if start_immediately:
             self.start_adb()
@@ -117,11 +127,15 @@ class AdvancedAdbClient:
         return result
 
     def adb_send_events(self, input_device_name: str, event_file: str | Path) -> None:
+        if input_device_name == "Touch":
+            if self.player == "ld":
+                input_device_name = "ABS_MT_POSITION_Y"
+
         idn = self.secure_adb_shell(
             f"getevent -pl 2>&1 | sed -n '/^add/{{h}}/{input_device_name}/{{x;s/[^/]*//p}}'",
         )
         idn = str(idn).strip()
-        macroFile = open(event_file, "r")
+        macroFile = open(self.script_base / self.player / event_file, "r")
         lines = macroFile.readlines()
 
         for line in lines:
