@@ -728,6 +728,7 @@ class App(customtkinter.CTk):
 
         self.config["scan"]["timings"]["info_close"] = options["info_time"]
         self.config["scan"]["timings"]["gov_close"] = options["gov_time"]
+        self.config["scan"]["advanced_scroll"] = options["adv_scroll"]
 
         try:
             # Activate end scan button
@@ -749,7 +750,7 @@ class App(customtkinter.CTk):
                 options["reconstruct"],
                 options["validate_power"],
                 options["power_threshold"],
-                options["formats"]
+                options["formats"],
             )
 
         except AdbError as error:
