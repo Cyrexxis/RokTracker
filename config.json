@@ -27,7 +27,7 @@
     "emulator": "bluestacks",
     "bluestacks": {
       "name": "RoK Tracker",
-      "config": "C:\\ProgramData\BlueStacks_nxt\\bluestacks.conf"
+      "config": "C:\\ProgramData\\BlueStacks_nxt\\bluestacks.conf"
     },
     "adb_port": 5555
   }

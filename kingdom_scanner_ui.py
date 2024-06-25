@@ -1,8 +1,13 @@
 import logging
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
-from roktracker.utils.exceptions import AdbError
-from roktracker.utils.general import is_string_float, is_string_int, to_int_check
+from roktracker.utils.exceptions import AdbError, ConfigError
+from roktracker.utils.general import (
+    is_string_float,
+    is_string_int,
+    load_config,
+    to_int_check,
+)
 from roktracker.utils.gui import ConfirmDialog, InfoDialog
 from roktracker.utils.output_formats import OutputFormats
 
@@ -596,16 +601,25 @@ class App(customtkinter.CTk):
         file_validation = validate_installation()
         if not file_validation.success:
             self.withdraw()
-            InfoDialog(
+            dia = InfoDialog(
                 "Validation failed",
                 "\n".join(file_validation.messages),
                 "760x200",
                 self.close_program,
             )
+            self.wait_window(dia)
 
-        config_file = open(get_app_root() / "config.json")
-        self.config = json.load(config_file)
-        config_file.close()
+        try:
+            self.config = load_config()
+        except ConfigError as e:
+            logger.fatal(str(e))
+            dia = InfoDialog(
+                "Invalid Config",
+                str(e),
+                "360x200",
+                self.close_program,
+            )
+            self.wait_window(dia)
 
         self.title("Kingdom Scanner by Cyrexxis")
         self.geometry("800x590")
