@@ -29,7 +29,7 @@ def load_config():
         raise ConfigError(f"Config is invalid. {e.msg} in line {e.lineno}.")
     except FileNotFoundError:
         raise ConfigError(
-            "Config file is missing: make sure config.json is present in the root directory of the scanner."
+            "Config file is missing: make sure config.json is in the same folder as your scanner."
         )
 
 
