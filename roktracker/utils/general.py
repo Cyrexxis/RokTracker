@@ -1,4 +1,5 @@
 import datetime
+import json
 from os import PathLike
 import random
 import string
@@ -7,6 +8,29 @@ import numpy as np
 
 from typing import Any
 from cv2.typing import MatLike
+
+from dummy_root import get_app_root
+from roktracker.utils.exceptions import ConfigError
+
+
+def load_config():
+    try:
+        with open(get_app_root() / "config.json", "rt") as config_file:
+            return json.load(config_file)
+    except json.JSONDecodeError as e:
+        if e.msg == "Invalid \\escape":
+            raise ConfigError(
+                f"Config is invalid. Make sure you use \\\\ instead of \\. The error happened in line {e.lineno}."
+            )
+        if e.msg == "Invalid control character at":
+            raise ConfigError(
+                f"Config is invalid. {e.msg} char {e.colno} in line {e.lineno}."
+            )
+        raise ConfigError(f"Config is invalid. {e.msg} in line {e.lineno}.")
+    except FileNotFoundError:
+        raise ConfigError(
+            "Config file is missing: make sure config.json is present in the root directory of the scanner."
+        )
 
 
 def to_int_check(element) -> int:

@@ -63,9 +63,13 @@ def main():
         sys.exit(2)
 
     root_dir = get_app_root()
-    config_file = open(root_dir / "config.json")
-    config = json.load(config_file)
-    config_file.close()
+
+    try:
+        config = load_config()
+    except ConfigError as e:
+        logger.fatal(str(e))
+        console.log(str(e))
+        sys.exit(3)
 
     console.print(
         "Tesseract languages available: "
