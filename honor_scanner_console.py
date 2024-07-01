@@ -79,7 +79,7 @@ def main():
     try:
         bluestacks_device_name = questionary.text(
             message="Name of your bluestacks instance:",
-            default=config["general"]["bluestacks_name"],
+            default=config["general"]["bluestacks"]["name"],
         ).unsafe_ask()
 
         bluestacks_port = int(
