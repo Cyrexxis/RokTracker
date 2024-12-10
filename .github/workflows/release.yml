@@ -12,7 +12,7 @@ jobs:
       - name: (Install) python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           architecture: "x64"
 
       - name: (Install) python dev tools
@@ -41,7 +41,7 @@ jobs:
             rok_tracker.spec
 
           echo "✔️ Executables created successfully" >> $GITHUB_STEP_SUMMARY
-          echo "  - Python version used: '3.11'" >> $GITHUB_STEP_SUMMARY
+          echo "  - Python version used: '3.12'" >> $GITHUB_STEP_SUMMARY
           echo "  - Python architecture used: 'x64'" >> $GITHUB_STEP_SUMMARY
 
       - name: Prepare executable for upload
