@@ -1,10 +1,17 @@
 # Rok Tracker
 
+## Important Notes
+* Version 5 config is not compatible with Version 4 config,
+so you need to adjust the config accordingly.
+* It is important to use `\\` in the config json bluestacks path (not `\`), otherwise you will get a JSONDecodeError. Please open no issues for that.
+
 ## Latest Changes
-* Updated Alliance and Honor scanner and added GUI for those
-* Improved GUI by showing the user messages if something isn't right
-* Now checking if all files are at the expected places
-* Improved logging to make error finding easier
+* Experimental support for LD Player
+* [Wiki tab](https://github.com/Cyrexxis/RokTracker/wiki/) where more stuff gets explained
+* Seed Scanner that works like alliance scanner only for kingdom (fast way to get only kp or power)
+* Now possible to choose the output format (xlsx, jsonl or csv)
+* Default adb port can be changed
+* Option to check for plausible governor power during kingdom scan on the power ranking page
 
 ## Summary
 
