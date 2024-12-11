@@ -271,6 +271,11 @@ class KingdomScanner:
 
         if self.is_page_needed(1):
             self.state_callback("Scanning general page")
+
+            # take screenshot before copying the name
+            self.adb_client.secure_adb_screencap().save(self.img_path / "gov_info.png")
+            image = load_cv2_img(self.img_path / "gov_info.png", cv2.IMREAD_UNCHANGED)
+
             if self.scan_options["Name"]:
                 # nickname copy
                 copy_try = 0
@@ -290,9 +295,6 @@ class KingdomScanner:
                         copy_try = copy_try + 1
 
             # time.sleep(1.5 + random_delay())
-
-            self.adb_client.secure_adb_screencap().save(self.img_path / "gov_info.png")
-            image = load_cv2_img(self.img_path / "gov_info.png", cv2.IMREAD_UNCHANGED)
 
             # 1st image data (ID, Power, Killpoints, Alliance)
             with PyTessBaseAPI(
