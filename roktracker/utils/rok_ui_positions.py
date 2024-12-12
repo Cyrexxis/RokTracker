@@ -4,7 +4,7 @@ ocr_regions = {
     "more_info": (158, 776, 137, 29),
     "gov_id": (721, 177, 260, 38),
     "power": (876, 321, 218, 38),
-    "killpoints": (1145, 321, 216, 38),
+    "killpoints": (1185, 321, 216, 38),
     "alliance_name": (586, 321, 279, 38),
     # second screen
     "t1_kills": (917, 414, 200, 38),
