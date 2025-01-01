@@ -48,6 +48,8 @@ class KingdomScanner:
 
         self.config = config
         self.timings = config["scan"]["timings"]
+        self.max_random_delay = config["scan"]["timings"]["max_random"]
+
         self.advanced_scroll = config["scan"]["advanced_scroll"]
         self.scan_options = scan_options
         self.abort = False
@@ -199,7 +201,8 @@ class KingdomScanner:
             f"input tap 690 "
             + str(self.get_gov_position(current_player, self.inactive_players))
         )
-        time.sleep(self.timings["gov_open"] + random_delay())
+
+        wait_random_range(self.timings["gov_open"], self.max_random_delay)
 
         gov_info = False
         count = 0
@@ -258,7 +261,7 @@ class KingdomScanner:
                     + str(self.get_gov_position(current_player, self.inactive_players)),
                 )
                 count += 1
-                time.sleep(self.timings["gov_open"] + random_delay())
+                wait_random_range(self.timings["gov_open"], self.max_random_delay)
                 if count == 10:
                     cont = self.ask_continue("Could not find user, retry?")
                     if cont:
@@ -284,7 +287,9 @@ class KingdomScanner:
                         self.adb_client.secure_adb_tap(
                             rok_ui.tap_positions["name_copy"]
                         )
-                        time.sleep(self.timings["copy_wait"])
+                        wait_random_range(
+                            self.timings["copy_wait"], self.max_random_delay
+                        )
                         tk_clipboard = tkinter.Tk()
                         governor_data.name = tk_clipboard.clipboard_get()
                         tk_clipboard.destroy()
@@ -293,8 +298,6 @@ class KingdomScanner:
                         console.log("Name copy failed, retying")
                         logging.log(logging.INFO, "Name copy failed, retying")
                         copy_try = copy_try + 1
-
-            # time.sleep(1.5 + random_delay())
 
             # 1st image data (ID, Power, Killpoints, Alliance)
             with PyTessBaseAPI(
@@ -339,7 +342,7 @@ class KingdomScanner:
             # kills tier
             self.adb_client.secure_adb_tap(rok_ui.tap_positions["open_kills"])
             self.state_callback("Scanning kills page")
-            time.sleep(self.timings["kills_open"] + random_delay())
+            wait_random_range(self.timings["kills_open"], self.max_random_delay)
 
             self.adb_client.secure_adb_screencap().save(
                 self.img_path / "kills_tier.png"
@@ -417,7 +420,7 @@ class KingdomScanner:
             # More info tab
             self.adb_client.secure_adb_tap(rok_ui.tap_positions["more_info"])
             self.state_callback("Scanning more info page")
-            time.sleep(self.timings["info_open"] + random_delay())
+            wait_random_range(self.timings["info_open"], self.max_random_delay)
             self.adb_client.secure_adb_screencap().save(self.img_path / "more_info.png")
             image3 = load_cv2_img(self.img_path / "more_info.png", cv2.IMREAD_UNCHANGED)
 
@@ -452,11 +455,11 @@ class KingdomScanner:
             self.adb_client.secure_adb_tap(
                 rok_ui.tap_positions["close_info"]
             )  # close more info
-            time.sleep(self.timings["info_close"] + random_delay())
+            wait_random_range(self.timings["info_close"], self.max_random_delay)
         self.adb_client.secure_adb_tap(
             rok_ui.tap_positions["close_gov"]
         )  # close governor info
-        time.sleep(self.timings["gov_close"] + random_delay())
+        wait_random_range(self.timings["gov_close"], self.max_random_delay)
 
         end_time = time.time()
 

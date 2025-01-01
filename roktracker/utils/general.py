@@ -3,6 +3,7 @@ import json
 from os import PathLike
 import random
 import string
+import time
 import cv2
 import numpy as np
 
@@ -82,6 +83,10 @@ def next_alpha(s: str) -> str:
 
 def random_delay() -> float:
     return random.random() * 0.1
+
+
+def wait_random_range(min_time: float, max_offset: float) -> None:
+    time.sleep(random.uniform(min_time, min_time + max_offset))
 
 
 def format_timedelta_to_HHMMSS(td: datetime.timedelta) -> str:

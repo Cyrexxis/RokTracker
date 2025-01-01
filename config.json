@@ -15,7 +15,8 @@
       "kills_open": 1,
       "info_open": 1,
       "info_close": 0.5,
-      "gov_close": 1
+      "gov_close": 1,
+      "max_random": 0.5
     },
     "formats": {
       "xlsx": true,

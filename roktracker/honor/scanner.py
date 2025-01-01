@@ -41,6 +41,8 @@ class HonorScanner:
         self.govs_per_screen = 5
         self.screens_needed = 0
 
+        self.max_random_delay = config["scan"]["timings"]["max_random"]
+
         # TODO: Load paths from config
         self.root_dir = get_app_root()
         self.tesseract_path = Path(self.root_dir / "deps" / "tessdata")
@@ -166,7 +168,7 @@ class HonorScanner:
                 break
             else:
                 self.adb_client.adb_send_events("Touch", HonorUI.misc.script)
-                time.sleep(1 + random.random())
+                wait_random_range(1, self.max_random_delay)
 
         data_handler.save()
         self.adb_client.kill_adb()  # make sure to clean up adb server
