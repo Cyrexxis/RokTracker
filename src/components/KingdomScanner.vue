@@ -199,6 +199,12 @@ import { intRule, floatRule, notEmptyArrayRule } from 'src/util/rules'
 import type { KingdomScanSettings } from 'src/types/KingdomScanSettings'
 import type { KingdomPreset } from 'src/types/KingdomPreset'
 import ScanStatus from './ScanStatus.vue'
+import { useKingdomStore } from 'src/stores/kingdom-scanner-store'
+import { useQuasar } from 'quasar'
+
+const $q = useQuasar()
+
+const kingdomStore = useKingdomStore()
 
 const scanRunning = ref(false)
 
@@ -335,5 +341,41 @@ const computedInfoToScan = computed(() => {
 const handleMainButtonClick = () => {
   scanRunning.value = !scanRunning.value
   console.log('clicked')
+  window.pywebview.api.TestPython()
+}
+
+const setScanId = (id: string) => {
+  settings.value.scanName = id
+}
+
+const governorUpdate = (governorData: string) => {
+  console.log(governorData)
+}
+
+const stateUpdate = (state: string) => {
+  kingdomStore.statusMessage = state
+}
+
+const askConfirm = (message: string) => {
+  $q.dialog({
+    title: 'Confirm',
+    message,
+    ok: 'Yes',
+    cancel: 'No',
+    persistent: true,
+  })
+    .onOk(() => {
+      window.pywebview.api.ConfirmCallback(true)
+    })
+    .onCancel(() => {
+      window.pywebview.api.ConfirmCallback(false)
+    })
+}
+
+window.kingdom = {
+  setScanID: setScanId,
+  governorUpdate: governorUpdate,
+  stateUpdate: stateUpdate,
+  askConfirm: askConfirm,
 }
 </script>

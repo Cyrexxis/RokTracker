@@ -1,7 +1,7 @@
 {
   "scan": {
     "kingdom_name": "",
-    "people_to_scan": "",
+    "people_to_scan": 300,
     "resume": false,
     "advanced_scroll": true,
     "track_inactives": false,
