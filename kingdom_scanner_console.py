@@ -4,6 +4,8 @@ from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exception_handling import ConsoleExceptionHander
 from roktracker.utils.output_formats import OutputFormats
+from roktracker.utils.types.full_config import FormatsConfig
+from roktracker.utils.types.scan_preset import ScanOptions
 
 logging.basicConfig(
     filename=str(get_app_root() / "kingdom-scanner.log"),
@@ -63,23 +65,23 @@ def main():
         console.log(str(e))
         sys.exit(3)
 
-    scan_options = {
-        "ID": False,
-        "Name": False,
-        "Power": False,
-        "Killpoints": False,
-        "Alliance": False,
-        "T1 Kills": False,
-        "T2 Kills": False,
-        "T3 Kills": False,
-        "T4 Kills": False,
-        "T5 Kills": False,
-        "Ranged": False,
-        "Deads": False,
-        "Rss Assistance": False,
-        "Rss Gathered": False,
-        "Helps": False,
-    }
+    scan_options = ScanOptions(
+        id=False,
+        name=False,
+        power=False,
+        killpoints=False,
+        alliance=False,
+        t1_kills=False,
+        t2_kills=False,
+        t3_kills=False,
+        t4_kills=False,
+        t5_kills=False,
+        ranged=False,
+        deaths=False,
+        assistance=False,
+        gathered=False,
+        helps=False,
+    )
 
     console.print(
         "Tesseract languages available: "
@@ -89,7 +91,7 @@ def main():
     try:
         bluestacks_device_name = questionary.text(
             message="Name of your bluestacks instance:",
-            default=config["general"]["bluestacks"]["name"],
+            default=config.general.bluestacks.name,
         ).unsafe_ask()
 
         bluestacks_port = int(
@@ -102,7 +104,7 @@ def main():
 
         kingdom = questionary.text(
             message="Kingdom name (used for file name):",
-            default=config["scan"]["kingdom_name"],
+            default=config.scan.kingdom_name,
         ).unsafe_ask()
 
         validated_name = sanitize_scanname(kingdom)
@@ -117,27 +119,27 @@ def main():
             questionary.text(
                 message="Number of people to scan:",
                 validate=lambda port: is_string_int(port),
-                default=str(config["scan"]["people_to_scan"]),
+                default=str(config.scan.people_to_scan),
             ).unsafe_ask()
         )
 
         resume_scan = questionary.confirm(
             message="Resume scan:",
             auto_enter=False,
-            default=config["scan"]["resume"],
+            default=config.scan.resume,
         ).unsafe_ask()
 
         new_scroll = questionary.confirm(
             message="Use advanced scrolling method:",
             auto_enter=False,
-            default=config["scan"]["advanced_scroll"],
+            default=config.scan.advanced_scroll,
         ).unsafe_ask()
-        config["scan"]["advanced_scroll"] = new_scroll
+        config.scan.advanced_scroll = new_scroll
 
         track_inactives = questionary.confirm(
             message="Screenshot inactives:",
             auto_enter=False,
-            default=config["scan"]["track_inactives"],
+            default=config.scan.track_inactives,
         ).unsafe_ask()
 
         scan_mode = questionary.select(
@@ -166,103 +168,118 @@ def main():
 
         match scan_mode:
             case "full":
-                scan_options = {
-                    "ID": True,
-                    "Name": True,
-                    "Power": True,
-                    "Killpoints": True,
-                    "Alliance": True,
-                    "T1 Kills": True,
-                    "T2 Kills": True,
-                    "T3 Kills": True,
-                    "T4 Kills": True,
-                    "T5 Kills": True,
-                    "Ranged": True,
-                    "Deads": True,
-                    "Rss Assistance": True,
-                    "Rss Gathered": True,
-                    "Helps": True,
-                }
+                scan_options = ScanOptions(
+                    id=True,
+                    name=True,
+                    power=True,
+                    killpoints=True,
+                    alliance=True,
+                    t1_kills=True,
+                    t2_kills=True,
+                    t3_kills=True,
+                    t4_kills=True,
+                    t5_kills=True,
+                    ranged=True,
+                    deaths=True,
+                    assistance=True,
+                    gathered=True,
+                    helps=True,
+                )
             case "seed":
-                scan_options = {
-                    "ID": True,
-                    "Name": True,
-                    "Power": True,
-                    "Killpoints": True,
-                    "Alliance": True,
-                    "T1 Kills": False,
-                    "T2 Kills": False,
-                    "T3 Kills": False,
-                    "T4 Kills": False,
-                    "T5 Kills": False,
-                    "Ranged": False,
-                    "Deads": False,
-                    "Rss Assistance": False,
-                    "Rss Gathered": False,
-                    "Helps": False,
-                }
+                scan_options = ScanOptions(
+                    id=True,
+                    name=True,
+                    power=True,
+                    killpoints=True,
+                    alliance=True,
+                    t1_kills=False,
+                    t2_kills=False,
+                    t3_kills=False,
+                    t4_kills=False,
+                    t5_kills=False,
+                    ranged=False,
+                    deaths=False,
+                    assistance=False,
+                    gathered=False,
+                    helps=False,
+                )
             case "custom":
                 items_to_scan = questionary.checkbox(
                     "What stats should be scanned?",
                     choices=[
                         questionary.Choice(
                             "ID",
+                            value="id",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Name",
+                            value="name",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Power",
+                            value="power",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Killpoints",
+                            value="killpoints",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Alliance",
+                            value="alliance",
                             checked=False,
                         ),
                         questionary.Choice(
                             "T1 Kills",
+                            value="t1_kills",
                             checked=False,
                         ),
                         questionary.Choice(
                             "T2 Kills",
+                            value="t2_kills",
                             checked=False,
                         ),
                         questionary.Choice(
                             "T3 Kills",
+                            value="t3_kills",
                             checked=False,
                         ),
                         questionary.Choice(
                             "T4 Kills",
+                            value="t4_kills",
                             checked=False,
                         ),
                         questionary.Choice(
                             "T5 Kills",
+                            value="t5_kills",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Ranged",
+                            value="ranged",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Deads",
+                            value="deaths",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Rss Assistance",
+                            value="assistance",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Rss Gathered",
+                            value="gathered",
                             checked=False,
                         ),
                         questionary.Choice(
                             "Helps",
+                            value="helps",
                             checked=False,
                         ),
                     ],
@@ -272,7 +289,7 @@ def main():
                     return
                 else:
                     for item in items_to_scan:
-                        scan_options[item] = True
+                        setattr(scan_options, item, True)
             case _:
                 console.print("Exiting, no mode selected.")
                 return
@@ -281,74 +298,74 @@ def main():
         reconstruct_fails = False
 
         if (
-            scan_options["T1 Kills"]
-            and scan_options["T2 Kills"]
-            and scan_options["T3 Kills"]
-            and scan_options["T4 Kills"]
-            and scan_options["T5 Kills"]
-            and scan_options["Killpoints"]
+            scan_options.t1_kills
+            and scan_options.t2_kills
+            and scan_options.t3_kills
+            and scan_options.t4_kills
+            and scan_options.t5_kills
+            and scan_options.killpoints
         ):
             validate_kills = questionary.confirm(
                 message="Validate killpoints:",
                 auto_enter=False,
-                default=config["scan"]["validate_kills"],
+                default=config.scan.validate_kills,
             ).unsafe_ask()
 
         if validate_kills:
             reconstruct_fails = questionary.confirm(
                 message="Try reconstructiong wrong kills values:",
                 auto_enter=False,
-                default=config["scan"]["reconstruct_kills"],
+                default=config.scan.reconstruct_kills,
             ).unsafe_ask()
 
         validate_power = questionary.confirm(
             message="Validate power (only works in power ranking):",
             auto_enter=False,
-            default=config["scan"]["validate_power"],
+            default=config.scan.validate_power,
         ).unsafe_ask()
 
         power_threshold = int(
             questionary.text(
                 message="Power threshold to trigger warning:",
                 validate=lambda pt: is_string_int(pt),
-                default=str(config["scan"]["power_threshold"]),
+                default=str(config.scan.power_threshold),
             ).unsafe_ask()
         )
 
-        config["scan"]["timings"]["info_close"] = float(
+        config.scan.timings.info_close = float(
             questionary.text(
                 message="Time to wait after more info close:",
                 validate=lambda port: is_string_float(port),
-                default=str(config["scan"]["timings"]["info_close"]),
+                default=str(config.scan.timings.info_close),
             ).unsafe_ask()
         )
 
-        config["scan"]["timings"]["gov_close"] = float(
+        config.scan.timings.gov_close = float(
             questionary.text(
                 message="Time to wait after governor close:",
                 validate=lambda port: is_string_float(port),
-                default=str(config["scan"]["timings"]["gov_close"]),
+                default=str(config.scan.timings.gov_close),
             ).unsafe_ask()
         )
 
-        save_formats = OutputFormats()
+        save_formats = FormatsConfig()
         save_formats_tmp = questionary.checkbox(
             "In what format should the result be saved?",
             choices=[
                 questionary.Choice(
                     "Excel (xlsx)",
                     value="xlsx",
-                    checked=config["scan"]["formats"]["xlsx"],
+                    checked=config.scan.formats.xlsx,
                 ),
                 questionary.Choice(
                     "Comma seperated values (csv)",
                     value="csv",
-                    checked=config["scan"]["formats"]["csv"],
+                    checked=config.scan.formats.csv,
                 ),
                 questionary.Choice(
                     "JSON Lines (jsonl)",
                     value="jsonl",
-                    checked=config["scan"]["formats"]["jsonl"],
+                    checked=config.scan.formats.jsonl,
                 ),
             ],
         ).unsafe_ask()

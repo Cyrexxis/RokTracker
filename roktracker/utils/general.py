@@ -12,12 +12,13 @@ from cv2.typing import MatLike
 
 from dummy_root import get_app_root
 from roktracker.utils.exceptions import ConfigError
+from roktracker.utils.types.full_config import FullConfig
 
 
-def load_config():
+def load_config() -> FullConfig:
     try:
         with open(get_app_root() / "config.json", "rt") as config_file:
-            return json.load(config_file)
+            return FullConfig(**json.load(config_file))
     except json.JSONDecodeError as e:
         if e.msg == "Invalid \\escape":
             raise ConfigError(

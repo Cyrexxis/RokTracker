@@ -10,15 +10,16 @@ import sys
 
 from roktracker.utils.exceptions import AdbError
 from roktracker.utils.general import to_int_or
+from roktracker.utils.types.full_config import FullConfig
 
 
-def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
-    default_port = to_int_or(config["general"]["adb_port"], 5555)
+def get_bluestacks_port(bluestacks_device_name: str, config: FullConfig) -> int:
+    default_port = config.general.adb_port
     # try to read port from bluestacks config
-    if config["general"]["emulator"] == "bluestacks":
+    if config.general.emulator == "bluestacks":
         try:
             dummy = "AmazingDummy"
-            with open(config["general"]["bluestacks"]["config"], "r") as config_file:
+            with open(config.general.bluestacks.config, "r") as config_file:
                 file_content = "[" + dummy + "]\n" + config_file.read()
             bluestacks_config = configparser.RawConfigParser()
             bluestacks_config.read_string(file_content)

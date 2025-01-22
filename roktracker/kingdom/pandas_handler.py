@@ -7,13 +7,15 @@ from roktracker.kingdom.governor_data import GovernorData
 from roktracker.utils.output_formats import OutputFormats
 from datetime import date
 
+from roktracker.utils.types.full_config import FormatsConfig
+
 
 class PandasHandler:
     def __init__(
         self,
         path: str | PathLike[Any],
         filename: str,
-        formats: OutputFormats,
+        formats: FormatsConfig,
         title: str = str(date.today()),
     ):
         self.title = title
