@@ -5,6 +5,8 @@ import sys
 from threading import Event, Thread
 import threading
 import tracemalloc
+
+from pydantic import TypeAdapter
 import dummy_root
 import webview
 import getpass
@@ -16,6 +18,7 @@ from roktracker.kingdom.types.additional_data import AdditionalData
 from roktracker.kingdom.types.governor_data import GovernorData
 from roktracker.kingdom.scanner import KingdomScanner, scan_preset_to_scan_options
 from roktracker.utils.exception_handling import ConsoleExceptionHander
+from roktracker.utils.general import load_config, load_kingdom_presets
 from roktracker.utils.types.full_config import FullConfig
 from roktracker.utils.types.scan_preset import ScanPreset
 
@@ -151,6 +154,12 @@ class API:
     def StopKingdomScan(self):
         kingdom_scanner.end_scan()
         return ""
+
+    def LoadFullConfig(self):
+        return load_config().model_dump_json()
+
+    def LoadScanPresets(self):
+        return TypeAdapter(list[ScanPreset]).dump_json(load_kingdom_presets()).decode()
 
 
 def WebViewApp():

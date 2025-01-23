@@ -83,6 +83,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { useConfigStore } from './stores/config-store'
+import { FullConfigSchema } from './schema/FullConfig'
+import { KingdomPresetListSchema } from './schema/SchemaUtils'
+
+const configStore = useConfigStore()
+
 const $q = useQuasar()
 // import themeToggleIcon from 'assets/theme-toggle.svg'
 const splitterModel = ref(120)
@@ -92,7 +98,24 @@ const toggleDarkMode = () => {
   darkMode.value = !darkMode.value
   $q.dark.set(darkMode.value)
 }
-// const blueModel = ref(true)
+
+window.addEventListener('pywebviewready', async () => {
+  const loadedConfig = await window.pywebview.api.LoadFullConfig()
+  console.log(loadedConfig)
+  const parsedConfig = FullConfigSchema.safeParse(JSON.parse(loadedConfig))
+
+  if (parsedConfig.success) {
+    configStore.config = parsedConfig.data
+  }
+
+  const loadedPresets = await window.pywebview.api.LoadScanPresets()
+  console.log(loadedPresets)
+  const parsedPresets = KingdomPresetListSchema.safeParse(JSON.parse(loadedPresets))
+
+  if (parsedPresets.success) {
+    configStore.availableScanPresets.push(...parsedPresets.data)
+  }
+})
 </script>
 
 <style lang="css" scoped></style>

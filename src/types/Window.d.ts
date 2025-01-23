@@ -3,6 +3,8 @@ interface PywebviewApi {
   StopKingdomScan(): void
   TestPython(): void
   ConfirmCallback(confirm: boolean): void
+  LoadFullConfig(): Promise<string>
+  LoadScanPresets(): Promise<string>
 }
 
 interface KingdomApi {
