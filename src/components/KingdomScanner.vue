@@ -10,7 +10,9 @@
             label="Scan Preset"
             stack-label
             :display-value="selectedPreset!.name"
-            @update:model-value="settings.selectedInfo = selectedPreset?.selections ?? []"
+            @update:model-value="
+              configStore.selectedKingdomOptions.selections = selectedPreset?.selections ?? []
+            "
             :disable="scanRunning"
           >
             <template v-slot:option="scope">
@@ -21,7 +23,7 @@
           </q-select>
           <q-tree
             :nodes="computedInfoToScan"
-            v-model:ticked="settings.selectedInfo"
+            v-model:ticked="configStore.selectedKingdomOptions.selections"
             node-key="label"
             tick-strategy="leaf"
             default-expand-all
@@ -36,9 +38,12 @@
           />
           <div class="row column">
             <q-btn
-              :label="scanRunning ? 'Stop Scan' : 'Start Scan'"
+              :label="
+                startButtonDisabled ? 'Stopping...' : scanRunning ? 'Stop Scan' : 'Start Scan'
+              "
               :color="scanRunning ? 'negative' : 'primary'"
               @click="handleMainButtonClick"
+              :disable="startButtonDisabled"
             />
           </div>
         </div>
@@ -48,14 +53,14 @@
               <q-input
                 class="col"
                 outlined
-                v-model="settings.scanName"
+                v-model="configStore.config.scan.kingdom_name"
                 label="Scan name"
                 hint="This will get prepended to the file name"
                 :disable="scanRunning"
               />
               <q-select
                 class="col"
-                v-model="settings.outputFormatsSelected"
+                v-model="selectedOutputs"
                 multiple
                 :options="outputFormats"
                 label="Output formats"
@@ -83,7 +88,7 @@
               <q-input
                 class="col"
                 outlined
-                v-model="settings.emulatorName"
+                v-model="configStore.config.general.bluestacks.name"
                 label="Emulator name"
                 hint="Works only for BlueStacks"
                 :disable="scanRunning"
@@ -91,7 +96,7 @@
               <q-input
                 class="col"
                 outlined
-                v-model="settings.adbPort"
+                v-model="configStore.config.general.adb_port"
                 label="ADB Port of emulator"
                 :rules="intRule"
                 hint="Should be autofilled if emulator is found"
@@ -101,52 +106,52 @@
 
             <q-input
               outlined
-              v-model="settings.scanAmount"
+              v-model="configStore.config.scan.people_to_scan"
               label="How many people to scan"
               hint="The amount of people you want to scan"
               :rules="intRule"
               :disable="scanRunning"
             />
             <q-toggle
-              v-model="settings.continuedScan"
+              v-model="configStore.config.scan.resume"
               label="Start at 4th governor"
               :disable="scanRunning"
             />
             <q-toggle
-              v-model="settings.betterScroll"
+              v-model="configStore.config.scan.advanced_scroll"
               label="Better Scrolling"
               :disable="scanRunning"
             />
             <q-toggle
-              v-model="settings.trackInactives"
+              v-model="configStore.config.scan.track_inactives"
               label="Track inactives"
               :disable="scanRunning"
             />
             <q-toggle
-              v-model="settings.validateKills"
+              v-model="configStore.config.scan.validate_kills"
               label="Validate kills"
               :disable="scanRunning"
             />
             <q-toggle
-              v-model="settings.reconstructKills"
+              v-model="configStore.config.scan.reconstruct_kills"
               label="Reconstruct kills"
-              :disable="scanRunning || !settings.validateKills"
+              :disable="scanRunning || !configStore.config.scan.validate_kills"
             />
             <div class="row q-gutter-x-sm">
               <q-toggle
                 class="col"
-                v-model="settings.validatePower"
+                v-model="configStore.config.scan.validate_power"
                 label="Validate Power"
                 :disable="scanRunning"
               />
               <q-input
                 class="col-8"
                 outlined
-                v-model="settings.powerTolerance"
+                v-model="configStore.config.scan.power_threshold"
                 label="Power tolarance"
                 :rules="floatRule"
                 hint="Acceptable power in wrong direction"
-                :disable="scanRunning || !settings.validatePower"
+                :disable="scanRunning || !configStore.config.scan.validate_power"
               />
             </div>
 
@@ -154,26 +159,26 @@
               <q-input
                 class="col"
                 outlined
-                v-model="settings.moreInfoWait"
-                label="Wait after more info (in s)"
+                v-model="configStore.config.scan.timings.info_close"
+                label="Wait after more close (in s)"
                 :rules="floatRule"
-                hint="Delay after clicking more info"
+                hint="Delay after exiting more info"
                 :disable="scanRunning"
               />
               <q-input
                 class="col"
                 outlined
-                v-model="settings.governorWait"
-                label="Wait after governor open (in s)"
+                v-model="configStore.config.scan.timings.gov_close"
+                label="Wait after governor close (in s)"
                 :rules="floatRule"
-                hint="Delay after opening governor"
+                hint="Delay after exiting governor"
                 :disable="scanRunning"
               />
             </div>
 
             <q-input
               outlined
-              v-model="settings.governorRandom"
+              v-model="configStore.config.scan.timings.max_random"
               label="Maximum random delay (in s)"
               :rules="floatRule"
               hint="A random delay is added to the wait times, this is the maximum"
@@ -193,22 +198,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import LastGovernor from './LastGovernor.vue'
 import { intRule, floatRule, notEmptyArrayRule } from 'src/util/rules'
-import type { KingdomScanSettings } from 'src/types/KingdomScanSettings'
-import type { KingdomPreset } from 'src/types/KingdomPreset'
+import type { OutputFormat } from 'src/types/OutputFormats'
 import ScanStatus from './ScanStatus.vue'
 import { useKingdomStore } from 'src/stores/kingdom-scanner-store'
 import { useQuasar } from 'quasar'
+import { useConfigStore } from 'src/stores/config-store'
+import type { ScanPreset } from 'src/schema/ScanPreset'
+import { KingdomGovernorDataSchema } from 'src/schema/KingdomGovernorData'
+import { KingdomAdditionalDataSchema } from 'src/schema/KingdomAdditionalData'
 
 const $q = useQuasar()
 
 const kingdomStore = useKingdomStore()
+const configStore = useConfigStore()
 
 const scanRunning = ref(false)
+const startButtonDisabled = ref(false)
 
-const scanPresets: KingdomPreset[] = [
+const scanPresets: ScanPreset[] = [
   {
     name: 'Full',
     selections: [
@@ -234,35 +244,10 @@ const scanPresets: KingdomPreset[] = [
 
 const handleClick = () => {
   console.log('clicked')
-  console.log(JSON.stringify(settings.value))
+  console.log(JSON.stringify(selectedOutputs.value))
 }
 
 const selectedPreset = ref(scanPresets[0])
-
-const settings = ref<KingdomScanSettings>({
-  scanName: '',
-  emulatorName: '',
-  adbPort: '5555',
-  scanAmount: '',
-  continuedScan: false,
-  betterScroll: true,
-  trackInactives: true,
-  validateKills: true,
-  reconstructKills: true,
-  validatePower: true,
-  powerTolerance: '1000000',
-  moreInfoWait: '1',
-  governorWait: '1',
-  governorRandom: '0.5',
-  outputFormatsSelected: [
-    {
-      label: 'Excel',
-      value: 'xlsx',
-      display: 'xlsx',
-    },
-  ],
-  selectedInfo: scanPresets[0]?.selections ?? [],
-})
 
 const outputFormats = ref([
   {
@@ -281,6 +266,20 @@ const outputFormats = ref([
     display: 'jsonl',
   },
 ])
+
+const selectedOutputs = ref<OutputFormat[]>([
+  {
+    label: 'Excel',
+    value: 'xlsx',
+    display: 'xlsx',
+  },
+])
+
+watch(selectedOutputs, (newVal) => {
+  configStore.config.scan.formats.csv = newVal.some((format) => format.value === 'csv')
+  configStore.config.scan.formats.jsonl = newVal.some((format) => format.value === 'jsonl')
+  configStore.config.scan.formats.xlsx = newVal.some((format) => format.value === 'xlsx')
+})
 
 const infoToScan = [
   {
@@ -339,17 +338,26 @@ const computedInfoToScan = computed(() => {
 })
 
 const handleMainButtonClick = () => {
-  scanRunning.value = !scanRunning.value
-  console.log('clicked')
-  window.pywebview.api.TestPython()
+  if (!scanRunning.value) {
+    window.pywebview.api.StartKingdomScan(
+      JSON.stringify(configStore.config),
+      JSON.stringify(selectedPreset.value),
+    )
+
+    scanRunning.value = !scanRunning.value
+  } else {
+    window.pywebview.api.StopKingdomScan()
+    startButtonDisabled.value = true
+  }
 }
 
 const setScanId = (id: string) => {
-  settings.value.scanName = id
+  kingdomStore.scanID = id
 }
 
-const governorUpdate = (governorData: string) => {
-  console.log(governorData)
+const governorUpdate = (governorData: string, extraData: string) => {
+  kingdomStore.lastGovernor = KingdomGovernorDataSchema.parse(JSON.parse(governorData))
+  kingdomStore.status = KingdomAdditionalDataSchema.parse(JSON.parse(extraData))
 }
 
 const stateUpdate = (state: string) => {
@@ -372,10 +380,16 @@ const askConfirm = (message: string) => {
     })
 }
 
+const scanFinished = () => {
+  scanRunning.value = false
+  startButtonDisabled.value = false
+}
+
 window.kingdom = {
   setScanID: setScanId,
   governorUpdate: governorUpdate,
   stateUpdate: stateUpdate,
   askConfirm: askConfirm,
+  scanFinished: scanFinished,
 }
 </script>

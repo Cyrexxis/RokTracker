@@ -3,7 +3,7 @@ from typing import Any
 import pandas as pd
 import pathlib
 
-from roktracker.kingdom.governor_data import GovernorData
+from roktracker.kingdom.types.governor_data import GovernorData
 from roktracker.utils.output_formats import OutputFormats
 from datetime import date
 
@@ -37,8 +37,8 @@ class PandasHandler:
                 "T3 Kills": GovernorData.intify_value(gov_data.t3_kills),
                 "T4 Kills": GovernorData.intify_value(gov_data.t4_kills),
                 "T5 Kills": GovernorData.intify_value(gov_data.t5_kills),
-                "Total Kills": GovernorData.intify_value(gov_data.total_kills()),
-                "T45 Kills": GovernorData.intify_value(gov_data.t45_kills()),
+                "Total Kills": GovernorData.intify_value(gov_data.total_kills),
+                "T45 Kills": GovernorData.intify_value(gov_data.t45_kills),
                 "Ranged": GovernorData.intify_value(gov_data.ranged_points),
                 "Rss Gathered": GovernorData.intify_value(gov_data.rss_gathered),
                 "Rss Assistance": GovernorData.intify_value(gov_data.rss_assistance),

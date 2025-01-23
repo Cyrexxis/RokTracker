@@ -1,7 +1,10 @@
+import logging
 import json
 import os
 import sys
-from threading import Event
+from threading import Event, Thread
+import threading
+import tracemalloc
 import dummy_root
 import webview
 import getpass
@@ -9,11 +12,28 @@ import getpass
 # Import Bottle
 from bottle import static_file, Bottle
 
-from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.governor_data import GovernorData
+from roktracker.kingdom.types.additional_data import AdditionalData
+from roktracker.kingdom.types.governor_data import GovernorData
 from roktracker.kingdom.scanner import KingdomScanner, scan_preset_to_scan_options
+from roktracker.utils.exception_handling import ConsoleExceptionHander
 from roktracker.utils.types.full_config import FullConfig
 from roktracker.utils.types.scan_preset import ScanPreset
+
+logging.basicConfig(
+    filename=str(dummy_root.get_app_root() / "kingdom-scanner-web.log"),
+    encoding="utf-8",
+    format="%(asctime)s %(module)s %(levelname)s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+tracemalloc.start()
+
+logger = logging.getLogger(__name__)
+ex_handler = ConsoleExceptionHander(logger)
+
+
+sys.excepthook = ex_handler.handle_exception
+threading.excepthook = ex_handler.handle_thread_exception
 
 MAIN_DIR = os.path.join(dummy_root.get_script_root(), "dist", "spa")
 
@@ -37,7 +57,7 @@ def get_static_files(filename):
     return response
 
 
-DEBUG = True
+# DEBUG = True
 
 js_confirm_result = False
 jsResponse = Event()
@@ -51,10 +71,12 @@ class ScanCallbackHandler:
     def kingdom_governor_callback(
         self, gov_data: GovernorData, extra_data: AdditionalData
     ) -> None:
-        pass
+        window.evaluate_js(
+            f"window.kingdom.governorUpdate('{gov_data.model_dump_json()}', '{extra_data.model_dump_json()}')"
+        )
 
     def state_callback(self, state: str) -> None:
-        pass
+        window.evaluate_js(f"window.kingdom.stateUpdate('{state}')")
 
     def ask_confirm(self, message: str) -> bool:
         jsResponse.clear()
@@ -66,8 +88,42 @@ class ScanCallbackHandler:
         jsResponse.wait()
         return js_confirm_result
 
+    def kingdom_scan_finished(self):
+        window.evaluate_js("window.kingdom.scanFinished()")
+
+    def set_kingdom_scan_id(self, scan_id: str):
+        window.evaluate_js(f"window.kingdom.setScanID('{scan_id}')")
+
 
 scanCbHandler = ScanCallbackHandler()
+
+
+def start_kingdom_scanner(full_config: str, scan_preset: str):
+    global kingdom_scanner
+    config = FullConfig(**json.loads(full_config))
+    preset = ScanPreset(**json.loads(scan_preset))
+    kingdom_scanner = KingdomScanner(
+        config, scan_preset_to_scan_options(preset), config.general.adb_port
+    )
+    kingdom_scanner.set_governor_callback(scanCbHandler.kingdom_governor_callback)
+    kingdom_scanner.set_state_callback(scanCbHandler.state_callback)
+    kingdom_scanner.set_continue_handler(scanCbHandler.ask_confirm)
+
+    scanCbHandler.set_kingdom_scan_id(kingdom_scanner.run_id)
+
+    kingdom_scanner.start_scan(
+        config.scan.kingdom_name,
+        config.scan.people_to_scan,
+        config.scan.resume,
+        config.scan.track_inactives,
+        config.scan.validate_kills,
+        config.scan.reconstruct_kills,
+        config.scan.validate_power,
+        config.scan.power_threshold,
+        config.scan.formats,
+    )
+
+    scanCbHandler.kingdom_scan_finished()
 
 
 class API:
@@ -89,30 +145,11 @@ class API:
         return ""
 
     def StartKingdomScan(self, full_config: str, scan_preset: str):
-        global kingdom_scanner
-        config = FullConfig(**json.loads(full_config))
-        preset = ScanPreset(**json.loads(scan_preset))
-        kingdom_scanner = KingdomScanner(
-            config, scan_preset_to_scan_options(preset), config.general.adb_port
-        )
-        kingdom_scanner.set_governor_callback(scanCbHandler.kingdom_governor_callback)
-        kingdom_scanner.set_state_callback(scanCbHandler.state_callback)
-        kingdom_scanner.set_continue_handler(scanCbHandler.ask_confirm)
+        Thread(target=start_kingdom_scanner, args=(full_config, scan_preset)).start()
+        return ""
 
-        # Update UUID here
-
-        kingdom_scanner.start_scan(
-            config.scan.kingdom_name,
-            config.scan.people_to_scan,
-            config.scan.resume,
-            config.scan.track_inactives,
-            config.scan.validate_kills,
-            config.scan.reconstruct_kills,
-            config.scan.validate_power,
-            config.scan.power_threshold,
-            config.scan.formats,
-        )
-
+    def StopKingdomScan(self):
+        kingdom_scanner.end_scan()
         return ""
 
 
@@ -127,7 +164,7 @@ def WebViewApp():
         height=740 + 40,
     )
 
-    webview.start(debug=DEBUG, http_server=True)
+    webview.start(debug=True, http_server=False)
 
 
 if __name__ == "__main__":

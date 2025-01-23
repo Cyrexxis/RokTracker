@@ -11,14 +11,12 @@
       <q-list dense>
         <q-item>
           <q-item-section>Power</q-item-section>
-          <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.power)
-          }}</q-item-section>
+          <q-item-section side>{{ formatNumber(kingdomStore.lastGovernor.power) }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>Killpoints</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.killpoints)
+            formatNumber(kingdomStore.lastGovernor.killpoints)
           }}</q-item-section>
         </q-item>
         <q-item>
@@ -29,63 +27,59 @@
         <q-item>
           <q-item-section>T1 Kills</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.t1Kills)
+            formatNumber(kingdomStore.lastGovernor.t1_kills)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>T2 Kills</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.t2Kills)
+            formatNumber(kingdomStore.lastGovernor.t2_kills)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>T3 Kills</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.t3Kills)
+            formatNumber(kingdomStore.lastGovernor.t3_kills)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>T4 Kills</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.t4Kills)
+            formatNumber(kingdomStore.lastGovernor.t4_kills)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>T5 Kills</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.t5Kills)
+            formatNumber(kingdomStore.lastGovernor.t5_kills)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>Ranged Points</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.rangedPoints)
+            formatNumber(kingdomStore.lastGovernor.ranged_points)
           }}</q-item-section>
         </q-item>
         <q-separator />
         <q-item>
           <q-item-section>Deaths</q-item-section>
-          <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.deaths)
-          }}</q-item-section>
+          <q-item-section side>{{ formatNumber(kingdomStore.lastGovernor.dead) }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>Assisted</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.assists)
+            formatNumber(kingdomStore.lastGovernor.rss_assistance)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>Gathered</q-item-section>
           <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.gathered)
+            formatNumber(kingdomStore.lastGovernor.rss_gathered)
           }}</q-item-section>
         </q-item>
         <q-item>
           <q-item-section>Helps</q-item-section>
-          <q-item-section side>{{
-            Intl.NumberFormat().format(kingdomStore.lastGovernor.helps)
-          }}</q-item-section>
+          <q-item-section side>{{ formatNumber(kingdomStore.lastGovernor.helps) }}</q-item-section>
         </q-item>
       </q-list>
     </q-card-section>
@@ -98,18 +92,19 @@
             <div class="text-left">
               <q-tooltip anchor="bottom left" self="top left" :offset="[10, 10]">
                 {{ lastUpdateFormatted }} </q-tooltip
-              ><UseTimeAgo v-slot="{ timeAgo }" :time="kingdomStore.status.lastUpdate">
+              ><UseTimeAgo v-slot="{ timeAgo }" :time="lastUpdate">
                 {{ timeAgo }}
               </UseTimeAgo>
             </div>
           </div>
           <div class="column">
             <div class="text-center">
-              {{ kingdomStore.status.currentGovernor }} of {{ kingdomStore.status.maxGovernor }}
+              {{ kingdomStore.status.current_governor }} of
+              {{ kingdomStore.status.target_governor }}
             </div>
             <div class="text-center">
-              {{ kingdomStore.status.skippedGovernors }}
-              {{ kingdomStore.status.skippedGovernors === 1 ? 'skip' : 'skips' }}
+              {{ kingdomStore.status.skipped_governors }}
+              {{ kingdomStore.status.skipped_governors === 1 ? 'skip' : 'skips' }}
             </div>
           </div>
           <div class="column">
@@ -117,14 +112,19 @@
             <div class="text-right">
               <q-tooltip anchor="bottom right" self="top right" :offset="[10, 10]">
                 {{ expectedFinishFormatted }} </q-tooltip
-              ><UseTimeAgo v-slot="{ timeAgo }" :time="kingdomStore.status.expectedFinish">
+              ><UseTimeAgo
+                v-slot="{ timeAgo }"
+                :time="expectedFinish"
+                :show-second="true"
+                :update-interval="1000"
+              >
                 {{ timeAgo }}
               </UseTimeAgo>
             </div>
           </div>
         </div>
         <q-linear-progress
-          :value="kingdomStore.status.currentGovernor / kingdomStore.status.maxGovernor"
+          :value="kingdomStore.status.current_governor / kingdomStore.status.target_governor"
           rounded
           class="q-mt-sm"
         />
@@ -137,11 +137,21 @@ import { useKingdomStore } from 'src/stores/kingdom-scanner-store'
 
 import { UseTimeAgo } from '@vueuse/components'
 import { useDateFormat } from '@vueuse/core'
+import { computed } from 'vue'
 
 const kingdomStore = useKingdomStore()
 
-const lastUpdateFormatted = useDateFormat(kingdomStore.status.lastUpdate, 'HH:mm:ss')
-const expectedFinishFormatted = useDateFormat(kingdomStore.status.expectedFinish, 'HH:mm:ss')
+const lastUpdate = computed(() => new Date(kingdomStore.status.current_time))
+const expectedFinish = computed(
+  () => new Date(lastUpdate.value.getTime() + kingdomStore.status.remaining_sec * 1000),
+)
+
+const lastUpdateFormatted = useDateFormat(lastUpdate, 'HH:mm:ss')
+const expectedFinishFormatted = useDateFormat(expectedFinish, 'HH:mm:ss')
+
+const formatNumber = (value: number | string) => {
+  return isNaN(Number(value)) ? (value as string) : Intl.NumberFormat().format(value as number)
+}
 </script>
 
 <style scoped>

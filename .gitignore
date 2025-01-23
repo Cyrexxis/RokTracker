@@ -657,3 +657,5 @@ scans_kingdom/
 scans_seed/
 deps/tessdata
 deps/*.whl
+schema/
+!src/schema

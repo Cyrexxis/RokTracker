@@ -31,8 +31,8 @@ import sys
 import threading
 
 from dummy_root import get_app_root
-from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.governor_data import GovernorData
+from roktracker.kingdom.types.additional_data import AdditionalData
+from roktracker.kingdom.types.governor_data import GovernorData
 from roktracker.kingdom.scanner import KingdomScanner
 from roktracker.utils.adb import get_bluestacks_port
 from roktracker.utils.exception_handling import GuiExceptionHandler
@@ -830,8 +830,8 @@ class App(customtkinter.CTk):
                 "T3 Kills": to_int_or(gov_data.t3_kills, "Unknown"),
                 "T4 Kills": to_int_or(gov_data.t4_kills, "Unknown"),
                 "T5 Kills": to_int_or(gov_data.t5_kills, "Unknown"),
-                "T4+5 Kills": to_int_or(gov_data.t45_kills(), "Unknown"),
-                "Total Kills": to_int_or(gov_data.total_kills(), "Unknown"),
+                "T4+5 Kills": to_int_or(gov_data.t45_kills, "Unknown"),
+                "Total Kills": to_int_or(gov_data.total_kills, "Unknown"),
                 "Ranged": to_int_or(gov_data.ranged_points, "Unknown"),
                 "Rss Assistance": to_int_or(gov_data.rss_assistance, "Unknown"),
                 "Rss Gathered": to_int_or(gov_data.rss_gathered, "Unknown"),
@@ -839,7 +839,7 @@ class App(customtkinter.CTk):
                 "Alliance": gov_data.alliance,
                 "govs": f"{extra_data.current_governor} of {extra_data.target_governor}",
                 "skipped": skipped_text,
-                "time": extra_data.current_time,
+                "time": extra_data.current_time.strftime("%H:%M:%S"),
                 "eta": extra_data.eta(),
             }
         )
