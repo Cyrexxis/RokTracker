@@ -13,8 +13,8 @@ from pathlib import Path
 from roktracker.utils.adb import *
 from roktracker.utils.general import *
 from roktracker.utils.ocr import *
-from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.governor_data import GovernorData
+from roktracker.kingdom.types.additional_data import AdditionalData
+from roktracker.kingdom.types.governor_data import GovernorData
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore (tesserocr has no type defs)
 from typing import Callable
 from PIL import Image
@@ -636,14 +636,17 @@ class KingdomScanner:
             data_handler.write_governor(gov_data)
             data_handler.save()
 
-            additional_info = AdditionalData(
-                i + 1,
-                amount,
-                self.inactive_players,
-                str(power_ok),
-                str(kills_ok),
-                str(reconstruction_success),
-                self.get_remaining_time(amount - i),
+            additional_info = AdditionalData.model_validate(
+                {
+                    "current_governor": i + 1,
+                    "target_governor": amount,
+                    "skipped_governors": self.inactive_players,
+                    "power_ok": power_ok,
+                    "kills_ok": kills_ok,
+                    "reconstruction_success": reconstruction_success,
+                    "remaining_sec": self.get_remaining_time(amount - i),
+                    "current_time": datetime.datetime.now().astimezone(),
+                }
             )
 
             self.gov_callback(gov_data, additional_info)

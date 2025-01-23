@@ -1,20 +1,19 @@
 import datetime
 
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 from roktracker.utils.general import format_timedelta_to_HHMMSS
 
 
-@dataclass
-class AdditionalData:
+class AdditionalData(BaseModel):
     current_governor: int
     target_governor: int
     skipped_governors: int
-    power_ok: str
-    kills_ok: str
-    reconstruction_success: str
+    power_ok: bool | str
+    kills_ok: bool | str
+    reconstruction_success: bool | str
     remaining_sec: float
-    current_time: str = datetime.datetime.now().strftime("%H:%M:%S")
+    current_time: datetime.datetime = datetime.datetime.now().astimezone()
 
     def eta(self) -> str:
         return format_timedelta_to_HHMMSS(

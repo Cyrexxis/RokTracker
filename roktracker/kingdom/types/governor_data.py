@@ -1,39 +1,42 @@
 import math
+from pydantic import BaseModel, computed_field
 
-from dataclasses import dataclass
 from roktracker.utils.general import is_string_int, to_int_check
 
 
-@dataclass
-class GovernorData:
-    id: str = "Skipped"
+class GovernorData(BaseModel):
+    id: int | str = "Skipped"
     name: str = "Skipped"
-    power: str = "Skipped"
-    killpoints: str = "Skipped"
+    power: int | str = "Skipped"
+    killpoints: int | str = "Skipped"
     alliance: str = "Skipped"
-    t1_kills: str = "Skipped"
-    t1_kp: str = "Skipped"
-    t2_kills: str = "Skipped"
-    t2_kp: str = "Skipped"
-    t3_kills: str = "Skipped"
-    t3_kp: str = "Skipped"
-    t4_kills: str = "Skipped"
-    t4_kp: str = "Skipped"
-    t5_kills: str = "Skipped"
-    t5_kp: str = "Skipped"
-    ranged_points: str = "Skipped"
-    dead: str = "Skipped"
-    rss_assistance: str = "Skipped"
-    rss_gathered: str = "Skipped"
-    helps: str = "Skipped"
+    t1_kills: int | str = "Skipped"
+    t1_kp: int | str = "Skipped"
+    t2_kills: int | str = "Skipped"
+    t2_kp: int | str = "Skipped"
+    t3_kills: int | str = "Skipped"
+    t3_kp: int | str = "Skipped"
+    t4_kills: int | str = "Skipped"
+    t4_kp: int | str = "Skipped"
+    t5_kills: int | str = "Skipped"
+    t5_kp: int | str = "Skipped"
+    ranged_points: int | str = "Skipped"
+    dead: int | str = "Skipped"
+    rss_assistance: int | str = "Skipped"
+    rss_gathered: int | str = "Skipped"
+    helps: int | str = "Skipped"
 
-    def t45_kills(self) -> str:
+    @computed_field
+    @property
+    def t45_kills(self) -> int | str:
         if self.t4_kills != "Skipped" and self.t5_kills != "Skipped":
             return str(to_int_check(self.t4_kills) + to_int_check(self.t5_kills))
         else:
             return "Skipped"
 
-    def total_kills(self) -> str:
+    @computed_field
+    @property
+    def total_kills(self) -> int | str:
         if (
             self.t1_kills != "Skipped"
             and self.t2_kills != "Skipped"
@@ -45,65 +48,20 @@ class GovernorData:
                 to_int_check(self.t1_kills)
                 + to_int_check(self.t2_kills)
                 + to_int_check(self.t3_kills)
-                + to_int_check(self.t45_kills())
+                + to_int_check(self.t45_kills)
             )
         else:
             return "Skipped"
 
     def flag_unknown(self):
-        if self.power == "":
-            self.power = "Unknown"
-
-        if self.killpoints == "":
-            self.killpoints = "Unknown"
-
-        if self.t1_kills == "":
-            self.t1_kills = "Unknown"
-
-        if self.t2_kills == "":
-            self.t2_kills = "Unknown"
-
-        if self.t3_kills == "":
-            self.t3_kills = "Unknown"
-
-        if self.t4_kills == "":
-            self.t4_kills = "Unknown"
-
-        if self.t5_kills == "":
-            self.t5_kills = "Unknown"
-
-        if self.t1_kp == "":
-            self.t1_kp = "Unknown"
-
-        if self.t2_kp == "":
-            self.t2_kp = "Unknown"
-
-        if self.t3_kp == "":
-            self.t3_kp = "Unknown"
-
-        if self.t4_kp == "":
-            self.t4_kp = "Unknown"
-
-        if self.t5_kp == "":
-            self.t5_kp = "Unknown"
-
-        if self.ranged_points == "":
-            self.ranged_points = "Unknown"
-
-        if self.dead == "":
-            self.dead = "Unknown"
-
-        if self.rss_gathered == "":
-            self.rss_gathered = "Unknown"
-
-        if self.rss_assistance == "":
-            self.rss_assistance = "Unknown"
-
-        if self.helps == "":
-            self.helps = "Unknown"
+        for field in self.model_fields:
+            if getattr(self, field) == "":
+                setattr(self, field, "Unknown")
 
     @staticmethod
-    def intify_value(value: str) -> int:
+    def intify_value(value: int | str) -> int:
+        if isinstance(value, int):
+            return value
         if value == "Unknown":
             return -1
         elif value == "Skipped":

@@ -1,14 +1,14 @@
 from rich.markup import escape
 from rich.table import Table
-from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.governor_data import GovernorData
+from roktracker.kingdom.types.additional_data import AdditionalData
+from roktracker.kingdom.types.governor_data import GovernorData
 from roktracker.utils.console import console
 
 
 def print_gov_state(gov_data: GovernorData, extra: AdditionalData) -> None:
     table = Table(
         title="["
-        + extra.current_time
+        + extra.current_time.strftime("%H:%M:%S")
         + "]\n"
         + "Latest Scan Result\nGovernor "
         + str(extra.current_governor)
@@ -47,22 +47,22 @@ def print_gov_state(gov_data: GovernorData, extra: AdditionalData) -> None:
         style="cyan",
     )
 
-    table.add_row("Governor ID", gov_data.id)
+    table.add_row("Governor ID", str(gov_data.id))
     table.add_row("Governor Name", gov_data.name)
-    table.add_row("Governor Power", gov_data.power)
-    table.add_row("Governor Kill Points", gov_data.killpoints)
-    table.add_row("Governor Deads", gov_data.dead)
-    table.add_row("Governor T1 Kills", gov_data.t1_kills)
-    table.add_row("Governor T2 Kills", gov_data.t2_kills)
-    table.add_row("Governor T3 Kills", gov_data.t3_kills)
-    table.add_row("Governor T4 Kills", gov_data.t4_kills)
-    table.add_row("Governor T5 Kills", gov_data.t5_kills)
-    table.add_row("Governor T4+5 Kills", gov_data.t45_kills())
-    table.add_row("Governor Total Kills", gov_data.total_kills())
-    table.add_row("Governor Ranged Points", gov_data.ranged_points)
-    table.add_row("Governor RSS Assistance", gov_data.rss_assistance)
-    table.add_row("Governor RSS Gathered", gov_data.rss_gathered)
-    table.add_row("Governor Helps", gov_data.helps)
+    table.add_row("Governor Power", str(gov_data.power))
+    table.add_row("Governor Kill Points", str(gov_data.killpoints))
+    table.add_row("Governor Deads", str(gov_data.dead))
+    table.add_row("Governor T1 Kills", str(gov_data.t1_kills))
+    table.add_row("Governor T2 Kills", str(gov_data.t2_kills))
+    table.add_row("Governor T3 Kills", str(gov_data.t3_kills))
+    table.add_row("Governor T4 Kills", str(gov_data.t4_kills))
+    table.add_row("Governor T5 Kills", str(gov_data.t5_kills))
+    table.add_row("Governor T4+5 Kills", str(gov_data.t45_kills))
+    table.add_row("Governor Total Kills", str(gov_data.total_kills))
+    table.add_row("Governor Ranged Points", str(gov_data.ranged_points))
+    table.add_row("Governor RSS Assistance", str(gov_data.rss_assistance))
+    table.add_row("Governor RSS Gathered", str(gov_data.rss_gathered))
+    table.add_row("Governor Helps", str(gov_data.helps))
     table.add_row("Governor Alliance", escape(gov_data.alliance))
 
     console.print(table)
