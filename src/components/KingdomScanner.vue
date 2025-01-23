@@ -6,7 +6,7 @@
           <q-select
             outlined
             v-model="selectedPreset"
-            :options="scanPresets"
+            :options="configStore.availableScanPresets"
             label="Scan Preset"
             stack-label
             :display-value="selectedPreset!.name"
@@ -206,7 +206,6 @@ import ScanStatus from './ScanStatus.vue'
 import { useKingdomStore } from 'src/stores/kingdom-scanner-store'
 import { useQuasar } from 'quasar'
 import { useConfigStore } from 'src/stores/config-store'
-import type { ScanPreset } from 'src/schema/ScanPreset'
 import { KingdomGovernorDataSchema } from 'src/schema/KingdomGovernorData'
 import { KingdomAdditionalDataSchema } from 'src/schema/KingdomAdditionalData'
 
@@ -218,36 +217,12 @@ const configStore = useConfigStore()
 const scanRunning = ref(false)
 const startButtonDisabled = ref(false)
 
-const scanPresets: ScanPreset[] = [
-  {
-    name: 'Full',
-    selections: [
-      'ID',
-      'Name',
-      'Power',
-      'Killpoints',
-      'Alliance',
-      'T1 Kills',
-      'T2 Kills',
-      'T3 Kills',
-      'T4 Kills',
-      'T5 Kills',
-      'Ranged',
-      'Deaths',
-      'Assistance',
-      'Gathered',
-      'Helps',
-    ],
-  },
-  { name: 'Seed', selections: ['ID', 'Name', 'Power', 'Killpoints', 'Alliance'] },
-]
-
 const handleClick = () => {
   console.log('clicked')
   console.log(JSON.stringify(selectedOutputs.value))
 }
 
-const selectedPreset = ref(scanPresets[0])
+const selectedPreset = ref(configStore.availableScanPresets[0])
 
 const outputFormats = ref([
   {

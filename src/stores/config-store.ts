@@ -61,8 +61,33 @@ export const useConfigStore = defineStore('configStore', () => {
     ],
   })
 
+  const availableScanPresets = ref<ScanPreset[]>([
+    {
+      name: 'Full',
+      selections: [
+        'ID',
+        'Name',
+        'Power',
+        'Killpoints',
+        'Alliance',
+        'T1 Kills',
+        'T2 Kills',
+        'T3 Kills',
+        'T4 Kills',
+        'T5 Kills',
+        'Ranged',
+        'Deaths',
+        'Assistance',
+        'Gathered',
+        'Helps',
+      ],
+    },
+    { name: 'Seed', selections: ['ID', 'Name', 'Power', 'Killpoints', 'Alliance'] },
+  ])
+
   return {
     config,
+    availableScanPresets,
     selectedKingdomOptions,
   }
 })

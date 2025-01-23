@@ -659,3 +659,4 @@ deps/tessdata
 deps/*.whl
 schema/
 !src/schema
+presets.json
