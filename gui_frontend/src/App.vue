@@ -100,20 +100,26 @@ const toggleDarkMode = () => {
 }
 
 window.addEventListener('pywebviewready', async () => {
-  const loadedConfig = await window.pywebview.api.LoadFullConfig()
-  console.log(loadedConfig)
-  const parsedConfig = FullConfigSchema.safeParse(JSON.parse(loadedConfig))
+  try {
+    const loadedConfig = await window.pywebview.api.LoadFullConfig()
+    console.log(loadedConfig)
+    const parsedConfig = FullConfigSchema.safeParse(JSON.parse(loadedConfig))
 
-  if (parsedConfig.success) {
-    configStore.config = parsedConfig.data
-  }
+    if (parsedConfig.success) {
+      configStore.config = parsedConfig.data
+    }
 
-  const loadedPresets = await window.pywebview.api.LoadScanPresets()
-  console.log(loadedPresets)
-  const parsedPresets = KingdomPresetListSchema.safeParse(JSON.parse(loadedPresets))
+    const loadedPresets = await window.pywebview.api.LoadScanPresets()
+    console.log(loadedPresets)
+    const parsedPresets = KingdomPresetListSchema.safeParse(JSON.parse(loadedPresets))
 
-  if (parsedPresets.success) {
-    configStore.availableScanPresets.push(...parsedPresets.data)
+    if (parsedPresets.success) {
+      configStore.availableScanPresets.push(...parsedPresets.data)
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    window.pywebview.api.WindowReady()
   }
 })
 </script>

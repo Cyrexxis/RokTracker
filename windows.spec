@@ -9,7 +9,7 @@ block_cipher = None
 a = Analysis(['.\\main.py'],
              pathex=['.'],
              binaries=None,
-             datas=[('.\\dist', 'dist')],
+             datas=[('.\\gui_frontend\\dist', 'dist')],
              hiddenimports=['clr'],
              excludes=[],
              win_no_prefer_redirects=False,
@@ -18,14 +18,26 @@ a = Analysis(['.\\main.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+splash = Splash('splashscreen.png',
+                binaries=a.binaries,
+                datas=a.datas)
+
 exe = EXE(pyz,
+          splash,
           a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
+          exclude_binaries=True,
           name='RoK Tracker Suite',
           debug=False,
           strip=True,
-          icon='.\\public\\favicon.ico',
+          icon='.\\gui_frontend\\public\\favicon.ico',
           upx=True,
           console=False)
+
+coll = COLLECT(exe,
+               splash.binaries,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=False,
+               upx=False,
+               name='RoK Tracker Suite')

@@ -4,12 +4,9 @@ import os
 import sys
 from threading import Event, Thread
 import threading
-import tracemalloc
-
 from pydantic import TypeAdapter
 import dummy_root
 import webview
-import getpass
 
 # Import Bottle
 from bottle import static_file, Bottle
@@ -29,7 +26,6 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-tracemalloc.start()
 
 logger = logging.getLogger(__name__)
 ex_handler = ConsoleExceptionHander(logger)
@@ -38,7 +34,7 @@ ex_handler = ConsoleExceptionHander(logger)
 sys.excepthook = ex_handler.handle_exception
 threading.excepthook = ex_handler.handle_thread_exception
 
-MAIN_DIR = os.path.join(dummy_root.get_script_root(), "dist", "spa")
+MAIN_DIR = dummy_root.get_web_root()
 
 print(MAIN_DIR)
 
@@ -130,11 +126,12 @@ def start_kingdom_scanner(full_config: str, scan_preset: str):
 
 
 class API:
-    def __init__(self):
-        self.username = getpass.getuser()
+    def WindowReady(self):
+        if getattr(sys, "frozen", False):
+            import pyi_splash  # type: ignore
 
-    def GetUsername(self):
-        return {"user": self.username}
+            pyi_splash.close()
+        return ""
 
     def TestPython(self):
         print(scanCbHandler.ask_confirm("Do you want to continue?"))
