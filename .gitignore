@@ -658,5 +658,5 @@ scans_seed/
 deps/tessdata
 deps/*.whl
 schema/
-!src/schema
+!gui_frontend/src/schema
 presets.json

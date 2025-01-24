@@ -1,4 +1,5 @@
 interface PywebviewApi {
+  WindowReady(): void
   StartKingdomScan(full_config: string, scan_preset: string): void
   StopKingdomScan(): void
   TestPython(): void
