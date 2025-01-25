@@ -2,10 +2,10 @@ import logging
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exceptions import AdbError, ConfigError
+from roktracker.utils.file_manager import load_config
 from roktracker.utils.general import (
     is_string_float,
     is_string_int,
-    load_config,
     to_int_check,
 )
 from roktracker.utils.gui import ConfirmDialog, InfoDialog

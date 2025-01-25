@@ -113,8 +113,8 @@ window.addEventListener('pywebviewready', async () => {
     console.log(loadedPresets)
     const parsedPresets = KingdomPresetListSchema.safeParse(JSON.parse(loadedPresets))
 
-    if (parsedPresets.success) {
-      configStore.availableScanPresets.push(...parsedPresets.data)
+    if (parsedPresets.success && parsedPresets.data.length > 0) {
+      configStore.availableScanPresets = parsedPresets.data
     }
   } catch (e) {
     console.error(e)
