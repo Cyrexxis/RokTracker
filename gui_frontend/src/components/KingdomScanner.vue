@@ -33,7 +33,7 @@
           <q-btn
             label="Save as Preset"
             color="primary"
-            @click="handleClick"
+            @click="handeSavePreset"
             :disable="scanRunning"
           />
           <div class="row column">
@@ -208,6 +208,7 @@ import { useQuasar } from 'quasar'
 import { useConfigStore } from 'src/stores/config-store'
 import { KingdomGovernorDataSchema } from 'src/schema/KingdomGovernorData'
 import { KingdomAdditionalDataSchema } from 'src/schema/KingdomAdditionalData'
+import type { ScanPreset } from 'src/schema/ScanPreset'
 
 const $q = useQuasar()
 
@@ -217,9 +218,28 @@ const configStore = useConfigStore()
 const scanRunning = ref(false)
 const startButtonDisabled = ref(false)
 
-const handleClick = () => {
-  console.log('clicked')
-  console.log(JSON.stringify(selectedOutputs.value))
+const handeSavePreset = () => {
+  $q.dialog({
+    title: 'Save Preset',
+    message: 'Enter a name for the preset',
+    prompt: {
+      model: '',
+      type: 'text',
+      isValid: (val) => val.length > 0,
+    },
+    cancel: true,
+    persistent: true,
+  }).onOk((val) => {
+    const newPreset: ScanPreset = {
+      name: val,
+      selections: configStore.selectedKingdomOptions.selections,
+    }
+
+    configStore.availableScanPresets.push(newPreset)
+    selectedPreset.value = newPreset
+
+    window.pywebview.api.SaveScanPresets(JSON.stringify(configStore.availableScanPresets))
+  })
 }
 
 const selectedPreset = ref(configStore.availableScanPresets[0])

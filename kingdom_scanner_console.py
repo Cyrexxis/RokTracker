@@ -3,6 +3,7 @@ import threading
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exception_handling import ConsoleExceptionHander
+from roktracker.utils.file_manager import load_config
 from roktracker.utils.output_formats import OutputFormats
 from roktracker.utils.types.full_config import FormatsConfig
 from roktracker.utils.types.scan_preset import ScanOptions

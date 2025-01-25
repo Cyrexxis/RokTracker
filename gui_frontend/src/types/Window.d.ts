@@ -6,6 +6,7 @@ interface PywebviewApi {
   ConfirmCallback(confirm: boolean): void
   LoadFullConfig(): Promise<string>
   LoadScanPresets(): Promise<string>
+  SaveScanPresets(presets: string): void
 }
 
 interface KingdomApi {
