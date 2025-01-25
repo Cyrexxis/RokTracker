@@ -9,7 +9,7 @@
             :options="configStore.availableScanPresets"
             label="Scan Preset"
             stack-label
-            :display-value="selectedPreset!.name"
+            :display-value="selectedPreset?.name ?? ''"
             @update:model-value="
               configStore.selectedKingdomOptions.selections = selectedPreset?.selections ?? []
             "
@@ -19,6 +19,16 @@
               <q-item v-bind="scope.itemProps">
                 <q-item-section>{{ scope.opt.name }}</q-item-section>
               </q-item>
+            </template>
+
+            <template v-slot:append>
+              <q-icon
+                v-if="selectedPreset !== undefined"
+                class="cursor-pointer"
+                name="delete_forever"
+                color="negative"
+                @click.stop.prevent="handelDeletePreset"
+              />
             </template>
           </q-select>
           <q-tree
@@ -237,6 +247,24 @@ const handeSavePreset = () => {
 
     configStore.availableScanPresets.push(newPreset)
     selectedPreset.value = newPreset
+
+    window.pywebview.api.SaveScanPresets(JSON.stringify(configStore.availableScanPresets))
+  })
+}
+
+const handelDeletePreset = () => {
+  $q.dialog({
+    title: 'Delete Preset',
+    message: `Do you really want to delete the ${selectedPreset.value?.name} preset?`,
+    ok: 'Yes',
+    cancel: 'No',
+    persistent: true,
+  }).onOk(() => {
+    configStore.availableScanPresets = configStore.availableScanPresets.filter(
+      (preset) => preset.name !== selectedPreset.value?.name,
+    )
+
+    selectedPreset.value = undefined
 
     window.pywebview.api.SaveScanPresets(JSON.stringify(configStore.availableScanPresets))
   })
