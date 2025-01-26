@@ -32,6 +32,8 @@ export default defineConfig((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
+      envFolder: '../',
+
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node20',
@@ -81,6 +83,7 @@ export default defineConfig((/* ctx */) => {
     devServer: {
       // https: true,
       open: true, // opens browser window automatically
+      port: parseInt(process.env.DEV_SERVER_PORT ?? '3000'),
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
