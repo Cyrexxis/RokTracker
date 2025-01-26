@@ -15,14 +15,16 @@
     "build:watch": "cd gui_frontend && yarpm run build:watch",
     "build:app": "yarpm run build && .\\venv\\Scripts\\pyinstaller windows.spec",
     "postinstall": "cd gui_frontend && yarpm install",
-    "start:app": "yarpm run build:watch && yarpm run run:py",
-    "dev:py": ".\\venv\\Scripts\\python -X dev .\\main.py",
+    "start:app": "yarpm run build && yarpm run run:py",
+    "dev:py": "concurrently --kill-others -n QUASAR,PYTHON -c bgGreen.bold,bgBlue.bold \"yarpm run dev\" \"dotenv -- cross-replace yarn run run:py --DEVELOPMENT 1 --DEV_SERVER_PORT $DEV_SERVER_PORT\"",
     "run:py": ".\\venv\\Scripts\\python .\\main.py",
     "generate:zod": "cd gui_frontend && yarpm run generate:zod",
     "generate:json-schema": ".\\venv\\Scripts\\python .\\schema_generator.py"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
+    "cross-replace": "^0.2.0",
+    "dotenv-cli": "^8.0.0",
     "yarpm": "^1.2.0"
   },
   "engines": {
