@@ -1,14 +1,16 @@
 import logging
 from dummy_root import get_app_root
-from roktracker.alliance.additional_data import AdditionalData
-from roktracker.alliance.governor_data import GovernorData
 from roktracker.alliance.scanner import AllianceScanner
 from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exception_handling import GuiExceptionHandler
 from roktracker.utils.exceptions import AdbError, ConfigError
-from roktracker.utils.general import is_string_int, load_config
+from roktracker.utils.file_manager import load_config
+from roktracker.utils.general import is_string_int
 from roktracker.utils.gui import InfoDialog
 from roktracker.utils.output_formats import OutputFormats
+from roktracker.utils.types.batch_scanner.additional_data import AdditionalData
+from roktracker.utils.types.batch_scanner.governor_data import GovernorData
+from roktracker.utils.types.full_config import FullConfig
 
 logging.basicConfig(
     filename=str(get_app_root() / "alliance-scanner.log"),
@@ -164,9 +166,9 @@ class HorizontalCheckboxFrame(customtkinter.CTkTabview):
 
 
 class BasicOptionsFame(customtkinter.CTkFrame):
-    def __init__(self, master, config):
+    def __init__(self, master, config: FullConfig):
         super().__init__(master)
-        self.config = config
+        self.full_config = config
 
         self.int_validation = self.register(is_string_int)
 
@@ -184,7 +186,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.scan_name_label.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="w")
         self.scan_name_text = customtkinter.CTkEntry(self)
         self.scan_name_text.grid(row=1, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.scan_name_text.insert(0, config["scan"]["kingdom_name"])
+        self.scan_name_text.insert(0, config.scan.kingdom_name)
 
         self.bluestacks_instance_label = customtkinter.CTkLabel(
             self, text="Bluestacks name:", height=1
@@ -196,7 +198,7 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.bluestacks_instance_text.grid(
             row=2, column=1, padx=10, pady=(10, 0), sticky="ew"
         )
-        self.bluestacks_instance_text.insert(0, config["general"]["bluestacks"]["name"])
+        self.bluestacks_instance_text.insert(0, config.general.bluestacks.name)
 
         self.adb_port_label = customtkinter.CTkLabel(self, text="Adb port:", height=1)
         self.adb_port_label.grid(row=3, column=0, padx=10, pady=(10, 0), sticky="w")
@@ -221,22 +223,22 @@ class BasicOptionsFame(customtkinter.CTkFrame):
             validatecommand=(self.int_validation, "%P", True),
         )
         self.scan_amount_text.grid(row=4, column=1, padx=10, pady=(10, 0), sticky="ew")
-        self.scan_amount_text.insert(0, str(config["scan"]["people_to_scan"]))
+        self.scan_amount_text.insert(0, str(config.scan.people_to_scan))
 
         output_values = [
             {
                 "name": "xlsx",
-                "default": config["scan"]["formats"]["xlsx"],
+                "default": config.scan.formats.xlsx,
                 "group": "Output Format",
             },
             {
                 "name": "csv",
-                "default": config["scan"]["formats"]["csv"],
+                "default": config.scan.formats.csv,
                 "group": "Output Format",
             },
             {
                 "name": "jsonl",
-                "default": config["scan"]["formats"]["jsonl"],
+                "default": config.scan.formats.jsonl,
                 "group": "Output Format",
             },
         ]
@@ -254,10 +256,13 @@ class BasicOptionsFame(customtkinter.CTkFrame):
         self.adb_port_text.delete(0, len(self.adb_port_text.get()))
 
         if name != "":
-            self.adb_port_text.insert(0, get_bluestacks_port(name, self.config))
+            self.adb_port_text.insert(0, get_bluestacks_port(name, self.full_config))
         else:
             self.adb_port_text.insert(
-                0, get_bluestacks_port(self.bluestacks_instance_text.get(), self.config)
+                0,
+                get_bluestacks_port(
+                    self.bluestacks_instance_text.get(), self.full_config
+                ),
             )
         return True
 
@@ -563,7 +568,7 @@ class App(customtkinter.CTk):
         batch_data.update(
             {
                 "govs": f"{extra_data.current_page * extra_data.govs_per_page} to {(extra_data.current_page + 1) * extra_data.govs_per_page} of {extra_data.target_governor}",
-                "time": extra_data.current_time,
+                "time": extra_data.current_time.strftime("%H:%M:%S"),
                 "eta": extra_data.eta(),
             }
         )

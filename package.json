@@ -19,7 +19,8 @@
     "dev:py": "concurrently --kill-others -n QUASAR,PYTHON -c bgGreen.bold,bgBlue.bold \"yarpm run dev\" \"dotenv -- cross-replace yarn run run:py --DEVELOPMENT 1 --DEV_SERVER_PORT $DEV_SERVER_PORT\"",
     "run:py": ".\\venv\\Scripts\\python .\\main.py",
     "generate:zod": "cd gui_frontend && yarpm run generate:zod",
-    "generate:json-schema": ".\\venv\\Scripts\\python .\\schema_generator.py"
+    "generate:json-schema": ".\\venv\\Scripts\\python .\\schema_generator.py",
+    "generate:all": "yarpm run generate:json-schema && yarpm run generate:zod"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

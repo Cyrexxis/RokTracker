@@ -133,7 +133,7 @@
   </q-card>
 </template>
 <script setup lang="ts">
-import { useKingdomStore } from 'src/stores/kingdom-scanner-store'
+import { useKingdomStore } from 'src/stores/kingdom-store'
 
 import { UseTimeAgo } from '@vueuse/components'
 import { useDateFormat } from '@vueuse/core'

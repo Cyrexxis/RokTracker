@@ -202,7 +202,11 @@
       <div class="row col">
         <LastGovernor class="col" />
       </div>
-      <ScanStatus class="col-auto" />
+      <ScanStatus
+        class="col-auto"
+        :scan-id="kingdomStore.scanID"
+        :status-message="kingdomStore.statusMessage"
+      />
     </div>
   </div>
 </template>
@@ -213,7 +217,7 @@ import LastGovernor from './LastGovernor.vue'
 import { intRule, floatRule, notEmptyArrayRule } from 'src/util/rules'
 import type { OutputFormat } from 'src/types/OutputFormats'
 import ScanStatus from './ScanStatus.vue'
-import { useKingdomStore } from 'src/stores/kingdom-scanner-store'
+import { useKingdomStore } from 'src/stores/kingdom-store'
 import { useQuasar } from 'quasar'
 import { useConfigStore } from 'src/stores/config-store'
 import { KingdomGovernorDataSchema } from 'src/schema/KingdomGovernorData'
