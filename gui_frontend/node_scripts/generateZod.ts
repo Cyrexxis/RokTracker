@@ -5,7 +5,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as prettier from 'prettier'
 
-const schemaDir = './schema'
+const schemaDir = '../schema'
 const outputDir = './src/schema'
 
 if (!fs.existsSync(outputDir)) {

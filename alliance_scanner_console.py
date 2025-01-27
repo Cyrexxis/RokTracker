@@ -3,6 +3,7 @@ import threading
 from dummy_root import get_app_root
 from roktracker.utils.check_python import check_py_version
 from roktracker.utils.exception_handling import ConsoleExceptionHander
+from roktracker.utils.file_manager import load_config
 from roktracker.utils.output_formats import OutputFormats
 
 logging.basicConfig(
@@ -80,7 +81,7 @@ def main():
     try:
         bluestacks_device_name = questionary.text(
             message="Name of your bluestacks instance:",
-            default=config["general"]["bluestacks"]["name"],
+            default=config.general.bluestacks.name,
         ).unsafe_ask()
 
         bluestacks_port = int(
@@ -93,7 +94,7 @@ def main():
 
         kingdom = questionary.text(
             message="Alliance name (used for file name):",
-            default=config["scan"]["kingdom_name"],
+            default=config.scan.kingdom_name,
         ).unsafe_ask()
 
         validated_name = sanitize_scanname(kingdom)
@@ -108,7 +109,7 @@ def main():
             questionary.text(
                 message="Number of people to scan:",
                 validate=lambda port: is_string_int(port),
-                default=str(config["scan"]["people_to_scan"]),
+                default=str(config.scan.people_to_scan),
             ).unsafe_ask()
         )
 
@@ -119,17 +120,17 @@ def main():
                 questionary.Choice(
                     "Excel (xlsx)",
                     value="xlsx",
-                    checked=config["scan"]["formats"]["xlsx"],
+                    checked=config.scan.formats.xlsx,
                 ),
                 questionary.Choice(
                     "Comma seperated values (csv)",
                     value="csv",
-                    checked=config["scan"]["formats"]["csv"],
+                    checked=config.scan.formats.csv,
                 ),
                 questionary.Choice(
                     "JSON Lines (jsonl)",
                     value="jsonl",
-                    checked=config["scan"]["formats"]["jsonl"],
+                    checked=config.scan.formats.jsonl,
                 ),
             ],
         ).unsafe_ask()

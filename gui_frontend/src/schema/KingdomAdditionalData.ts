@@ -11,6 +11,6 @@ export const KingdomAdditionalDataSchema = z.object({
   current_time: z
     .string()
     .datetime({ offset: true })
-    .default("2025-01-23T15:04:12.742202"),
+    .default("2025-01-27T11:16:26.528636+01:00"),
 });
 export type KingdomAdditionalData = z.infer<typeof KingdomAdditionalDataSchema>;
