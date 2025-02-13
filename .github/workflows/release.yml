@@ -28,7 +28,7 @@ jobs:
 
       - name: (Install) pyinstaller
         shell: bash
-        run: | 
+        run: |
           set PYINSTALLER_COMPILE_BOOTLOADER=TRUE
           pip install pyinstaller
 
@@ -52,7 +52,7 @@ jobs:
           tar.exe -a -c -f "RoK Tracker.zip" -C "dist/" "RoK Tracker"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: RoK Tracker
           path: "RoK Tracker.zip"
@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Get compiled executables
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: RoK Tracker
 
