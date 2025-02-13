@@ -19,10 +19,10 @@ ocr_regions = {
     "t5_killpoints": (1298, 591, 171, 38),
     "ranged_points": (1275, 693, 200, 38),
     # third screen
-    "deads": (1130, 443, 183, 40),
-    "rss_gathered": (1130, 612, 183, 40),
-    "rss_assisted": (1130, 668, 183, 40),
-    "alliance_helps": (1130, 735, 183, 40),
+    "deads": (1130, 453, 183, 40),
+    "rss_gathered": (1130, 628, 183, 40),
+    "rss_assisted": (1130, 688, 183, 40),
+    "alliance_helps": (1130, 746, 183, 40),
 }
 
 # format: (x, y)
