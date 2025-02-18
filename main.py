@@ -4,6 +4,7 @@ import os
 import sys
 from threading import Event, Thread
 import threading
+from typing import List
 from pydantic import TypeAdapter
 import dummy_root
 import webview
@@ -11,8 +12,16 @@ import webview
 # Import Bottle
 from bottle import static_file, Bottle
 
+from roktracker.alliance.scanner import AllianceScanner
+from roktracker.honor.scanner import HonorScanner
 from roktracker.kingdom.types.additional_data import AdditionalData
 from roktracker.kingdom.types.governor_data import GovernorData
+from roktracker.seed.scanner import SeedScanner
+from roktracker.utils.types.batch_scanner.batch_type import BatchStatus, BatchType
+from roktracker.utils.types.batch_scanner.governor_data import GovernorData as BatchData
+from roktracker.utils.types.batch_scanner.additional_data import (
+    AdditionalData as BatchAdditionalData,
+)
 from roktracker.kingdom.scanner import KingdomScanner, scan_preset_to_scan_options
 from roktracker.utils.exception_handling import ConsoleExceptionHander
 from roktracker.utils.file_manager import (
@@ -63,8 +72,11 @@ if not environmentVars.development:
         return response
 
 
-js_confirm_result = False
-jsResponse = Event()
+kingdom_confirm_result = False
+kingdomResponse = Event()
+
+alliance_confirm_result = False
+allianceResponse = Event()
 
 
 class ScanCallbackHandler:
@@ -79,24 +91,97 @@ class ScanCallbackHandler:
             f"window.kingdom.governorUpdate('{gov_data.model_dump_json()}', '{extra_data.model_dump_json()}')"
         )
 
-    def state_callback(self, state: str) -> None:
+    def kingdom_state_callback(self, state: str) -> None:
         window.evaluate_js(f"window.kingdom.stateUpdate('{state}')")
 
     def ask_confirm(self, message: str) -> bool:
-        jsResponse.clear()
+        kingdomResponse.clear()
 
         # Call the JavaScript dialog through webview
         window.evaluate_js("window.kingdom.askConfirm('Do you want to continue?')")
 
         # Wait for response
-        jsResponse.wait()
-        return js_confirm_result
+        kingdomResponse.wait()
+        return kingdom_confirm_result
 
     def kingdom_scan_finished(self):
         window.evaluate_js("window.kingdom.scanFinished()")
 
     def set_kingdom_scan_id(self, scan_id: str):
         window.evaluate_js(f"window.kingdom.setScanID('{scan_id}')")
+
+    def batch_update(
+        self,
+        batch_data: List[BatchData],
+        extra_data: BatchAdditionalData,
+        batch_type: BatchType,
+    ):
+        batch_data_encoded = TypeAdapter(list[BatchData]).dump_json(batch_data).decode()
+        # additional json dump needed for proper escaping
+        batch_data_encoded = json.dumps(batch_data_encoded)
+        window.evaluate_js(
+            f"window.batch.batchUpdate({batch_data_encoded}, '{extra_data.model_dump_json()}', '{BatchStatus(type=batch_type).model_dump_json()}')"
+        )
+
+    def alliance_scan_batch_callback(
+        self, batch_data: List[BatchData], extra_data: BatchAdditionalData
+    ):
+        self.batch_update(batch_data, extra_data, BatchType.ALLIANCE)
+
+    def honor_scan_batch_callback(
+        self, batch_data: List[BatchData], extra_data: BatchAdditionalData
+    ):
+        self.batch_update(batch_data, extra_data, BatchType.HONOR)
+
+    def seed_scan_batch_callback(
+        self, batch_data: List[BatchData], extra_data: BatchAdditionalData
+    ):
+        self.batch_update(batch_data, extra_data, BatchType.SEED)
+
+    def batch_state_update(self, msg: str, batch_type: BatchType):
+        window.evaluate_js(
+            f"window.batch.stateUpdate('{msg}', '{BatchStatus(type=batch_type).model_dump_json()}')"
+        )
+
+    def alliance_state_callback(self, msg: str):
+        self.batch_state_update(msg, BatchType.ALLIANCE)
+
+    def honor_state_callback(self, msg: str):
+        self.batch_state_update(msg, BatchType.HONOR)
+
+    def seed_state_callback(self, msg: str):
+        self.batch_state_update(msg, BatchType.SEED)
+
+    def set_batch_id(self, batch_type: BatchType, id: str):
+        window.evaluate_js(
+            f"window.batch.setScanID('{id}', '{BatchStatus(type=batch_type).model_dump_json()}')"
+        )
+
+    def batch_scan_finished(self, batch_type: BatchType):
+        window.evaluate_js(
+            f"window.batch.scanFinished('{BatchStatus(type=batch_type).model_dump_json()}')"
+        )
+
+    def alliance_scan_finished(self):
+        self.batch_scan_finished(BatchType.ALLIANCE)
+
+    def honor_scan_finished(self):
+        self.batch_scan_finished(BatchType.HONOR)
+
+    def seed_scan_finished(self):
+        self.batch_scan_finished(BatchType.SEED)
+
+    def ask_confirm_alliance(self, message: str) -> bool:
+        allianceResponse.clear()
+
+        # Call the JavaScript dialog through webview
+        window.evaluate_js(
+            f"window.batch.askConfirm('Do you want to continue?', {BatchStatus(type=BatchType.ALLIANCE).model_dump_json()})"
+        )
+
+        # Wait for response
+        allianceResponse.wait()
+        return alliance_confirm_result
 
 
 scanCbHandler = ScanCallbackHandler()
@@ -110,7 +195,7 @@ def start_kingdom_scanner(full_config: str, scan_preset: str):
         config, scan_preset_to_scan_options(preset), config.general.adb_port
     )
     kingdom_scanner.set_governor_callback(scanCbHandler.kingdom_governor_callback)
-    kingdom_scanner.set_state_callback(scanCbHandler.state_callback)
+    kingdom_scanner.set_state_callback(scanCbHandler.kingdom_state_callback)
     kingdom_scanner.set_continue_handler(scanCbHandler.ask_confirm)
 
     scanCbHandler.set_kingdom_scan_id(kingdom_scanner.run_id)
@@ -130,6 +215,57 @@ def start_kingdom_scanner(full_config: str, scan_preset: str):
     scanCbHandler.kingdom_scan_finished()
 
 
+def start_alliance_scanner(full_config: str):
+    global alliance_scanner
+    config = FullConfig(**json.loads(full_config))
+
+    alliance_scanner = AllianceScanner(config.general.adb_port, config)
+    alliance_scanner.set_batch_callback(scanCbHandler.alliance_scan_batch_callback)
+    alliance_scanner.set_state_callback(scanCbHandler.alliance_state_callback)
+
+    scanCbHandler.set_batch_id(BatchType.ALLIANCE, alliance_scanner.run_id)
+
+    alliance_scanner.start_scan(
+        config.scan.kingdom_name, config.scan.people_to_scan, config.scan.formats
+    )
+
+    scanCbHandler.alliance_scan_finished()
+
+
+def start_honor_scanner(full_config: str):
+    global honor_scanner
+    config = FullConfig(**json.loads(full_config))
+
+    honor_scanner = HonorScanner(config.general.adb_port, config)
+    honor_scanner.set_batch_callback(scanCbHandler.honor_scan_batch_callback)
+    honor_scanner.set_state_callback(scanCbHandler.honor_state_callback)
+
+    scanCbHandler.set_batch_id(BatchType.HONOR, honor_scanner.run_id)
+
+    honor_scanner.start_scan(
+        config.scan.kingdom_name, config.scan.people_to_scan, config.scan.formats
+    )
+
+    scanCbHandler.honor_scan_finished()
+
+
+def start_seed_scanner(full_config: str):
+    global seed_scanner
+    config = FullConfig(**json.loads(full_config))
+
+    seed_scanner = SeedScanner(config.general.adb_port, config)
+    seed_scanner.set_batch_callback(scanCbHandler.seed_scan_batch_callback)
+    seed_scanner.set_state_callback(scanCbHandler.seed_state_callback)
+
+    scanCbHandler.set_batch_id(BatchType.SEED, seed_scanner.run_id)
+
+    seed_scanner.start_scan(
+        config.scan.kingdom_name, config.scan.people_to_scan, config.scan.formats
+    )
+
+    scanCbHandler.seed_scan_finished()
+
+
 class API:
     def WindowReady(self):
         if getattr(sys, "frozen", False):
@@ -144,9 +280,9 @@ class API:
         return ""
 
     def ConfirmCallback(self, confirmed: bool):
-        global js_confirm_result, jsResponse
-        js_confirm_result = confirmed
-        jsResponse.set()
+        global kingdom_confirm_result, kingdomResponse
+        kingdom_confirm_result = confirmed
+        kingdomResponse.set()
         return ""
 
     def StartKingdomScan(self, full_config: str, scan_preset: str):
@@ -165,6 +301,47 @@ class API:
 
     def SaveScanPresets(self, presets: str):
         save_kingdom_presets(TypeAdapter(list[ScanPreset]).validate_json(presets))
+        return ""
+
+    def StartBatchScan(self, full_config: str, batchType: str):
+        realBatchType = BatchStatus(**json.loads(batchType)).type
+        match realBatchType:
+            case BatchType.ALLIANCE:
+                # Thread(target=start_alliance_scanner, args=(full_config)).start()
+                start_alliance_scanner(full_config)
+            case BatchType.HONOR:
+                start_honor_scanner(full_config)
+                pass
+            case BatchType.SEED:
+                start_seed_scanner(full_config)
+                pass
+        return ""
+
+    def StopBatchScan(self, batchType: str):
+        realBatchType = BatchStatus(**json.loads(batchType)).type
+        match realBatchType:
+            case BatchType.ALLIANCE:
+                alliance_scanner.end_scan()
+            case BatchType.HONOR:
+                honor_scanner.end_scan()
+                pass
+            case BatchType.SEED:
+                seed_scanner.end_scan()
+                pass
+        return ""
+
+    # Currently not used
+    def ConfirmCallbackBatch(self, confirmed: bool, batchType: str):
+        realBatchType = BatchStatus(**json.loads(batchType)).type
+        match realBatchType:
+            case BatchType.ALLIANCE:
+                global alliance_confirm_result, allianceResponse
+                alliance_confirm_result = confirmed
+                allianceResponse.set()
+            case BatchType.HONOR:
+                pass
+            case BatchType.SEED:
+                pass
         return ""
 
 

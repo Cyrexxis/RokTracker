@@ -93,14 +93,14 @@
       <div class="row col">
         <LastBatch
           class="col"
-          :batchData="allianceScore.lastGovernor"
-          :batchStatus="allianceScore.status"
+          :batchData="seedStore.lastGovernor"
+          :batchStatus="seedStore.status"
         />
       </div>
       <ScanStatus
         class="col-auto"
-        :scan-id="allianceScore.scanID"
-        :status-message="allianceScore.statusMessage"
+        :scan-id="seedStore.scanID"
+        :status-message="seedStore.statusMessage"
       />
     </div>
   </div>
@@ -112,16 +112,16 @@ import { storeToRefs } from 'pinia'
 import { intRule, floatRule, notEmptyArrayRule } from 'src/util/rules'
 import type { OutputFormat } from 'src/types/OutputFormats'
 import ScanStatus from './ScanStatus.vue'
-import { useAllianceStore } from 'src/stores/alliance-store'
 import { useConfigStore } from 'src/stores/config-store'
 import LastBatch from './LastBatch.vue'
 import type { BatchType } from 'src/schema/BatchType'
+import { useSeedStore } from 'src/stores/seed-store'
 
-const allianceScore = useAllianceStore()
+const seedStore = useSeedStore()
 const configStore = useConfigStore()
-const { scanRunning, startButtonDisabled } = storeToRefs(allianceScore)
+const { scanRunning, startButtonDisabled } = storeToRefs(seedStore)
 
-const batchType: BatchType = { type: 'Alliance' }
+const batchType: BatchType = { type: 'Seed' }
 
 const outputFormats = ref([
   {

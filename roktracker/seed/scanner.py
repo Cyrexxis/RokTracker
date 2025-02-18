@@ -3,8 +3,6 @@ import time
 
 from cv2.typing import MatLike
 from dummy_root import get_app_root
-from roktracker.alliance.additional_data import AdditionalData
-from roktracker.alliance.governor_data import GovernorData
 from roktracker.alliance.governor_image_group import GovImageGroup
 from roktracker.alliance.pandas_handler import PandasHandler
 from roktracker.seed.ui_settings import KingdomUI
@@ -14,6 +12,10 @@ from roktracker.utils.ocr import *
 from roktracker.utils.output_formats import OutputFormats
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore
 from typing import Callable, List
+
+from roktracker.utils.types.batch_scanner.additional_data import AdditionalData
+from roktracker.utils.types.batch_scanner.governor_data import GovernorData
+from roktracker.utils.types.full_config import FormatsConfig
 
 
 def default_batch_callback(govs: List[GovernorData], extra: AdditionalData) -> None:
@@ -30,7 +32,7 @@ def default_output_handler(msg: str) -> None:
 
 
 class SeedScanner:
-    def __init__(self, port, config):
+    def __init__(self, port, config: FullConfig):
         self.run_id = generate_random_id(8)
         self.start_date = datetime.date.today()
         self.stop_scan = False
@@ -40,7 +42,7 @@ class SeedScanner:
         self.govs_per_screen = 6
         self.screens_needed = 0
 
-        self.max_random_delay = config["scan"]["timings"]["max_random"]
+        self.max_random_delay = config.scan.timings.max_random
 
         # TODO: Load paths from config
         self.root_dir = get_app_root()
@@ -57,7 +59,7 @@ class SeedScanner:
         self.adb_client = AdvancedAdbClient(
             str(self.root_dir / "deps" / "platform-tools" / "adb.exe"),
             port,
-            config["general"]["emulator"],
+            config.general.emulator,
             self.root_dir / "deps" / "inputs",
         )
 
@@ -163,11 +165,19 @@ class SeedScanner:
                     "png",
                 )
 
-                govs.append(GovernorData(gov_img_path, gov_name, gov_score))
+                govs.append(
+                    GovernorData(
+                        **{
+                            "img_path": gov_img_path,
+                            "name": gov_name,
+                            "score": gov_score,
+                        }
+                    )
+                )
 
         return govs
 
-    def start_scan(self, kingdom: str, amount: int, formats: OutputFormats):
+    def start_scan(self, kingdom: str, amount: int, formats: FormatsConfig):
         self.state_callback("Initializing")
         self.adb_client.start_adb()
         self.screens_needed = int(math.ceil(amount / self.govs_per_screen))
@@ -189,10 +199,13 @@ class SeedScanner:
             self.scan_times.append(end_time - start_time)
 
             additional_data = AdditionalData(
-                i,
-                amount,
-                self.govs_per_screen,
-                self.get_remaining_time(self.screens_needed - i),
+                **{
+                    "current_page": i,
+                    "govs_per_page": self.govs_per_screen,
+                    "target_governor": amount,
+                    "remaining_sec": self.get_remaining_time(self.screens_needed - i),
+                    "current_time": datetime.datetime.now().astimezone(),
+                }
             )
 
             self.batch_callback(governors, additional_data)

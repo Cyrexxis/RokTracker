@@ -1,9 +1,9 @@
 <template>
   <q-card bordered flat>
     <q-card-section>
-      <div class="text-h6">Screen {{ allianceStore.status.current_page }}</div>
+      <div class="text-h6">Screen {{ batchStatus.current_page }}</div>
       <div class="text-subtitle2">
-        of {{ allianceStore.status.target_governor / allianceStore.status.govs_per_page }}
+        of {{ batchStatus.target_governor / batchStatus.govs_per_page }}
       </div>
     </q-card-section>
 
@@ -11,7 +11,7 @@
 
     <q-card-section>
       <q-list dense>
-        <q-item v-for="gov in allianceStore.lastGovernor" :key="gov.img_path">
+        <q-item v-for="gov in batchData" :key="gov.img_path">
           <q-item-section>{{ gov.name }}</q-item-section>
           <q-item-section side>{{ formatNumber(gov.score) }}</q-item-section>
         </q-item>
@@ -33,8 +33,8 @@
           </div>
           <div class="column justify-center">
             <div class="text-center col-auto">
-              {{ allianceStore.status.current_page * allianceStore.status.govs_per_page }} of
-              {{ allianceStore.status.target_governor }}
+              {{ batchStatus.current_page * batchStatus.govs_per_page }} of
+              {{ batchStatus.target_governor }}
             </div>
           </div>
           <div class="column">
@@ -55,8 +55,7 @@
         </div>
         <q-linear-progress
           :value="
-            (allianceStore.status.current_page * allianceStore.status.govs_per_page) /
-            allianceStore.status.target_governor
+            (batchStatus.current_page * batchStatus.govs_per_page) / batchStatus.target_governor
           "
           rounded
           class="q-mt-sm"
@@ -68,14 +67,19 @@
 <script setup lang="ts">
 import { UseTimeAgo } from '@vueuse/components'
 import { useDateFormat } from '@vueuse/core'
-import { useAllianceStore } from 'src/stores/alliance-store'
 import { computed } from 'vue'
 
-const allianceStore = useAllianceStore()
+import type { BatchAdditionalData } from 'src/schema/BatchAdditionalData'
+import type { BatchGovernorData } from 'src/schema/BatchGovernorData'
 
-const lastUpdate = computed(() => new Date(allianceStore.status.current_time))
+const props = defineProps<{
+  batchData: BatchGovernorData[]
+  batchStatus: BatchAdditionalData
+}>()
+
+const lastUpdate = computed(() => new Date(props.batchStatus.current_time))
 const expectedFinish = computed(
-  () => new Date(lastUpdate.value.getTime() + allianceStore.status.remaining_sec * 1000),
+  () => new Date(lastUpdate.value.getTime() + props.batchStatus.remaining_sec * 1000),
 )
 
 const lastUpdateFormatted = useDateFormat(lastUpdate, 'HH:mm:ss')

@@ -3,7 +3,7 @@ import type { BatchAdditionalData } from 'src/schema/BatchAdditionalData'
 import type { BatchGovernorData } from 'src/schema/BatchGovernorData'
 import { ref } from 'vue'
 
-export const useAllianceStore = defineStore('alliance', () => {
+export const useHonorStore = defineStore('honor', () => {
   const lastGovernor = ref<BatchGovernorData[]>([
     {
       name: 'Governor 1',
@@ -58,5 +58,5 @@ export const useAllianceStore = defineStore('alliance', () => {
 })
 
 if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useAllianceStore, import.meta.hot))
+  import.meta.hot.accept(acceptHMRUpdate(useHonorStore, import.meta.hot))
 }

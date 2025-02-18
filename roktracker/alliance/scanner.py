@@ -15,6 +15,7 @@ from typing import Callable, List
 
 from roktracker.utils.types.batch_scanner.additional_data import AdditionalData
 from roktracker.utils.types.batch_scanner.governor_data import GovernorData
+from roktracker.utils.types.full_config import FormatsConfig
 
 
 def default_batch_callback(govs: List[GovernorData], extra: AdditionalData) -> None:
@@ -176,7 +177,7 @@ class AllianceScanner:
 
         return govs
 
-    def start_scan(self, kingdom: str, amount: int, formats: OutputFormats):
+    def start_scan(self, kingdom: str, amount: int, formats: FormatsConfig):
         self.state_callback("Initializing")
         self.adb_client.start_adb()
         self.screens_needed = int(math.ceil(amount / self.govs_per_screen))
@@ -203,6 +204,7 @@ class AllianceScanner:
                     "govs_per_page": self.govs_per_screen,
                     "target_governor": amount,
                     "remaining_sec": self.get_remaining_time(self.screens_needed - i),
+                    "current_time": datetime.datetime.now().astimezone(),
                 }
             )
 

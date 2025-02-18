@@ -85,9 +85,17 @@ import { ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useConfigStore } from './stores/config-store'
 import { FullConfigSchema } from './schema/FullConfig'
-import { KingdomPresetListSchema } from './schema/SchemaUtils'
+import { BatchGovernorDataListSchema, KingdomPresetListSchema } from './schema/SchemaUtils'
+import { BatchTypeSchema } from './schema/BatchType'
+import { useAllianceStore } from './stores/alliance-store'
+import { BatchAdditionalDataSchema } from './schema/BatchAdditionalData'
+import { useHonorStore } from './stores/honor-store'
+import { useSeedStore } from './stores/seed-store'
 
 const configStore = useConfigStore()
+const allianceStore = useAllianceStore()
+const honorStore = useHonorStore()
+const seedStore = useSeedStore()
 
 const $q = useQuasar()
 // import themeToggleIcon from 'assets/theme-toggle.svg'
@@ -122,6 +130,119 @@ window.addEventListener('pywebviewready', async () => {
     window.pywebview.api.WindowReady()
   }
 })
+
+const setScanId = (id: string, batchType: string) => {
+  const parsedBatchType = BatchTypeSchema.safeParse(JSON.parse(batchType))
+
+  if (parsedBatchType.success) {
+    switch (parsedBatchType.data.type) {
+      case 'Alliance':
+        allianceStore.scanID = id
+        break
+      case 'Honor':
+        honorStore.scanID = id
+        break
+      case 'Seed':
+        seedStore.scanID = id
+        break
+      default:
+        break
+    }
+  }
+}
+
+const governorUpdate = (governorData: string, extraData: string, batchType: string) => {
+  const parsedBatchType = BatchTypeSchema.safeParse(JSON.parse(batchType))
+  if (parsedBatchType.success) {
+    switch (parsedBatchType.data.type) {
+      case 'Alliance':
+        allianceStore.lastGovernor = BatchGovernorDataListSchema.parse(JSON.parse(governorData))
+        allianceStore.status = BatchAdditionalDataSchema.parse(JSON.parse(extraData))
+        break
+      case 'Honor':
+        honorStore.lastGovernor = BatchGovernorDataListSchema.parse(JSON.parse(governorData))
+        honorStore.status = BatchAdditionalDataSchema.parse(JSON.parse(extraData))
+        break
+      case 'Seed':
+        seedStore.lastGovernor = BatchGovernorDataListSchema.parse(JSON.parse(governorData))
+        seedStore.status = BatchAdditionalDataSchema.parse(JSON.parse(extraData))
+        break
+      default:
+        break
+    }
+  }
+}
+
+const stateUpdate = (state: string, batchType: string) => {
+  const parsedBatchType = BatchTypeSchema.safeParse(JSON.parse(batchType))
+
+  if (parsedBatchType.success) {
+    switch (parsedBatchType.data.type) {
+      case 'Alliance':
+        allianceStore.statusMessage = state
+        break
+      case 'Honor':
+        honorStore.statusMessage = state
+        break
+      case 'Seed':
+        seedStore.statusMessage = state
+        break
+      default:
+        break
+    }
+  }
+}
+
+const askConfirm = (message: string, batchType: string) => {
+  const parsedBatchType = BatchTypeSchema.safeParse(JSON.parse(batchType))
+
+  if (parsedBatchType.success) {
+    $q.dialog({
+      title: 'Confirm',
+      message,
+      ok: 'Yes',
+      cancel: 'No',
+      persistent: true,
+    })
+      .onOk(() => {
+        window.pywebview.api.ConfirmCallbackBatch(true, JSON.stringify(parsedBatchType.data))
+      })
+      .onCancel(() => {
+        window.pywebview.api.ConfirmCallbackBatch(false, JSON.stringify(parsedBatchType.data))
+      })
+  }
+}
+
+const scanFinished = (batchType: string) => {
+  const parsedBatchType = BatchTypeSchema.safeParse(JSON.parse(batchType))
+
+  if (parsedBatchType.success) {
+    switch (parsedBatchType.data.type) {
+      case 'Alliance':
+        allianceStore.scanRunning = false
+        allianceStore.startButtonDisabled = false
+        break
+      case 'Honor':
+        honorStore.scanRunning = false
+        honorStore.startButtonDisabled = false
+        break
+      case 'Seed':
+        seedStore.scanRunning = false
+        seedStore.startButtonDisabled = false
+        break
+      default:
+        break
+    }
+  }
+}
+
+window.batch = {
+  setScanID: setScanId,
+  batchUpdate: governorUpdate,
+  stateUpdate: stateUpdate,
+  askConfirm: askConfirm,
+  scanFinished: scanFinished,
+}
 </script>
 
 <style lang="css" scoped></style>

@@ -15,11 +15,11 @@
       </q-tab-panel>
 
       <q-tab-panel name="seed">
-        <PlaceholderComponent />
+        <SeedScanner />
       </q-tab-panel>
 
       <q-tab-panel name="honor">
-        <PlaceholderComponent />
+        <HonorScanner />
       </q-tab-panel>
 
       <q-tab-panel name="alliance">
@@ -33,7 +33,8 @@
 import { ref } from 'vue'
 import KingdomScanner from 'src/components/KingdomScanner.vue'
 import AllianceScanner from 'src/components/AllianceScanner.vue'
-import PlaceholderComponent from 'src/components/PlaceholderComponent.vue'
+import HonorScanner from 'src/components/HonorScanner.vue'
+import SeedScanner from 'src/components/SeedScanner.vue'
 
 const tab = ref('kingdom')
 </script>
