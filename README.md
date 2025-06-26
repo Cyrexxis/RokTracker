@@ -91,7 +91,9 @@ The second way of using the scanner is by using the python files directly. Howev
 4. Open your terminal in this folder and create a venv via `python -m venv venv`
 5. Activate that venv via `./venv/Scripts/activate`
 6. Install the python requirements via `pip install -r requirements_win64.txt`
-7. Configure your Bluestacks instance according to the [instructions](#bluestacks-5-settings)
+7. Install Tesseract: `sudo apt install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config -y`
+8. Install tesserocr: `pip install tesserocr`
+9. Configure your Bluestacks instance according to the [instructions](#bluestacks-5-settings)
 
 ## Usage
 

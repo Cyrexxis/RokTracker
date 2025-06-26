@@ -8,6 +8,8 @@ import time
 import tkinter
 import numpy as np
 
+import pyperclip
+
 from dummy_root import get_app_root
 from pathlib import Path
 from roktracker.utils.adb import *
@@ -280,24 +282,20 @@ class KingdomScanner:
             image = load_cv2_img(self.img_path / "gov_info.png", cv2.IMREAD_UNCHANGED)
 
             if self.scan_options["Name"]:
-                # nickname copy
-                copy_try = 0
-                while copy_try < 3:
-                    try:
-                        self.adb_client.secure_adb_tap(
-                            rok_ui.tap_positions["name_copy"]
-                        )
-                        wait_random_range(
-                            self.timings["copy_wait"], self.max_random_delay
-                        )
-                        tk_clipboard = tkinter.Tk()
-                        governor_data.name = tk_clipboard.clipboard_get()
-                        tk_clipboard.destroy()
-                        break
-                    except:
-                        console.log("Name copy failed, retying")
-                        logging.log(logging.INFO, "Name copy failed, retying")
-                        copy_try = copy_try + 1
+                self.adb_client.secure_adb_tap(rok_ui.tap_positions["name_copy"])
+                time.sleep(0.7)
+
+                try:
+                    clipboard_text = pyperclip.paste().strip()
+                    if clipboard_text:
+                        governor_data.name = clipboard_text
+                        logging.info(f"Governor name copied: '{governor_data.name}'")
+                    else:
+                        logging.warning("Clipboard was empty after copy.")
+                        governor_data.name = "Clipboard Empty"
+                except Exception as e:
+                    logging.warning(f"Failed to read from clipboard: {e}")
+                    governor_data.name = "Clipboard Exception"
 
             # 1st image data (ID, Power, Killpoints, Alliance)
             with PyTessBaseAPI(

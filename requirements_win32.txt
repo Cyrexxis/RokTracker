@@ -34,8 +34,9 @@ questionary==2.0.1
 requests==2.31.0
 rich==13.7.0
 six==1.16.0
-tesserocr @ https://github.com/simonflueckiger/tesserocr-windows_build/releases/download/tesserocr-v2.6.2-tesseract-5.3.4/tesserocr-2.6.2-cp312-cp312-win32.whl
+#tesserocr @ https://github.com/simonflueckiger/tesserocr-windows_build/releases/download/tesserocr-v2.6.2-tesseract-5.3.4/tesserocr-2.6.2-cp312-cp312-win32.whl
 tzdata==2024.1
 urllib3==2.1.0
 wcwidth==0.2.12
 XlsxWriter==3.2.0
+pyperclip==1.9.0
