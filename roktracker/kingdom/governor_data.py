@@ -8,6 +8,7 @@ from roktracker.utils.general import is_string_int, to_int_check
 class GovernorData:
     id: str = "Skipped"
     name: str = "Skipped"
+    score: str = "Skipped"
     power: str = "Skipped"
     killpoints: str = "Skipped"
     alliance: str = "Skipped"
@@ -53,6 +54,9 @@ class GovernorData:
     def flag_unknown(self):
         if self.power == "":
             self.power = "Unknown"
+        
+        if self.score == "":
+            self.score = "Unknown"
 
         if self.killpoints == "":
             self.killpoints = "Unknown"

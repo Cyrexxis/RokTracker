@@ -663,6 +663,7 @@ class App(customtkinter.CTk):
             [
                 {"name": "ID", "col": 0},
                 {"name": "Name", "col": 0},
+                {"name": "Score", "col": 0},
                 {"name": "Power", "col": 0},
                 {"name": "Killpoints", "col": 0},
                 {"name": "T1 Kills", "col": 0},
@@ -685,6 +686,7 @@ class App(customtkinter.CTk):
             {
                 "ID": "12345678",
                 "Name": "Super Governor",
+                "Score": "26",
                 "Power": 100000000,
                 "Killpoints": 3000000000,
                 "T1 Kills": 0,
@@ -800,6 +802,7 @@ class App(customtkinter.CTk):
             {
                 "ID": gov_data.id,
                 "Name": gov_data.name,
+                "Score": to_int_or(gov_data.score, "Unknown"),
                 "Power": to_int_or(gov_data.power, "Unknown"),
                 "Killpoints": to_int_or(gov_data.killpoints, "Unknown"),
                 "Dead": to_int_or(gov_data.dead, "Unknown"),

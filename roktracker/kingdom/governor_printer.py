@@ -49,6 +49,7 @@ def print_gov_state(gov_data: GovernorData, extra: AdditionalData) -> None:
 
     table.add_row("Governor ID", gov_data.id)
     table.add_row("Governor Name", gov_data.name)
+    table.add_row("Governor Score", gov_data.score)
     table.add_row("Governor Power", gov_data.power)
     table.add_row("Governor Kill Points", gov_data.killpoints)
     table.add_row("Governor Deads", gov_data.dead)

@@ -6,6 +6,8 @@ import roktracker.utils.rok_ui_positions as rok_ui
 import shutil
 import time
 import tkinter
+import math
+import time
 import numpy as np
 
 import pyperclip
@@ -20,6 +22,15 @@ from roktracker.kingdom.governor_data import GovernorData
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore (tesserocr has no type defs)
 from typing import Callable
 from PIL import Image
+from cv2.typing import MatLike
+from roktracker.alliance.additional_data import AdditionalData as AdditionalDataSeed
+from roktracker.alliance.governor_data import GovernorData as GovernorDataSeed
+from roktracker.alliance.governor_image_group import GovImageGroup as GovImageGroupSeed
+from roktracker.alliance.pandas_handler import PandasHandler as PandasHandlerSeed
+from roktracker.seed.ui_settings import KingdomUI
+from roktracker.utils.output_formats import OutputFormats
+from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore
+from typing import Callable, List
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +200,23 @@ class KingdomScanner:
             case _:
                 return False
 
+    def process_ranking_screen(self, image: MatLike, position: int) -> GovImageGroupSeed:
+        if position < 6:
+            region = KingdomUI.score_normal[position]
+        else:
+            region = KingdomUI.score_last[position - 6]  # ajuste baseado nos últimos slots
+
+        gov_score_im = cropToRegion(image, region)
+        gov_score_im_bw = preprocessImage(
+            gov_score_im, 3, KingdomUI.misc.threshold, 12, KingdomUI.misc.invert
+        )
+
+        # debug opcional
+        write_cv2_img(gov_score_im_bw, self.img_path / f"debug_score_{position}.png", "png")
+
+        return GovImageGroupSeed(gov_score_im_bw)
+
+
     def scan_governor(
         self,
         current_player: int,
@@ -196,6 +224,19 @@ class KingdomScanner:
     ) -> GovernorData:
         start_time = time.time()
         governor_data = GovernorData()
+
+        # Screenshot da tela de ranking
+        self.adb_client.secure_adb_screencap().save(self.img_path / "currentState.png")
+        image = load_cv2_img(self.img_path / "currentState.png", cv2.IMREAD_UNCHANGED)
+
+        gov = self.process_ranking_screen(image, current_player)
+
+        with PyTessBaseAPI(path=str(self.tesseract_path), psm=PSM.SINGLE_WORD) as api:
+            api.SetVariable("tessedit_char_whitelist", "0123456789")
+            gov_score = ocr_number(api, gov.score_img)
+
+        governor_data.score = gov_score
+
 
         self.state_callback("Opening governor")
         # Open governor
