@@ -170,6 +170,7 @@ def main():
                 scan_options = {
                     "ID": True,
                     "Name": True,
+                    "Score": False,
                     "Power": True,
                     "Killpoints": True,
                     "Alliance": True,

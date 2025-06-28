@@ -27,7 +27,7 @@ from roktracker.alliance.additional_data import AdditionalData as AdditionalData
 from roktracker.alliance.governor_data import GovernorData as GovernorDataSeed
 from roktracker.alliance.governor_image_group import GovImageGroup as GovImageGroupSeed
 from roktracker.alliance.pandas_handler import PandasHandler as PandasHandlerSeed
-from roktracker.seed.ui_settings import KingdomUI
+from roktracker.kingdom.ui_settings import KingdomUI
 from roktracker.utils.output_formats import OutputFormats
 from tesserocr import PyTessBaseAPI, PSM, OEM  # type: ignore
 from typing import Callable, List
@@ -232,11 +232,19 @@ class KingdomScanner:
         gov = self.process_ranking_screen(image, current_player)
 
         with PyTessBaseAPI(path=str(self.tesseract_path), psm=PSM.SINGLE_WORD) as api:
-            api.SetVariable("tessedit_char_whitelist", "0123456789")
-            gov_score = ocr_number(api, gov.score_img)
+            if self.scan_options["Score"]:
+                api.SetVariable("tessedit_char_whitelist", "0123456789")
+                gov_score = ocr_number(api, gov.score_img)
 
-        governor_data.score = gov_score
-
+                governor_data.score = gov_score
+                try:
+                    score_value = int(governor_data.score)
+                    if score_value < 25:
+                        self.output_handler(f"Skipping governor {current_player+1} due to low score ({score_value})")
+                        self.scan_times.append(time.time() - start_time)
+                        return governor_data 
+                except:
+                    self.output_handler(f"Score could not be parsed for governor {current_player+1}: '{governor_data.score}'")
 
         self.state_callback("Opening governor")
         # Open governor

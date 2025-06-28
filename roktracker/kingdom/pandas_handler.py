@@ -23,27 +23,32 @@ class PandasHandler:
         self.data_list = []
 
     def write_governor(self, gov_data: GovernorData) -> None:
-        self.data_list.append(
-            {
-                "ID": GovernorData.intify_value(gov_data.id),
-                "Name": gov_data.name,
-                "Power": GovernorData.intify_value(gov_data.power),
-                "Killpoints": GovernorData.intify_value(gov_data.killpoints),
-                "Deads": GovernorData.intify_value(gov_data.dead),
-                "T1 Kills": GovernorData.intify_value(gov_data.t1_kills),
-                "T2 Kills": GovernorData.intify_value(gov_data.t2_kills),
-                "T3 Kills": GovernorData.intify_value(gov_data.t3_kills),
-                "T4 Kills": GovernorData.intify_value(gov_data.t4_kills),
-                "T5 Kills": GovernorData.intify_value(gov_data.t5_kills),
-                "Total Kills": GovernorData.intify_value(gov_data.total_kills()),
-                "T45 Kills": GovernorData.intify_value(gov_data.t45_kills()),
-                "Ranged": GovernorData.intify_value(gov_data.ranged_points),
-                "Rss Gathered": GovernorData.intify_value(gov_data.rss_gathered),
-                "Rss Assistance": GovernorData.intify_value(gov_data.rss_assistance),
-                "Helps": GovernorData.intify_value(gov_data.helps),
-                "Alliance": gov_data.alliance.rstrip(),
-            }
-        )
+        data = {
+            "ID": GovernorData.intify_value(gov_data.id),
+            "Name": gov_data.name,
+            "Score": GovernorData.intify_value(gov_data.score),
+            "Power": GovernorData.intify_value(gov_data.power),
+            "Killpoints": GovernorData.intify_value(gov_data.killpoints),
+            "Deads": GovernorData.intify_value(gov_data.dead),
+            "T1 Kills": GovernorData.intify_value(gov_data.t1_kills),
+            "T2 Kills": GovernorData.intify_value(gov_data.t2_kills),
+            "T3 Kills": GovernorData.intify_value(gov_data.t3_kills),
+            "T4 Kills": GovernorData.intify_value(gov_data.t4_kills),
+            "T5 Kills": GovernorData.intify_value(gov_data.t5_kills),
+            "Total Kills": GovernorData.intify_value(gov_data.total_kills()),
+            "T45 Kills": GovernorData.intify_value(gov_data.t45_kills()),
+            "Ranged": GovernorData.intify_value(gov_data.ranged_points),
+            "Rss Gathered": GovernorData.intify_value(gov_data.rss_gathered),
+            "Rss Assistance": GovernorData.intify_value(gov_data.rss_assistance),
+            "Helps": GovernorData.intify_value(gov_data.helps),
+        }
+        
+        if str(gov_data.score).strip().lower() == "skipped":
+            data["Alliance"] = gov_data.alliance.rstrip()
+        if str(gov_data.score).strip().lower() != "skipped":
+            data["Score"] = GovernorData.intify_value(gov_data.score)
+
+        self.data_list.append(data)
 
     def is_duplicate(self, gov_id: int) -> bool:
         if len(self.data_list) == 0:
