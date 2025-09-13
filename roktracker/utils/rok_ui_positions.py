@@ -1,10 +1,10 @@
 # format: (x, y, width, height)
 ocr_regions = {
     # first screen
-    "more_info": (158, 776, 137, 29),
+    "more_info": (178, 788, 137, 29),
     "gov_id": (721, 177, 260, 38),
     "power": (876, 321, 218, 38),
-    "killpoints": (1185, 321, 216, 38),
+    "killpoints": (1185, 313, 216, 38),
     "alliance_name": (586, 321, 279, 38),
     # second screen
     "t1_kills": (917, 414, 200, 38),
@@ -30,7 +30,7 @@ tap_positions = {
     # first screen
     "name_copy": (617, 232),
     "open_kills": (1174, 305),
-    "more_info": (224, 731),
+    "more_info": (242, 746),
     "close_gov": (1454, 88),
     # third screen
     "close_info": (1396, 58),
