@@ -71,6 +71,8 @@ def is_string_float(element: str, allow_empty=False) -> bool:
     except ValueError:
         return False
 
+def more_info_present(ocr_text: str) -> bool:
+    return "MoreInfo" in ocr_text or "Morenfor" in ocr_text
 
 def generate_random_id(length: int) -> str:
     alphabet = string.ascii_lowercase + string.digits

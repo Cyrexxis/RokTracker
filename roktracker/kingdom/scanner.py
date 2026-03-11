@@ -230,7 +230,7 @@ class KingdomScanner:
                 check_more_info = api.GetUTF8Text()
 
             # Probably tapped governor is inactive and needs to be skipped
-            if "MoreInfo" not in check_more_info:
+            if not more_info_present(check_more_info):
                 self.inactive_players += 1
                 if track_inactives:
                     image_check_inactive = load_cv2_img(
