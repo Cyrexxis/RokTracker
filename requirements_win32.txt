@@ -24,8 +24,6 @@ pefile==2023.2.7
 Pillow==10.1.0
 prompt-toolkit==3.0.36
 Pygments==2.17.2
-pyinstaller==6.3.0
-pyinstaller-hooks-contrib==2023.11
 pyparsing==3.1.1
 python-dateutil==2.8.2
 pytz==2024.1
