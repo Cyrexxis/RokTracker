@@ -11,6 +11,7 @@ import numpy as np
 from dummy_root import get_app_root
 from pathlib import Path
 from roktracker.utils.adb import *
+from roktracker.utils.exceptions import GovernorNotFoundError
 from roktracker.utils.general import *
 from roktracker.utils.ocr import *
 from roktracker.kingdom.additional_data import AdditionalData
@@ -197,10 +198,8 @@ class KingdomScanner:
 
         self.state_callback("Opening governor")
         # Open governor
-        self.adb_client.secure_adb_shell(
-            f"input tap 690 "
-            + str(self.get_gov_position(current_player, self.inactive_players))
-        )
+        gov_y = self.get_gov_position(current_player, self.inactive_players)
+        self.adb_client.secure_adb_tap((690, gov_y))
 
         wait_random_range(self.timings["gov_open"], self.max_random_delay)
 
@@ -224,7 +223,7 @@ class KingdomScanner:
             )
             check_more_info = ""
 
-            with PyTessBaseAPI(path=str(self.tesseract_path)) as api:
+            with PyTessBaseAPI(path=str(self.tesseract_path), psm=PSM.SINGLE_LINE) as api:
                 api.SetVariable("tessedit_char_whitelist", "MoreInfo")
                 api.SetImage(Image.fromarray(im_check_more_info))  # type: ignore (pylance is messed up)
                 check_more_info = api.GetUTF8Text()
@@ -258,9 +257,8 @@ class KingdomScanner:
                     )
                 else:
                     self.adb_client.secure_adb_shell(f"input swipe 690 605 690 540")
-                self.adb_client.secure_adb_shell(
-                    f"input tap 690 "
-                    + str(self.get_gov_position(current_player, self.inactive_players)),
+                self.adb_client.secure_adb_tap(
+                    (690, self.get_gov_position(current_player, self.inactive_players))
                 )
                 count += 1
                 wait_random_range(self.timings["gov_open"], self.max_random_delay)
@@ -269,7 +267,9 @@ class KingdomScanner:
                     if cont:
                         count = 0
                     else:
-                        break
+                        raise GovernorNotFoundError(
+                            "Could not open governor profile. Make sure the game is on the kingdom rankings screen (power or killpoints ranking)."
+                        )
             else:
                 gov_info = True
                 image_check = load_cv2_img(
@@ -537,10 +537,17 @@ class KingdomScanner:
                 break
 
             next_gov_to_scan = max(next_gov_to_scan + 1, i)
-            gov_data = self.scan_governor(
-                next_gov_to_scan,
-                track_inactives,
-            )
+            try:
+                gov_data = self.scan_governor(
+                    next_gov_to_scan,
+                    track_inactives,
+                )
+            except GovernorNotFoundError as e:
+                self.output_handler(str(e))
+                logging.log(logging.ERROR, str(e))
+                self.state_callback("Scan aborted")
+                data_handler.save()
+                return
 
             # Check for duplicate governor
             if data_handler.is_duplicate(to_int_check(gov_data.id)):

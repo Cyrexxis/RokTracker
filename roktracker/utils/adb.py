@@ -110,8 +110,12 @@ class AdvancedAdbClient:
                 return result
         return result
 
-    def secure_adb_tap(self, position: Tuple[int, int]):
-        self.secure_adb_shell(f"input tap {position[0]} {position[1]}")
+    def secure_adb_tap(self, position: Tuple[int, int], jitter: int = 5):
+        import random
+        x = position[0] + random.randint(-jitter, jitter)
+        y = position[1] + random.randint(-jitter, jitter)
+        duration = random.randint(50, 150)
+        self.secure_adb_shell(f"input swipe {x} {y} {x} {y} {duration}")
 
     def secure_adb_screencap(self) -> Image:
         result = NewImage(mode="RGB", size=(1, 1))
