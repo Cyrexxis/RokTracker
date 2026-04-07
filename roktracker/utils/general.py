@@ -72,7 +72,7 @@ def is_string_float(element: str, allow_empty=False) -> bool:
         return False
 
 def more_info_present(ocr_text: str) -> bool:
-    return "MoreInfo" in ocr_text or "Morenfor" in ocr_text
+    return "MoreInfo" in ocr_text or "Moren" in ocr_text
 
 def generate_random_id(length: int) -> str:
     alphabet = string.ascii_lowercase + string.digits
@@ -88,7 +88,9 @@ def random_delay() -> float:
 
 
 def wait_random_range(min_time: float, max_offset: float) -> None:
-    time.sleep(random.uniform(min_time, min_time + max_offset))
+    # Occasionally add a longer human-like pause (roughly 1 in 20 calls)
+    extra = random.uniform(1.5, 4.0) if random.random() < 0.05 else 0.0
+    time.sleep(random.uniform(min_time, min_time + max_offset) + extra)
 
 
 def format_timedelta_to_HHMMSS(td: datetime.timedelta) -> str:

@@ -4,3 +4,7 @@ class AdbError(RuntimeError):
 
 class ConfigError(RuntimeError):
     pass
+
+
+class GovernorNotFoundError(RuntimeError):
+    pass
