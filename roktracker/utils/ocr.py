@@ -5,6 +5,8 @@ import tesserocr
 from PIL import Image
 from cv2.typing import MatLike
 from typing import Tuple
+from typing import Literal
+import numpy as np
 
 
 def cropToRegion(image: MatLike, roi: Tuple[int, int, int, int]) -> MatLike:
@@ -43,6 +45,32 @@ def preprocessImage(
     (thresh, im_bw) = cv2.threshold(im_gray, threshold, 255, cv2.THRESH_BINARY)
     im_bw = cropToTextWithBorder(im_bw, border_size)
     return im_bw
+
+def advancedProcessing(
+        image: MatLike,
+        scale_factor: int,
+        mode: Literal["white", "dimmed white", "black"]
+) -> MatLike:
+    kernel = np.ones((2,2),np.uint8)
+    im_big = cv2.resize(image, (0, 0), fx=scale_factor, fy=scale_factor)
+    hsv = cv2.cvtColor(im_big, cv2.COLOR_BGR2HSV)
+
+    match mode:
+        case "black":
+            lower = np.array([0, 0, 0]) # Acclaim and ID
+            upper = np.array([255, 255, 30]) # Acclaim and ID
+        case "dimmed white":
+            lower = np.array([0, 0, 210]) # Acclaim and ID
+            upper = np.array([255, 255, 255]) # Acclaim and ID
+        case "white":
+            lower = np.array([0, 0, 220]) # Acclaim and ID
+            upper = np.array([255, 255, 255]) # Acclaim and ID
+        
+
+    mask = cv2.inRange(hsv, lower, upper)
+    result = cv2.dilate(mask,kernel,iterations = 1)
+    result = cv2.bitwise_not(result) # Need to invert to make text black
+    return result
 
 
 def ocr_number(api, image: MatLike):
