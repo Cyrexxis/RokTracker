@@ -273,21 +273,23 @@ class KingdomScanner:
             else:
                 gov_info = True
                 image_check = load_cv2_img(
-                    self.img_path / "check_more_info.png", cv2.IMREAD_GRAYSCALE
+                    self.img_path / "check_more_info.png", cv2.IMREAD_COLOR_BGR
                 )
 
                 # Checking for more info
                 im_check_more_info = cropToRegion(
                     image_check, rok_ui.ocr_check_profile_version
                 )
+                im_check_more_info = advancedProcessing(im_check_more_info, 3, "dimmed white")
+
                 check_profile_version = ""
 
                 with PyTessBaseAPI(path=str(self.tesseract_path)) as api:
-                    api.SetVariable("tessedit_char_whitelist", "Aclaim")
+                    api.SetVariable("tessedit_char_whitelist", "Civlzaton")
                     api.SetImage(Image.fromarray(im_check_more_info))  # type: ignore (pylance is messed up)
                     check_profile_version = api.GetUTF8Text()
 
-                if "Acclaim" in check_profile_version:
+                if "Civilization" in check_profile_version:
                     ui_positions = rok_ui.ocr_regions
                     tap_positions = rok_ui.tap_positions
                 else:
@@ -329,7 +331,7 @@ class KingdomScanner:
             ) as api:
                 if self.scan_options["Power"]:
                     im_gov_power = cropToRegion(image, ui_positions["power"])
-                    im_gov_power_bw = preprocessImage(im_gov_power, 3, 100, 12, True)
+                    im_gov_power_bw = advancedProcessing(im_gov_power, 3, "white")
 
                     governor_data.power = ocr_number(api, im_gov_power_bw)
 
@@ -337,8 +339,8 @@ class KingdomScanner:
                     im_gov_killpoints = cropToRegion(
                         image, ui_positions["killpoints"]
                     )
-                    im_gov_killpoints_bw = preprocessImage(
-                        im_gov_killpoints, 3, 100, 12, True
+                    im_gov_killpoints_bw = advancedProcessing(
+                        im_gov_killpoints, 3, "white"
                     )
 
                     governor_data.killpoints = ocr_number(api, im_gov_killpoints_bw)

@@ -1,4 +1,5 @@
-ocr_check_profile_version = (877, 356, 85, 26)  # new profile UI has "Acclaim" text here
+#ocr_check_profile_version = (877, 356, 85, 26)  # new profile UI has "Acclaim" text here
+ocr_check_profile_version = (588, 356, 116, 26)  # new profile UI has "Civilization" text here
 
 # format: (x, y, width, height)
 ocr_regions_old = {
