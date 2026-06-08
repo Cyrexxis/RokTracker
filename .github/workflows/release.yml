@@ -9,28 +9,23 @@ jobs:
   build-win64:
     runs-on: windows-latest
     steps:
-      - name: (Install) python
-        uses: actions/setup-python@v4
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version-file: ".python-version"
           architecture: "x64"
 
-      - name: (Install) python dev tools
-        shell: bash
-        run: python -m pip install pip wheel setuptools
-
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: (Install) dependencies
-        run: python -m pip install -r "requirements_win64.txt"
-        shell: bash
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: (Install) pyinstaller
+      - name: Install the project
         shell: bash
-        run: |
+        run: | 
           set PYINSTALLER_COMPILE_BOOTLOADER=TRUE
-          pip install pyinstaller
+          uv sync --locked --all-extras --dev
 
       - name: (Create) Executable
         shell: bash
@@ -41,7 +36,7 @@ jobs:
             rok_tracker.spec
 
           echo "✔️ Executables created successfully" >> $GITHUB_STEP_SUMMARY
-          echo "  - Python version used: '3.12'" >> $GITHUB_STEP_SUMMARY
+          echo "  - Python version used: '3.14'" >> $GITHUB_STEP_SUMMARY
           echo "  - Python architecture used: 'x64'" >> $GITHUB_STEP_SUMMARY
 
       - name: Prepare executable for upload

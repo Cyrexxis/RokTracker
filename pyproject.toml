@@ -1,0 +1,25 @@
+[project]
+name = "rok-tracker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "androidviewclient>=25.0.0",
+    "customtkinter>=5.2.2",
+    "numpy>=2.4.6",
+    "opencv-python>=4.13.0.92",
+    "pandas[excel]>=3.0.3",
+    "pathvalidate>=3.3.1",
+    "pillow>=12.2.0",
+    "questionary>=2.1.1",
+    "rich>=15.0.0",
+    "tesserocr>=2.10.0; platform_system == 'Linux'",
+    "tesserocr @ https://github.com/simonflueckiger/tesserocr-windows_build/releases/download/tesserocr-v2.10.0-tesseract-5.5.2/tesserocr-2.10.0-cp314-cp314-win_amd64.whl; platform_system == 'Windows'",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.20.0",
+    "ruff>=0.15.16",
+]

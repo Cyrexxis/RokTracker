@@ -1,15 +1,21 @@
 import customtkinter as ctk
+from PyInstaller.utils.hooks import copy_metadata
 
 ctk.__path__[0].replace("\\", "/")
 
-added_files = [(ctk.__path__[0].replace("\\", "/"), "customtkinter/")]
+hidden_imports = ['tesserocr.cysignals']
+
+added_metadata = []
+
+added_ui_files = [(ctk.__path__[0].replace("\\", "/"), "customtkinter/")] + added_metadata
+added_cli_files = [] + added_metadata
 
 alliance_console_a = Analysis(
     ["alliance_scanner_console.py"],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=added_cli_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -42,8 +48,8 @@ alliance_ui_a = Analysis(
     ["alliance_scanner_ui.py"],
     pathex=[],
     binaries=[],
-    datas=added_files,
-    hiddenimports=[],
+    datas=added_ui_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -76,8 +82,8 @@ honor_console_a = Analysis(
     ["honor_scanner_console.py"],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=added_cli_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -110,8 +116,8 @@ honor_ui_a = Analysis(
     ["honor_scanner_ui.py"],
     pathex=[],
     binaries=[],
-    datas=added_files,
-    hiddenimports=[],
+    datas=added_ui_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -144,8 +150,8 @@ kingdom_console_a = Analysis(
     ["kingdom_scanner_console.py"],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=added_cli_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -178,8 +184,8 @@ kingdom_ui_a = Analysis(
     ["kingdom_scanner_ui.py"],
     pathex=[],
     binaries=[],
-    datas=added_files,
-    hiddenimports=[],
+    datas=added_ui_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -212,8 +218,8 @@ seed_console_a = Analysis(
     ["seed_scanner_console.py"],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=added_cli_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -246,8 +252,8 @@ seed_ui_a = Analysis(
     ["seed_scanner_ui.py"],
     pathex=[],
     binaries=[],
-    datas=added_files,
-    hiddenimports=[],
+    datas=added_ui_files,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
