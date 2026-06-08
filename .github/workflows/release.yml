@@ -28,9 +28,9 @@ jobs:
 
       - name: (Create) Executable
         run: |
-          uv run pyinstaller \
-            --clean \
-            --noconfirm \
+          uv run pyinstaller `
+            --clean `
+            --noconfirm `
             rok_tracker.spec
 
           echo "✔️ Executables created successfully" >> $GITHUB_STEP_SUMMARY
