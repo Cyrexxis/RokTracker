@@ -22,15 +22,13 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Install the project
-        shell: bash
         run: | 
           set PYINSTALLER_COMPILE_BOOTLOADER=TRUE
           uv sync --locked --all-extras --dev
 
       - name: (Create) Executable
-        shell: bash
         run: |
-          pyinstaller \
+          uv run pyinstaller \
             --clean \
             --noconfirm \
             rok_tracker.spec
