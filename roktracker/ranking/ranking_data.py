@@ -1,18 +1,21 @@
 import datetime
-
 from dataclasses import dataclass
 
 from roktracker.utils.general import format_timedelta_to_HHMMSS
 
 
 @dataclass
-class AdditionalData:
-    current_governor: int
+class RankingData:
+    img_path: str
+    name: str
+    score: str
+
+
+@dataclass
+class AdditionalRankingData:
+    current_page: int
     target_governor: int
-    skipped_governors: int
-    power_ok: str
-    kills_ok: str
-    reconstruction_success: str
+    govs_per_page: int
     remaining_sec: float
     current_time: str = datetime.datetime.now().strftime("%H:%M:%S")
 

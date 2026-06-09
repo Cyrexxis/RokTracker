@@ -1,33 +1,37 @@
 import logging
-from os import PathLike
-from typing import Any, List
-import pandas as pd
 import pathlib
-
-from roktracker.alliance.governor_data import GovernorData
-from roktracker.utils.general import to_int_or
-from roktracker.utils.output_formats import OutputFormats
 from datetime import date
+from os import PathLike
+from typing import Any
+
+import pandas as pd
+
+from roktracker.common.output_formats import OutputFormats
+from roktracker.ranking.ranking_data import RankingData
+from roktracker.utils.general import to_int_or
 
 logger = logging.getLogger(__name__)
 
 
-class PandasHandler:
+class RankingDataHandler:
     def __init__(
         self,
         path: str | PathLike[Any],
         filename: str,
         formats: OutputFormats,
         title: str = str(date.today()),
+        extra_data_fields: list[str] | None = None,
     ):
         self.title = title
         self.path = pathlib.Path(path)
         self.name = filename
         self.formats = formats
-        self.data_list = []
-        self.last_score = -2
+        self.extra_data_fields = extra_data_fields or []
+        self.data_list: list[dict[str, str | int]] = []
+        self.last_score: int = -2
 
-    def write_governors(self, gov_data: List[GovernorData]) -> bool:
+    def write_governors(self, gov_data: list[RankingData]) -> bool:
+        """Write a batch of governor data. Returns True if the last screen is reached."""
         reached_bottom = False
 
         for gov in gov_data:
@@ -62,7 +66,8 @@ class PandasHandler:
 
         return reached_bottom
 
-    def is_duplicate(self, governor: GovernorData) -> bool:
+    def is_duplicate(self, governor: RankingData) -> bool:
+        """Check whether `governor` is a duplicate of a recently written entry."""
         if len(self.data_list) == 0:
             return False
 
@@ -75,7 +80,7 @@ class PandasHandler:
 
         return False
 
-    def save(self, trimm_to=0, sum_total=False):
+    def save(self, trimm_to: int = 0, sum_total: bool = False):
         frame = pd.DataFrame(self.data_list)
         # do trimming
         if trimm_to > 0:

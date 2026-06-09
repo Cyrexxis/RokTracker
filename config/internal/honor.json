@@ -1,0 +1,30 @@
+{
+  "$schema": "../schemas/ranking_scanner_schema.json",
+  "scan_path": "scans_honor",
+  "filename_prefix": "Honor",
+  "govs_per_screen": 5,
+  "last_different": false,
+  "misc": {
+    "threshold": 150,
+    "invert": false,
+    "script": "honor_5_person_scroll.txt"
+  },
+  "ui_config": {
+    "name_normal": [
+      [774, 324, 257, 40],
+      [774, 424, 257, 40],
+      [774, 524, 257, 40],
+      [774, 624, 257, 40],
+      [774, 724, 257, 40]
+    ],
+    "score_normal": [
+      [1183, 324, 178, 40],
+      [1183, 424, 178, 40],
+      [1183, 524, 178, 40],
+      [1183, 624, 178, 40],
+      [1183, 724, 178, 40]
+    ],
+    "name_last": [],
+    "score_last": []
+  }
+}

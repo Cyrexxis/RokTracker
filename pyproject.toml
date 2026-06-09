@@ -12,6 +12,8 @@ dependencies = [
     "pandas[excel]>=3.0.3",
     "pathvalidate>=3.3.1",
     "pillow>=12.2.0",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
     "questionary>=2.1.1",
     "rich>=15.0.0",
     "tesserocr>=2.10.0; platform_system == 'Linux'",

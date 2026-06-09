@@ -1,14 +1,15 @@
+import pathlib
+from datetime import date
 from os import PathLike
 from typing import Any
+
 import pandas as pd
-import pathlib
 
+from roktracker.common.output_formats import OutputFormats
 from roktracker.kingdom.governor_data import GovernorData
-from roktracker.utils.output_formats import OutputFormats
-from datetime import date
 
 
-class PandasHandler:
+class GovernorDataHandler:
     def __init__(
         self,
         path: str | PathLike[Any],
@@ -20,7 +21,7 @@ class PandasHandler:
         self.path = pathlib.Path(path)
         self.name = filename
         self.formats = formats
-        self.data_list = []
+        self.data_list: list[dict[str, str | int]] = []
 
     def write_governor(self, gov_data: GovernorData) -> None:
         self.data_list.append(

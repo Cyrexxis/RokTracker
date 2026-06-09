@@ -1,0 +1,20 @@
+{
+  "$schema": "./schemas/app_config_schema.json",
+  "timings": {
+    "gov_open": 2,
+    "copy_wait": 0.2,
+    "kills_open": 1,
+    "info_open": 1,
+    "info_close": 0.5,
+    "gov_close": 1,
+    "max_random": 0.5
+  },
+  "general": {
+    "emulator": "bluestacks",
+    "bluestacks": {
+      "name": "RoK Tracker",
+      "config": "C:\\ProgramData\\BlueStacks_nxt\\bluestacks.conf"
+    },
+    "adb_port": 5555
+  }
+}

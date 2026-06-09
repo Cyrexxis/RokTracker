@@ -1,14 +1,13 @@
 from typing import List
-from roktracker.alliance.additional_data import AdditionalData
-
-from roktracker.alliance.governor_data import GovernorData
-from roktracker.utils.console import console
 
 from rich.markup import escape
 from rich.table import Table
 
+from roktracker.ranking.ranking_data import AdditionalRankingData, RankingData
+from roktracker.utils.console import console
 
-def print_batch(govs: List[GovernorData], extra: AdditionalData) -> None:
+
+def print_batch(govs: List[RankingData], extra: AdditionalRankingData) -> None:
     # nice output for console
     table = Table(
         title="["

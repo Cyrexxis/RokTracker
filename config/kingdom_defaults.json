@@ -1,0 +1,34 @@
+{
+  "$schema": "./schemas/kingdom_options_schema.json",
+  "scan_name": "",
+  "amount": 300,
+  "continued": false,
+  "advanced_scroll": true,
+  "track_inactives": false,
+  "validate_kills": true,
+  "reconstruct_kills": true,
+  "validate_power": false,
+  "power_threshold": 100000,
+  "formats": {
+    "xlsx": true,
+    "csv": false,
+    "jsonl": false
+  },
+  "stats_to_scan": {
+    "id": true,
+    "name": true,
+    "power": true,
+    "killpoints": true,
+    "alliance": true,
+    "t1_kills": true,
+    "t2_kills": true,
+    "t3_kills": true,
+    "t4_kills": true,
+    "t5_kills": true,
+    "ranged_points": true,
+    "deads": true,
+    "assisted": true,
+    "gathered": true,
+    "helps": true
+  }
+}
