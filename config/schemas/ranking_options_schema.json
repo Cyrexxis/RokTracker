@@ -1,0 +1,47 @@
+{
+  "$defs": {
+    "OutputFormats": {
+      "properties": {
+        "xlsx": {
+          "default": true,
+          "title": "Xlsx",
+          "type": "boolean"
+        },
+        "csv": {
+          "default": false,
+          "title": "Csv",
+          "type": "boolean"
+        },
+        "jsonl": {
+          "default": false,
+          "title": "Jsonl",
+          "type": "boolean"
+        }
+      },
+      "title": "OutputFormats",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "scan_name": {
+      "default": "",
+      "title": "Scan Name",
+      "type": "string"
+    },
+    "amount": {
+      "default": 100,
+      "title": "Amount",
+      "type": "integer"
+    },
+    "formats": {
+      "$ref": "#/$defs/OutputFormats",
+      "default": {
+        "xlsx": true,
+        "csv": false,
+        "jsonl": false
+      }
+    }
+  },
+  "title": "RankingScanOptions",
+  "type": "object"
+}

@@ -1,24 +1,26 @@
-from typing import Tuple
-from roktracker.utils.console import console
-from PIL.Image import Image, new as NewImage
-from com.dtmilano.android.adb.adbclient import AdbClient
-from pathlib import Path
-import subprocess
-import socket
 import configparser
-import sys
+import socket
+import subprocess
+from pathlib import Path
+from typing import Tuple
 
+from com.dtmilano.android.adb.adbclient import AdbClient
+from PIL.Image import Image
+from PIL.Image import new as NewImage
+
+from roktracker.common.config import AppConfig
+from roktracker.utils.console import console
 from roktracker.utils.exceptions import AdbError
 from roktracker.utils.general import to_int_or
 
 
-def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
-    default_port = to_int_or(config["general"]["adb_port"], 5555)
+def get_bluestacks_port_new(bluestacks_device_name: str, config: AppConfig) -> int:
+    default_port = to_int_or(config.general.adb_port, 5555)
     # try to read port from bluestacks config
-    if config["general"]["emulator"] == "bluestacks":
+    if config.general.emulator == "bluestacks":
         try:
             dummy = "AmazingDummy"
-            with open(config["general"]["bluestacks"]["config"], "r") as config_file:
+            with open(config.general.bluestacks.config, "r") as config_file:
                 file_content = "[" + dummy + "]\n" + config_file.read()
             bluestacks_config = configparser.RawConfigParser()
             bluestacks_config.read_string(file_content)
@@ -29,6 +31,29 @@ def get_bluestacks_port(bluestacks_device_name: str, config) -> int:
                     port = bluestacks_config.get(dummy, key_port)
                     return int(port.strip('"'))
         except:
+            console.print(
+                "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
+            )
+    return default_port
+
+
+def get_bluestacks_port(config: AppConfig) -> int:
+    default_port = to_int_or(config.general.adb_port, 5555)
+    # try to read port from bluestacks config
+    if config.general.emulator == "bluestacks":
+        try:
+            dummy = "AmazingDummy"
+            with open(config.general.bluestacks.config, "r") as config_file:
+                file_content = "[" + dummy + "]\n" + config_file.read()
+            bluestacks_config = configparser.RawConfigParser()
+            bluestacks_config.read_string(file_content)
+
+            for key, value in bluestacks_config.items(dummy):
+                if value == f'"{config.general.bluestacks.name}"':
+                    key_port = key.replace("display_name", "status.adb_port")
+                    port = bluestacks_config.get(dummy, key_port)
+                    return int(port.strip('"'))
+        except Exception:
             console.print(
                 "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
             )
@@ -112,6 +137,7 @@ class AdvancedAdbClient:
 
     def secure_adb_tap(self, position: Tuple[int, int], jitter: int = 5):
         import random
+
         x = position[0] + random.randint(-jitter, jitter)
         y = position[1] + random.randint(-jitter, jitter)
         duration = random.randint(50, 150)

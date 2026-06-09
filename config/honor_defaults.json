@@ -1,0 +1,10 @@
+{
+  "$schema": "./schemas/ranking_options_schema.json",
+  "scan_name": "",
+  "amount": 100,
+  "formats": {
+    "xlsx": true,
+    "csv": false,
+    "jsonl": false
+  }
+}

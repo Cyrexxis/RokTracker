@@ -1,0 +1,166 @@
+{
+  "$defs": {
+    "RankingMisc": {
+      "properties": {
+        "threshold": {
+          "title": "Threshold",
+          "type": "integer"
+        },
+        "invert": {
+          "title": "Invert",
+          "type": "boolean"
+        },
+        "script": {
+          "title": "Script",
+          "type": "string"
+        }
+      },
+      "required": [
+        "threshold",
+        "invert",
+        "script"
+      ],
+      "title": "RankingMisc",
+      "type": "object"
+    },
+    "UIConfig": {
+      "properties": {
+        "name_normal": {
+          "items": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Name Normal",
+          "type": "array"
+        },
+        "score_normal": {
+          "items": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Score Normal",
+          "type": "array"
+        },
+        "name_last": {
+          "items": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Name Last",
+          "type": "array"
+        },
+        "score_last": {
+          "items": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Score Last",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name_normal",
+        "score_normal",
+        "name_last",
+        "score_last"
+      ],
+      "title": "UIConfig",
+      "type": "object"
+    }
+  },
+  "description": "Per-scanner configuration. Each subclass provides this.",
+  "properties": {
+    "scan_path": {
+      "title": "Scan Path",
+      "type": "string"
+    },
+    "filename_prefix": {
+      "title": "Filename Prefix",
+      "type": "string"
+    },
+    "govs_per_screen": {
+      "title": "Govs Per Screen",
+      "type": "integer"
+    },
+    "last_different": {
+      "title": "Last Different",
+      "type": "boolean"
+    },
+    "ui_config": {
+      "$ref": "#/$defs/UIConfig"
+    },
+    "misc": {
+      "$ref": "#/$defs/RankingMisc"
+    }
+  },
+  "required": [
+    "scan_path",
+    "filename_prefix",
+    "govs_per_screen",
+    "last_different",
+    "ui_config",
+    "misc"
+  ],
+  "title": "RankingConfig",
+  "type": "object"
+}

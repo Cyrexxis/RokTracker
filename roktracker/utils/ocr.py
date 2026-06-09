@@ -65,7 +65,7 @@ def advancedProcessing(
         case "white":
             lower = np.array([0, 0, 220]) # Acclaim and ID
             upper = np.array([255, 255, 255]) # Acclaim and ID
-        
+
 
     mask = cv2.inRange(hsv, lower, upper)
     result = cv2.dilate(mask,kernel,iterations = 1)
@@ -73,21 +73,21 @@ def advancedProcessing(
     return result
 
 
-def ocr_number(api, image: MatLike):
+def ocr_number(api: tesserocr.PyTessBaseAPI, image: MatLike):
     api.SetImage(Image.fromarray(image))
     score = api.GetUTF8Text()
     score = re.sub("[^0-9]", "", score)
     return score
 
 
-def ocr_text(api, image: MatLike):
+def ocr_text(api: tesserocr.PyTessBaseAPI, image: MatLike):
     api.SetImage(Image.fromarray(image))
     name = api.GetUTF8Text()
     return name.rstrip("\n")
 
 
 def preprocess_and_ocr_number(
-    api, image: MatLike, region: Tuple[int, int, int, int], invert: bool = False
+    api: tesserocr.PyTessBaseAPI, image: MatLike, region: Tuple[int, int, int, int], invert: bool = False
 ):
     cropped_image = cropToRegion(image, region)
     cropped_bw_image = preprocessImage(cropped_image, 3, 150, 12, invert)

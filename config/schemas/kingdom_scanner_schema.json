@@ -1,0 +1,586 @@
+{
+  "$defs": {
+    "KingdomTapPositions": {
+      "properties": {
+        "name": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Name",
+          "type": "array"
+        },
+        "kills": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Kills",
+          "type": "array"
+        },
+        "info": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Info",
+          "type": "array"
+        },
+        "close_gov": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Close Gov",
+          "type": "array"
+        },
+        "close_info": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Close Info",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "kills",
+        "info",
+        "close_gov",
+        "close_info"
+      ],
+      "title": "KingdomTapPositions",
+      "type": "object"
+    },
+    "KingdomUIRegions": {
+      "properties": {
+        "more_info": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "More Info",
+          "type": "array"
+        },
+        "id": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Id",
+          "type": "array"
+        },
+        "power": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Power",
+          "type": "array"
+        },
+        "killpoints": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Killpoints",
+          "type": "array"
+        },
+        "alliance": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Alliance",
+          "type": "array"
+        },
+        "t1_kills": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T1 Kills",
+          "type": "array"
+        },
+        "t2_kills": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T2 Kills",
+          "type": "array"
+        },
+        "t3_kills": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T3 Kills",
+          "type": "array"
+        },
+        "t4_kills": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T4 Kills",
+          "type": "array"
+        },
+        "t5_kills": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T5 Kills",
+          "type": "array"
+        },
+        "t1_killpoints": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T1 Killpoints",
+          "type": "array"
+        },
+        "t2_killpoints": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T2 Killpoints",
+          "type": "array"
+        },
+        "t3_killpoints": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T3 Killpoints",
+          "type": "array"
+        },
+        "t4_killpoints": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T4 Killpoints",
+          "type": "array"
+        },
+        "t5_killpoints": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "T5 Killpoints",
+          "type": "array"
+        },
+        "ranged_points": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Ranged Points",
+          "type": "array"
+        },
+        "deads": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Deads",
+          "type": "array"
+        },
+        "gathered": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Gathered",
+          "type": "array"
+        },
+        "assisted": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Assisted",
+          "type": "array"
+        },
+        "helps": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Helps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "more_info",
+        "id",
+        "power",
+        "killpoints",
+        "alliance",
+        "t1_kills",
+        "t2_kills",
+        "t3_kills",
+        "t4_kills",
+        "t5_kills",
+        "t1_killpoints",
+        "t2_killpoints",
+        "t3_killpoints",
+        "t4_killpoints",
+        "t5_killpoints",
+        "ranged_points",
+        "deads",
+        "gathered",
+        "assisted",
+        "helps"
+      ],
+      "title": "KingdomUIRegions",
+      "type": "object"
+    },
+    "UIConfig": {
+      "properties": {
+        "profile_version": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Profile Version",
+          "type": "array"
+        },
+        "regions": {
+          "$ref": "#/$defs/KingdomUIRegions"
+        },
+        "taps": {
+          "$ref": "#/$defs/KingdomTapPositions"
+        },
+        "regions_pre_acclaim": {
+          "$ref": "#/$defs/KingdomUIRegions"
+        },
+        "taps_pre_acclaim": {
+          "$ref": "#/$defs/KingdomTapPositions"
+        }
+      },
+      "required": [
+        "profile_version",
+        "regions",
+        "taps",
+        "regions_pre_acclaim",
+        "taps_pre_acclaim"
+      ],
+      "title": "UIConfig",
+      "type": "object"
+    }
+  },
+  "description": "Kingdom scanner configuration. Each subclass provides this.",
+  "properties": {
+    "scan_path": {
+      "title": "Scan Path",
+      "type": "string"
+    },
+    "filename_prefix_normal": {
+      "title": "Filename Prefix Normal",
+      "type": "string"
+    },
+    "filename_prefix_continued": {
+      "title": "Filename Prefix Continued",
+      "type": "string"
+    },
+    "ui_config": {
+      "$ref": "#/$defs/UIConfig"
+    }
+  },
+  "required": [
+    "scan_path",
+    "filename_prefix_normal",
+    "filename_prefix_continued",
+    "ui_config"
+  ],
+  "title": "KingdomConfig",
+  "type": "object"
+}

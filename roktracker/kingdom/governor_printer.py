@@ -1,11 +1,11 @@
 from rich.markup import escape
 from rich.table import Table
-from roktracker.kingdom.additional_data import AdditionalData
-from roktracker.kingdom.governor_data import GovernorData
+
+from roktracker.kingdom.governor_data import AdditionalGovernorData, GovernorData
 from roktracker.utils.console import console
 
 
-def print_gov_state(gov_data: GovernorData, extra: AdditionalData) -> None:
+def print_gov_state(gov_data: GovernorData, extra: AdditionalGovernorData) -> None:
     table = Table(
         title="["
         + extra.current_time

@@ -1,13 +1,13 @@
 import datetime
 import json
-from os import PathLike
 import random
 import string
 import time
+from os import PathLike
+from typing import Any
+
 import cv2
 import numpy as np
-
-from typing import Any
 from cv2.typing import MatLike
 
 from dummy_root import get_app_root
@@ -34,7 +34,7 @@ def load_config():
         )
 
 
-def to_int_check(element) -> int:
+def to_int_check(element: str) -> int:
     try:
         return int(element)
     except ValueError:
@@ -71,8 +71,10 @@ def is_string_float(element: str, allow_empty=False) -> bool:
     except ValueError:
         return False
 
+
 def more_info_present(ocr_text: str) -> bool:
     return "MoreInfo" in ocr_text or "Moren" in ocr_text
+
 
 def generate_random_id(length: int) -> str:
     alphabet = string.ascii_lowercase + string.digits

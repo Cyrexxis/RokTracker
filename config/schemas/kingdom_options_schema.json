@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "OutputFormats": {
+      "properties": {
+        "xlsx": {
+          "default": true,
+          "title": "Xlsx",
+          "type": "boolean"
+        },
+        "csv": {
+          "default": false,
+          "title": "Csv",
+          "type": "boolean"
+        },
+        "jsonl": {
+          "default": false,
+          "title": "Jsonl",
+          "type": "boolean"
+        }
+      },
+      "title": "OutputFormats",
+      "type": "object"
+    },
+    "StatsToScan": {
+      "properties": {
+        "id": {
+          "default": true,
+          "title": "Id",
+          "type": "boolean"
+        },
+        "name": {
+          "default": true,
+          "title": "Name",
+          "type": "boolean"
+        },
+        "power": {
+          "default": true,
+          "title": "Power",
+          "type": "boolean"
+        },
+        "killpoints": {
+          "default": true,
+          "title": "Killpoints",
+          "type": "boolean"
+        },
+        "alliance": {
+          "default": true,
+          "title": "Alliance",
+          "type": "boolean"
+        },
+        "t1_kills": {
+          "default": true,
+          "title": "T1 Kills",
+          "type": "boolean"
+        },
+        "t2_kills": {
+          "default": true,
+          "title": "T2 Kills",
+          "type": "boolean"
+        },
+        "t3_kills": {
+          "default": true,
+          "title": "T3 Kills",
+          "type": "boolean"
+        },
+        "t4_kills": {
+          "default": true,
+          "title": "T4 Kills",
+          "type": "boolean"
+        },
+        "t5_kills": {
+          "default": true,
+          "title": "T5 Kills",
+          "type": "boolean"
+        },
+        "ranged_points": {
+          "default": true,
+          "title": "Ranged Points",
+          "type": "boolean"
+        },
+        "deads": {
+          "default": true,
+          "title": "Deads",
+          "type": "boolean"
+        },
+        "gathered": {
+          "default": true,
+          "title": "Gathered",
+          "type": "boolean"
+        },
+        "assisted": {
+          "default": true,
+          "title": "Assisted",
+          "type": "boolean"
+        },
+        "helps": {
+          "default": true,
+          "title": "Helps",
+          "type": "boolean"
+        }
+      },
+      "title": "StatsToScan",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "scan_name": {
+      "title": "Scan Name",
+      "type": "string"
+    },
+    "amount": {
+      "title": "Amount",
+      "type": "integer"
+    },
+    "stats_to_scan": {
+      "$ref": "#/$defs/StatsToScan"
+    },
+    "continued": {
+      "title": "Continued",
+      "type": "boolean"
+    },
+    "track_inactives": {
+      "title": "Track Inactives",
+      "type": "boolean"
+    },
+    "validate_kills": {
+      "title": "Validate Kills",
+      "type": "boolean"
+    },
+    "reconstruct_kills": {
+      "title": "Reconstruct Kills",
+      "type": "boolean"
+    },
+    "validate_power": {
+      "title": "Validate Power",
+      "type": "boolean"
+    },
+    "power_threshold": {
+      "title": "Power Threshold",
+      "type": "integer"
+    },
+    "advanced_scroll": {
+      "title": "Advanced Scroll",
+      "type": "boolean"
+    },
+    "formats": {
+      "$ref": "#/$defs/OutputFormats"
+    }
+  },
+  "required": [
+    "scan_name",
+    "amount",
+    "stats_to_scan",
+    "continued",
+    "track_inactives",
+    "validate_kills",
+    "reconstruct_kills",
+    "validate_power",
+    "power_threshold",
+    "advanced_scroll",
+    "formats"
+  ],
+  "title": "KingdomScanOptions",
+  "type": "object"
+}

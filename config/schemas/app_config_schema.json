@@ -1,0 +1,116 @@
+{
+  "$defs": {
+    "BluestacksConfig": {
+      "properties": {
+        "name": {
+          "default": "RoK Tracker",
+          "title": "Name",
+          "type": "string"
+        },
+        "config": {
+          "default": "C:\\ProgramData\\Bluestacks_nxt\\bluestacks.conf",
+          "title": "Config",
+          "type": "string"
+        }
+      },
+      "title": "BluestacksConfig",
+      "type": "object"
+    },
+    "GeneralConfig": {
+      "properties": {
+        "emulator": {
+          "default": "bluestacks",
+          "enum": [
+            "bluestacks",
+            "ld"
+          ],
+          "title": "Emulator",
+          "type": "string"
+        },
+        "adb_port": {
+          "default": 5555,
+          "title": "Adb Port",
+          "type": "integer"
+        },
+        "bluestacks": {
+          "$ref": "#/$defs/BluestacksConfig",
+          "default": {
+            "name": "RoK Tracker",
+            "config": "C:\\ProgramData\\Bluestacks_nxt\\bluestacks.conf"
+          }
+        }
+      },
+      "title": "GeneralConfig",
+      "type": "object"
+    },
+    "ScanTimings": {
+      "properties": {
+        "gov_open": {
+          "default": 2.0,
+          "title": "Gov Open",
+          "type": "number"
+        },
+        "copy_wait": {
+          "default": 0.2,
+          "title": "Copy Wait",
+          "type": "number"
+        },
+        "kills_open": {
+          "default": 1.0,
+          "title": "Kills Open",
+          "type": "number"
+        },
+        "info_open": {
+          "default": 1.0,
+          "title": "Info Open",
+          "type": "number"
+        },
+        "info_close": {
+          "default": 0.5,
+          "title": "Info Close",
+          "type": "number"
+        },
+        "gov_close": {
+          "default": 1.0,
+          "title": "Gov Close",
+          "type": "number"
+        },
+        "max_random": {
+          "default": 0.5,
+          "title": "Max Random",
+          "type": "number"
+        }
+      },
+      "title": "ScanTimings",
+      "type": "object"
+    }
+  },
+  "description": "This is the collection of all globally configured values.\nIt uses default values or loads from the config.json file.",
+  "properties": {
+    "timings": {
+      "$ref": "#/$defs/ScanTimings",
+      "default": {
+        "gov_open": 2.0,
+        "copy_wait": 0.2,
+        "kills_open": 1.0,
+        "info_open": 1.0,
+        "info_close": 0.5,
+        "gov_close": 1.0,
+        "max_random": 0.5
+      }
+    },
+    "general": {
+      "$ref": "#/$defs/GeneralConfig",
+      "default": {
+        "emulator": "bluestacks",
+        "adb_port": 5555,
+        "bluestacks": {
+          "config": "C:\\ProgramData\\Bluestacks_nxt\\bluestacks.conf",
+          "name": "RoK Tracker"
+        }
+      }
+    }
+  },
+  "title": "AppConfig",
+  "type": "object"
+}

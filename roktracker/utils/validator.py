@@ -1,13 +1,13 @@
-from dataclasses import dataclass
-import os
-import sys
 import glob
 import logging
-from pathlib import Path
+import os
+from dataclasses import dataclass
 from typing import List
+
+from pathvalidate import ValidationError, sanitize_filename, validate_filename
+
 from dummy_root import get_app_root
 from roktracker.utils.console import console
-from pathvalidate import sanitize_filename, ValidationError, validate_filename
 
 logger = logging.getLogger(__name__)
 
