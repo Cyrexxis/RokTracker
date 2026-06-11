@@ -13,9 +13,10 @@ from tesserocr import OEM, PSM, PyTessBaseAPI
 import roktracker.utils.ocr as ocr
 from dummy_root import get_app_root
 from roktracker.common.config import AppConfig
+from roktracker.common.data import AdditionalScanData
 from roktracker.ranking.config import RankingConfig
 from roktracker.ranking.options import RankingScanOptions
-from roktracker.ranking.ranking_data import AdditionalRankingData, RankingData
+from roktracker.ranking.ranking_data import RankingData
 from roktracker.ranking.ranking_data_handler import RankingDataHandler
 from roktracker.utils.adb import AdvancedAdbClient
 from roktracker.utils.general import (
@@ -51,9 +52,9 @@ class RankingScanner:
         self.scan_path = Path(self.root_dir / cfg.scan_path)
         self.scan_path.mkdir(parents=True, exist_ok=True)
 
-        self.batch_callback: Callable[
-            [List[RankingData], AdditionalRankingData], None
-        ] = lambda g, e: None
+        self.batch_callback: Callable[[List[RankingData], AdditionalScanData], None] = (
+            lambda g, e: None
+        )
         self.state_callback: Callable[[str], None] = lambda m: None
         self.output_handler: Callable[[str], None] = lambda m: None
 
@@ -68,7 +69,7 @@ class RankingScanner:
 
     # -- Callback setters (identical, no override needed) --
     def set_batch_callback(
-        self, cb: Callable[[List[RankingData], AdditionalRankingData], None]
+        self, cb: Callable[[List[RankingData], AdditionalScanData], None]
     ) -> None:
         self.batch_callback = cb
 
@@ -176,14 +177,11 @@ class RankingScanner:
     def _make_filename(self, amount: int, kingdom: str) -> str:
         return f"{self.cfg.filename_prefix}{amount}-{self.start_date}-{kingdom}-[{self.run_id}]"
 
-    def _make_additional_data(
-        self, page: int, total_pages: int
-    ) -> AdditionalRankingData:
-        return AdditionalRankingData(
-            page,
-            total_pages,
-            self.govs_per_screen,
-            self.get_remaining_time(total_pages - page),
+    def _make_additional_data(self, page: int, total_pages: int) -> AdditionalScanData:
+        return AdditionalScanData(
+            current_governor=page * self.govs_per_screen,
+            target_governor=total_pages * self.govs_per_screen,
+            remaining_sec=self.get_remaining_time(total_pages - page),
         )
 
     # -- Main scan loop (identical, no override needed) --

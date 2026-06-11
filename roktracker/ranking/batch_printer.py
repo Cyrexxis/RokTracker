@@ -3,18 +3,19 @@ from typing import List
 from rich.markup import escape
 from rich.table import Table
 
-from roktracker.ranking.ranking_data import AdditionalRankingData, RankingData
+from roktracker.common.data import AdditionalScanData
+from roktracker.ranking.ranking_data import RankingData
 from roktracker.utils.console import console
 
 
-def print_batch(govs: List[RankingData], extra: AdditionalRankingData) -> None:
+def print_batch(govs: List[RankingData], extra: AdditionalScanData) -> None:
     # nice output for console
     table = Table(
         title="["
-        + extra.current_time
+        + extra.current_time_str()
         + "]\n"
         + "Latest Scan Result\nGovernor "
-        + f"{extra.current_page * extra.govs_per_page} - {extra.current_page * extra.govs_per_page + len(govs)}"
+        + f"{extra.current_governor}"
         + " of "
         + str(extra.target_governor),
         show_header=True,

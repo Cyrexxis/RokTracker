@@ -1,9 +1,9 @@
 from tkinter import CENTER
-import customtkinter
+
+import ttkbootstrap as ttk
 
 
-# Modification of the CTkInputDialog class
-class InfoDialog(customtkinter.CTkToplevel):
+class InfoDialog(ttk.Toplevel):
     def __init__(
         self,
         display_title,
@@ -11,7 +11,7 @@ class InfoDialog(customtkinter.CTkToplevel):
         size="300x400",
         close_cb=lambda: None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -22,40 +22,32 @@ class InfoDialog(customtkinter.CTkToplevel):
 
         self.title(self._title)
         self.geometry(size)
-        self.lift()  # lift window on top
-        self.attributes("-topmost", True)  # stay on top
+        self.lift()
+        self.attributes("-topmost", True)
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
-        self.after(
-            10, self._create_widgets
-        )  # create widgets with slight delay, to avoid white flickering of background
+        self.after(10, self._create_widgets)
         self.resizable(False, False)
-        self.grab_set()  # make other windows not clickable
+        self.grab_set()
 
     def _create_widgets(self):
-        self.grid_columnconfigure((0, 1), weight=1)  # type: ignore
+        self.grid_columnconfigure((0, 1), weight=1)
         self.rowconfigure(0, weight=1)
 
-        self._label = customtkinter.CTkLabel(
+        self._label = ttk.Message(
             master=self,
             width=300,
-            fg_color="transparent",
             text=self._text,
-            justify="center",
+            justify=CENTER,
         )
-        self.bind(
-            "<Configure>",
-            lambda e: self._label.configure(wraplength=self._label.winfo_width()),
-        )
-        self._label.grid(row=0, column=0, columnspan=1, padx=20, pady=20, sticky="ew")
+        self._label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="ew")
 
-        self._ok_button = customtkinter.CTkButton(
+        self._ok_button = ttk.Button(
             master=self,
-            border_width=0,
             text="Ok",
             command=self._ok_event,
         )
         self._ok_button.grid(
-            row=1, column=0, columnspan=1, padx=(20, 10), pady=(0, 20), sticky="ew"
+            row=1, column=0, columnspan=2, padx=20, pady=(0, 20), sticky="ew"
         )
 
     def _ok_event(self, event=None):
@@ -72,8 +64,7 @@ class InfoDialog(customtkinter.CTkToplevel):
         self.master.wait_window(self)
 
 
-# Modification of the CTkInputDialog class
-class ConfirmDialog(customtkinter.CTkToplevel):
+class ConfirmDialog(ttk.Toplevel):
     def __init__(self, display_title, display_text, size="300x400", *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -84,32 +75,27 @@ class ConfirmDialog(customtkinter.CTkToplevel):
 
         self.title(self._title)
         self.geometry(size)
-        self.lift()  # lift window on top
-        self.attributes("-topmost", True)  # stay on top
+        self.lift()
+        self.attributes("-topmost", True)
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
-        self.after(
-            10, self._create_widgets
-        )  # create widgets with slight delay, to avoid white flickering of background
+        self.after(10, self._create_widgets)
         self.resizable(False, False)
-        self.grab_set()  # make other windows not clickable
+        self.grab_set()
 
     def _create_widgets(self):
-        self.grid_columnconfigure((0, 1), weight=1)  # type: ignore
+        self.grid_columnconfigure((0, 1), weight=1)
         self.rowconfigure(0, weight=1)
 
-        self._label = customtkinter.CTkLabel(
+        self._label = ttk.Message(
             master=self,
             width=300,
-            wraplength=300,
-            fg_color="transparent",
             text=self._text,
+            justify=CENTER,
         )
         self._label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="ew")
 
-        self._ok_button = customtkinter.CTkButton(
+        self._ok_button = ttk.Button(
             master=self,
-            width=100,
-            border_width=0,
             text="Yes",
             command=self._ok_event,
         )
@@ -122,10 +108,8 @@ class ConfirmDialog(customtkinter.CTkToplevel):
             sticky="ew",
         )
 
-        self._cancel_button = customtkinter.CTkButton(
+        self._cancel_button = ttk.Button(
             master=self,
-            width=100,
-            border_width=0,
             text="No",
             command=self._cancel_event,
         )

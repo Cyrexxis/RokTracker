@@ -4,7 +4,9 @@ import subprocess
 from pathlib import Path
 from typing import Tuple
 
-from com.dtmilano.android.adb.adbclient import AdbClient
+from com.dtmilano.android.adb.adbclient import (  # type: ignore (No stub file is provided)
+    AdbClient,
+)
 from PIL.Image import Image
 from PIL.Image import new as NewImage
 
@@ -30,7 +32,7 @@ def get_bluestacks_port_new(bluestacks_device_name: str, config: AppConfig) -> i
                     key_port = key.replace("display_name", "status.adb_port")
                     port = bluestacks_config.get(dummy, key_port)
                     return int(port.strip('"'))
-        except:
+        except Exception:
             console.print(
                 "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
             )
@@ -67,7 +69,7 @@ class AdvancedAdbClient:
         port: int,
         player: str,
         script_base: str | Path,
-        start_immediately=False,
+        start_immediately: bool = False,
     ):
         self.server_port = 0
         self.client_port = port
