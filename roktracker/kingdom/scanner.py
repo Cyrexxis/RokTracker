@@ -3,10 +3,10 @@ import logging
 import re
 import shutil
 import time
-import tkinter
 from pathlib import Path
 from typing import Callable
 
+import copykitten
 import cv2
 from PIL import Image
 from tesserocr import (  # type: ignore (tesserocr has no type defs)
@@ -327,9 +327,7 @@ class KingdomScanner:
                     try:
                         self.adb_client.secure_adb_tap(tap_positions.name)
                         wait_random_range(self.timings.copy_wait, self.max_random_delay)
-                        tk_clipboard = tkinter.Tk()
-                        governor_data.name = tk_clipboard.clipboard_get()
-                        tk_clipboard.destroy()
+                        governor_data.name = copykitten.paste()
                         break
                     except Exception:
                         logging.log(logging.INFO, "Name copy failed, retying")
@@ -644,13 +642,13 @@ class KingdomScanner:
             data_handler.save()
 
             additional_info = AdditionalGovernorData(
-                i + 1,
-                amount,
-                self.inactive_players,
-                str(power_ok),
-                str(kills_ok),
-                str(reconstruction_success),
-                self.get_remaining_time(amount - i),
+                current_governor=i + 1,
+                target_governor=amount,
+                skipped_governors=self.inactive_players,
+                power_ok=str(power_ok),
+                kills_ok=str(kills_ok),
+                reconstruction_success=str(reconstruction_success),
+                remaining_sec=self.get_remaining_time(amount - i),
             )
 
             self.gov_callback(gov_data, additional_info)

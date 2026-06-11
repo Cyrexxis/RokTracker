@@ -19,6 +19,18 @@
     "editor.formatOnSave": true,
     "files.trimTrailingWhitespace": true
   },
+  "[markdown]": {
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "files.trimTrailingWhitespace": true,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
   "python-envs.defaultEnvManager": "ms-python.python:venv",
   "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"]
 }
