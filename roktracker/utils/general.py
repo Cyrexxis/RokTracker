@@ -50,7 +50,7 @@ def to_int_or(element: Any, fallback: int) -> int:
         return int(fallback)
 
 
-def is_string_int(element: str, allow_empty=False) -> bool:
+def is_string_int(element: str, allow_empty: bool = False) -> bool:
     if allow_empty and element == "":
         return True
 
@@ -61,7 +61,7 @@ def is_string_int(element: str, allow_empty=False) -> bool:
         return False
 
 
-def is_string_float(element: str, allow_empty=False) -> bool:
+def is_string_float(element: str, allow_empty: bool = False) -> bool:
     if allow_empty and element == "":
         return True
 
@@ -102,19 +102,20 @@ def format_timedelta_to_HHMMSS(td: datetime.timedelta) -> str:
     hours = int(hours)
     minutes = int(minutes)
     seconds = int(seconds)
-    if minutes < 10:
-        minutes = "0{}".format(minutes)
-    if seconds < 10:
-        seconds = "0{}".format(seconds)
-    return "{}:{}:{}".format(hours, minutes, seconds)
+    return f"({hours:02d}, {minutes:02d}, {seconds:02d})"
 
 
 # This workaroud is needed because cv2 doesn't support UTF-8 paths
 def load_cv2_img(path: str | PathLike[Any], flags: int) -> MatLike:
-    return cv2.imdecode(
+    image = cv2.imdecode(
         np.fromfile(file=path, dtype=np.uint8),
         flags,
     )
+
+    if image:
+        return image
+    else:
+        return np.zeros((10, 10, 3), np.uint8)
 
 
 # This workaroud is needed because cv2 doesn't support UTF-8 paths

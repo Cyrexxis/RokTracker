@@ -4,33 +4,15 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
-      "source.organizeImports": "explicit"
-    },
-    "files.trimTrailingWhitespace": true
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "files.trimTrailingWhitespace": true
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "files.trimTrailingWhitespace": true
-  },
-  "[markdown]": {
-    "editor.unicodeHighlight.ambiguousCharacters": false,
-    "editor.unicodeHighlight.invisibleCharacters": false,
-    "files.trimTrailingWhitespace": true,
-    "diffEditor.ignoreTrimWhitespace": false,
-    "editor.wordWrap": "on",
-    "editor.quickSuggestions": {
-      "comments": "off",
-      "strings": "off",
-      "other": "off"
+      "source.organizeImports": "explicit",
+      "source.fixAll.ruff": "explicit"
     }
   },
-  "python-envs.defaultEnvManager": "ms-python.python:venv",
-  "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"]
+  "ruff.nativeServer": true,
+  "ruff.configurationPreference": "filesystemFirst",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "terminal.integrated.sendKeybindingsToShell": true,
+  "json.schemaDownload.trustedDomains": {
+    "https://opencode.ai/config.json": true
+  }
 }

@@ -622,3 +622,5 @@ scans_kingdom/
 scans_seed/
 deps/tessdata
 deps/*.whl
+.devcontainer
+.opencode
