@@ -7,6 +7,7 @@ import ttkbootstrap as ttk
 from dummy_root import get_app_root
 from roktracker.common.config import AppConfig
 from roktracker.ui.kingdom_scanner_ui import KingdomScannerUI
+from roktracker.ui.ranking_scanner_ui import RankingScannerUI
 from roktracker.utils.exception_handling import GuiExceptionHandler
 
 logging.basicConfig(
@@ -23,8 +24,12 @@ ex_handler = GuiExceptionHandler(logger)
 sys.excepthook = ex_handler.handle_exception
 threading.excepthook = ex_handler.handle_thread_exception
 
+
 root = ttk.Window(title="ROK Scanner by Cyrexxis", themename="darkly")
-kingdom_scanner = KingdomScannerUI(root, AppConfig())
-kingdom_scanner.pack(padx=5, pady=5)
+
+tab_frame = ttk.Notebook(root)
+tab_frame.pack(padx=5, pady=5)
+tab_frame.add(KingdomScannerUI(tab_frame, AppConfig()), text="Kingdom")
+tab_frame.add(RankingScannerUI(tab_frame, AppConfig()), text="Rankings")
 
 root.mainloop()

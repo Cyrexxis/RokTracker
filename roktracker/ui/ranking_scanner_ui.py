@@ -6,28 +6,27 @@ import ttkbootstrap as ttk
 
 from dummy_root import get_app_root
 from roktracker.common.config import AppConfig
-from roktracker.kingdom.config import KingdomConfig
-from roktracker.kingdom.governor_data import AdditionalGovernorData, GovernorData
-from roktracker.kingdom.options import KingdomScanOptions
-from roktracker.kingdom.scanner import KingdomScanner
+from roktracker.common.data import AdditionalScanData
+from roktracker.ranking.config import RankingConfig
+from roktracker.ranking.options import RankingScanOptions
+from roktracker.ranking.ranking_data import RankingData
+from roktracker.ranking.scanner import RankingScanner
 from roktracker.ui.checkbox_frames import (
     HorizontalCheckboxFrame,
 )
 from roktracker.ui.options_frame import OptionsElement, OptionsFrame
 from roktracker.ui.placeholders import (
-    additional_stats_placeholder,
-    kingdom_stats_placeholder,
+    additional_ranking_stats_placeholder,
+    ranking_stats_placeholder,
 )
-from roktracker.ui.stats_to_scan_frame import StatsToScanFrame
 from roktracker.ui.status_frame import StatusInfoFrame
 from roktracker.ui.utils import (
-    additional_data_to_info,
+    additional_batch_data_to_info,
+    batch_to_info,
     formats_to_checkbox,
-    governor_to_info,
-    ko_to_options,
+    ro_to_options,
     show_confirm,
     show_error,
-    sts_to_checkbox,
     update_config_option,
     update_config_options,
 )
@@ -36,36 +35,47 @@ from roktracker.utils.exceptions import AdbError
 logger = logging.getLogger(__name__)
 
 
-class KingdomScannerUI(ttk.Frame):
-    def __init__(self, master: Any, app_config: AppConfig):
+class RankingScannerUI(ttk.Frame):
+    def __init__(
+        self,
+        master: Any,
+        app_config: AppConfig,
+    ):
         super().__init__(master)
 
         self.root_dir = get_app_root()
-        self.default_options = KingdomScanOptions.from_json(
-            self.root_dir / "config" / "kingdom_defaults.json"
+        self.scanner_type: str = "Alliance"
+        self.default_options = RankingScanOptions.from_json(
+            self.root_dir / "config" / f"{self.scanner_type.lower()}_defaults.json"
         )
-        self.selected_options = KingdomScanOptions()
+        self.selected_options = RankingScanOptions()
         self.app_config = app_config
 
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=2)
-        self.grid_columnconfigure(2, weight=2)
-        self.grid_columnconfigure(3, weight=5)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-        self.stats_to_scan_frame = StatsToScanFrame(
-            self, sts_to_checkbox(self.default_options.stats_to_scan)
+        combobox_frame = ttk.Frame(self)
+        combobox_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ewsn")
+        combobox_frame.grid_columnconfigure(0, weight=1)
+        combobox_frame.grid_columnconfigure(1, weight=2)
+
+        mode_selection_label = ttk.Label(combobox_frame, text="Mode")
+        mode_selection_label.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ewsn")
+
+        self.selected_mode = ttk.StringVar(self, "Alliance")
+        self.mode_selection = ttk.Combobox(
+            combobox_frame,
+            values=["Alliance", "Seed", "Honor"],
+            textvariable=self.selected_mode,
+            state="readonly",
         )
-        self.stats_to_scan_frame.grid(
-            row=0, column=0, padx=10, pady=10, sticky="ewsn", rowspan=2
-        )
+        self.mode_selection.grid(row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn")
 
         self.scan_options = OptionsFrame(
-            self, ko_to_options(self.app_config, self.default_options)
+            self, ro_to_options(self.app_config, self.default_options)
         )
-        self.scan_options.grid(
-            row=0, column=1, padx=10, pady=(10, 0), sticky="ewsn", columnspan=2
-        )
+        self.scan_options.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="ewsn")
 
         self.output_format_options = HorizontalCheckboxFrame(
             self.scan_options,
@@ -83,16 +93,16 @@ class KingdomScannerUI(ttk.Frame):
 
         self.status_frame = StatusInfoFrame(
             self,
-            "kingdom_status",
-            kingdom_stats_placeholder,
-            additional_stats_placeholder,
+            "ranking_status",
+            ranking_stats_placeholder,
+            additional_ranking_stats_placeholder,
         )
         self.status_frame.grid(
-            row=0, column=3, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
+            row=0, column=1, padx=10, pady=(10, 10), sticky="ewsn", rowspan=4
         )
 
         controll_frame = ttk.Frame(self)
-        controll_frame.grid(row=1, column=0, columnspan=4, pady=(5, 0), sticky="ew")
+        controll_frame.grid(row=2, column=0, columnspan=2, pady=(5, 0), sticky="ew")
         controll_frame.grid_columnconfigure(2, weight=1)
 
         self.start_button = ttk.Button(
@@ -117,10 +127,10 @@ class KingdomScannerUI(ttk.Frame):
     def launch_scanner(self):
         self.start_button.config(state="disabled")
 
+        self.scanner_type = self.selected_mode.get()
         options = self.scan_options.get_options()
         options.update(OptionsElement.from_checkboxes(self.output_format_options.get()))
 
-        stats_to_scan = self.stats_to_scan_frame.get_selection()
         formats_to_use = self.output_format_options.get()
 
         update_config_option(
@@ -134,28 +144,25 @@ class KingdomScannerUI(ttk.Frame):
         try:
             self.stop_button.configure(state="normal", text="End scan")
 
-            self.kingdom_scanner = KingdomScanner(
+            self.ranking_scanner = RankingScanner(
                 self.app_config,
-                KingdomConfig.from_json(
-                    self.root_dir / "config" / "internal" / "kingdom.json"
+                RankingConfig.from_json(
+                    self.root_dir
+                    / "config"
+                    / "internal"
+                    / f"{self.scanner_type.lower()}.json"
                 ),
             )
 
-            self.kingdom_scanner.set_governor_callback(self.governor_callback)
-            self.kingdom_scanner.set_state_callback(self.state_callback)
-            self.kingdom_scanner.set_continue_handler(self.ask_confirm)
+            self.ranking_scanner.set_batch_callback(self.batch_callback)
+            self.ranking_scanner.set_state_callback(self.state_callback)
             self.scan_options.set_option(
                 OptionsElement(
                     name="scan_uuid",
                     display_name="Scan UUID",
-                    value=self.kingdom_scanner.run_id,
+                    value=self.ranking_scanner.run_id,
                     editable=False,
                 )
-            )
-
-            update_config_options(
-                self.selected_options.stats_to_scan,
-                OptionsElement.from_checkboxes(stats_to_scan),
             )
 
             update_config_options(
@@ -165,7 +172,7 @@ class KingdomScannerUI(ttk.Frame):
 
             update_config_options(self.selected_options, options)
 
-            self.kingdom_scanner.start_scan(self.selected_options)
+            self.ranking_scanner.start_scan(self.selected_options)
 
         except AdbError as error:
             logger.error(
@@ -188,14 +195,14 @@ class KingdomScannerUI(ttk.Frame):
             self.start_button.configure(state="normal")
 
     def stop_scan(self):
-        self.kingdom_scanner.end_scan()
-        self.stop_button.configure(state="disabled", text="Abort after next governor")
+        self.ranking_scanner.end_scan()
+        self.stop_button.configure(state="disabled", text="Abort after next batch")
 
-    def governor_callback(
-        self, governor: GovernorData, additional: AdditionalGovernorData
+    def batch_callback(
+        self, ranking: list[RankingData], additional: AdditionalScanData
     ):
         self.status_frame.update_status(
-            governor_to_info(governor), additional_data_to_info(additional)
+            batch_to_info(ranking), additional_batch_data_to_info(additional)
         )
 
     def state_callback(self, state: str):

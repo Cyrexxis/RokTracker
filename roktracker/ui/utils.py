@@ -5,9 +5,12 @@ import ttkbootstrap as ttk
 from ttkbootstrap.dialogs import Messagebox
 
 from roktracker.common.config import AppConfig
+from roktracker.common.data import AdditionalScanData
 from roktracker.common.output_formats import OutputFormats
 from roktracker.kingdom.governor_data import AdditionalGovernorData, GovernorData
 from roktracker.kingdom.options import KingdomScanOptions, StatsToScan
+from roktracker.ranking.options import RankingScanOptions
+from roktracker.ranking.ranking_data import RankingData
 from roktracker.ui.checkbox_frames import CheckboxGroupValue
 from roktracker.ui.options_frame import OptionsElement
 from roktracker.ui.status_frame import AdditionalInfoData, InfoValue
@@ -74,6 +77,29 @@ def governor_to_info(governor: GovernorData) -> list[InfoValue]:
     info_values.append(InfoValue("helps", "Helps", governor.helps))
     info_values.append(InfoValue("t45_kills", "T4+5 Kills", governor.t45_kills()))
     info_values.append(InfoValue("total_kills", "Total Kills", governor.total_kills()))
+    return info_values
+
+
+def additional_batch_data_to_info(data: AdditionalScanData) -> AdditionalInfoData:
+    return AdditionalInfoData(
+        current_time=data.current_time_str(),
+        eta_remaining=data.eta(),
+        current_amount=data.current_governor,
+        target_amount=data.target_governor,
+    )
+
+
+def batch_to_info(batch: list[RankingData]) -> list[InfoValue]:
+    info_values: list[InfoValue] = []
+    for index, governor in enumerate(batch):
+        info_values.append(
+            InfoValue(f"governor_{index}", governor.name, governor.score)
+        )
+
+    if len(batch) < 6:
+        for missing in range(len(batch), 6 + 1):
+            info_values.append(InfoValue(f"governor-{missing}", "", ""))
+
     return info_values
 
 
@@ -171,6 +197,28 @@ def ko_to_options(
     info_values.append(
         OptionsElement("advanced_scroll", "Advanced Scroll", options.advanced_scroll)
     )
+    info_values.append(
+        OptionsElement("info_close", "More info wait", app_config.timings.info_close)
+    )
+    info_values.append(
+        OptionsElement("gov_close", "Governor wait", app_config.timings.gov_close)
+    )
+    return info_values
+
+
+def ro_to_options(
+    app_config: AppConfig, options: RankingScanOptions
+) -> list[OptionsElement]:
+    info_values: list[OptionsElement] = []
+    info_values.append(OptionsElement("scan_uuid", "Scan UUID", "---", False))
+    info_values.append(OptionsElement("scan_name", "Scan Name", options.scan_name))
+    info_values.append(
+        OptionsElement("name", "Bluestacks name", app_config.general.bluestacks.name)
+    )
+    info_values.append(
+        OptionsElement("adb_port", "ADB Port", app_config.general.adb_port)
+    )
+    info_values.append(OptionsElement("amount", "Amount", options.amount))
     info_values.append(
         OptionsElement("info_close", "More info wait", app_config.timings.info_close)
     )
