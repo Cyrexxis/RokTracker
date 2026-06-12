@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 from typing import Tuple
 
-from com.dtmilano.android.adb.adbclient import (  # type: ignore (No stub file is provided)
+from com.dtmilano.android.adb.adbclient import (  # type: ignore
     AdbClient,
 )
 from PIL.Image import Image
@@ -126,10 +126,10 @@ class AdvancedAdbClient:
 
     def secure_adb_shell(self, command_to_execute: str) -> str:
         result = ""
-        for i in range(3):
+        for _ in range(3):
             try:
-                result = str(self.device.shell(command_to_execute))
-            except:
+                result = str(self.device.shell(command_to_execute))  # type: ignore
+            except Exception:
                 console.print("[red]ADB crashed[/red]")
                 self.kill_adb()
                 self.start_adb()
@@ -147,10 +147,10 @@ class AdvancedAdbClient:
 
     def secure_adb_screencap(self) -> Image:
         result = NewImage(mode="RGB", size=(1, 1))
-        for i in range(3):
+        for _ in range(3):
             try:
-                result = self.device.takeSnapshot(reconnect=True)
-            except:
+                result = self.device.takeSnapshot(reconnect=True)  # type: ignore
+            except Exception:
                 console.print("[red]ADB crashed[/red]")
                 self.kill_adb()
                 self.start_adb()
