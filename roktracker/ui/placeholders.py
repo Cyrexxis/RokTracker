@@ -22,10 +22,27 @@ kingdom_stats_placeholder = [
     ),
 ]
 
+ranking_stats_placeholder = [
+    InfoValue(name="governor_0", display_name="Super Governor 1", value="1000"),
+    InfoValue(name="governor_1", display_name="Super Governor 2", value="500"),
+    InfoValue(name="governor_2", display_name="Super Governor 3", value="250"),
+    InfoValue(name="governor_3", display_name="Super Governor 4", value="125"),
+    InfoValue(name="governor_4", display_name="Super Governor 5", value="64"),
+    InfoValue(name="governor_5", display_name="Super Governor 6", value="32"),
+]
+
 additional_stats_placeholder = AdditionalInfoData(
     current_time="00:00:00",
     eta_remaining="00:00:00",
     current_amount=0,
     target_amount=300,
     skipped=0,
+)
+
+additional_ranking_stats_placeholder = AdditionalInfoData(
+    current_time="00:00:00",
+    eta_remaining="00:00:00",
+    current_amount=0,
+    target_amount=100,
+    skipped=-1,
 )
