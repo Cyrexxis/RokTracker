@@ -8,6 +8,9 @@
       "source.fixAll.ruff": "explicit"
     }
   },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "ruff.nativeServer": true,
   "ruff.configurationPreference": "filesystemFirst",
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",

@@ -19,6 +19,8 @@
     "name": true,
     "power": true,
     "killpoints": true,
+    "acclaim": true,
+    "acclaim_max": true,
     "alliance": true,
     "t1_kills": true,
     "t2_kills": true,

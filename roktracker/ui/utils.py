@@ -55,7 +55,10 @@ def governor_to_info(governor: GovernorData) -> list[InfoValue]:
     info_values.append(InfoValue("name", "Name", governor.name))
     info_values.append(InfoValue("power", "Power", governor.power))
     info_values.append(InfoValue("killpoints", "Kill Points", governor.killpoints))
-    info_values.append(InfoValue("alliance", "Alliance", governor.alliance))
+    info_values.append(InfoValue("acclaim", "Acclaim", governor.acclaim))
+    info_values.append(
+        InfoValue("acclaim_max", "Highest Acclaim", governor.acclaim_max)
+    )
     info_values.append(InfoValue("t1_kills", "T1 Kills", governor.t1_kills))
     info_values.append(InfoValue("t1_kp", "T1 KP", governor.t1_kp))
     info_values.append(InfoValue("t2_kills", "T2 Kills", governor.t2_kills))
@@ -66,17 +69,18 @@ def governor_to_info(governor: GovernorData) -> list[InfoValue]:
     info_values.append(InfoValue("t4_kp", "T4 KP", governor.t4_kp))
     info_values.append(InfoValue("t5_kills", "T5 Kills", governor.t5_kills))
     info_values.append(InfoValue("t5_kp", "T5 KP", governor.t5_kp))
+    info_values.append(InfoValue("t45_kills", "T4+5 Kills", governor.t45_kills()))
+    info_values.append(InfoValue("total_kills", "Total Kills", governor.total_kills()))
     info_values.append(
         InfoValue("ranged_points", "Ranged Points", governor.ranged_points)
     )
     info_values.append(InfoValue("dead", "Dead", governor.dead))
     info_values.append(
-        InfoValue("rss_assistance", "RSS Assistance", governor.rss_assistance)
+        InfoValue("assistance", "RSS Assistance", governor.rss_assistance)
     )
-    info_values.append(InfoValue("rss_gathered", "RSS Gathered", governor.rss_gathered))
+    info_values.append(InfoValue("gathered", "RSS Gathered", governor.rss_gathered))
     info_values.append(InfoValue("helps", "Helps", governor.helps))
-    info_values.append(InfoValue("t45_kills", "T4+5 Kills", governor.t45_kills()))
-    info_values.append(InfoValue("total_kills", "Total Kills", governor.total_kills()))
+    info_values.append(InfoValue("alliance", "Alliance", governor.alliance))
     return info_values
 
 
@@ -112,6 +116,14 @@ def sts_to_checkbox(stats: StatsToScan) -> list[CheckboxGroupValue]:
     )
     info_values.append(
         CheckboxGroupValue("killpoints", "Killpoints", "First Screen", stats.killpoints)
+    )
+    info_values.append(
+        CheckboxGroupValue("acclaim", "Acclaim", "First Screen", stats.acclaim)
+    )
+    info_values.append(
+        CheckboxGroupValue(
+            "acclaim_max", "Highest Acclaim", "First Screen", stats.acclaim_max
+        )
     )
     info_values.append(
         CheckboxGroupValue("alliance", "Alliance", "First Screen", stats.alliance)

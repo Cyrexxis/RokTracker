@@ -14,6 +14,8 @@ class GovernorData:
     name: str = "Skipped"
     power: str = "Skipped"
     killpoints: str = "Skipped"
+    acclaim: str = "Skipped"
+    acclaim_max: str = "Skipped"
     alliance: str = "Skipped"
     t1_kills: str = "Skipped"
     t1_kp: str = "Skipped"
@@ -60,6 +62,12 @@ class GovernorData:
 
         if self.killpoints == "":
             self.killpoints = "Unknown"
+
+        if self.acclaim == "":
+            self.acclaim = "Unknown"
+
+        if self.acclaim_max == "":
+            self.acclaim_max = "Unknown"
 
         if self.t1_kills == "":
             self.t1_kills = "Unknown"

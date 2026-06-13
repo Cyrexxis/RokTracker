@@ -8,7 +8,7 @@ from roktracker.utils.console import console
 def print_gov_state(gov_data: GovernorData, extra: AdditionalGovernorData) -> None:
     table = Table(
         title="["
-        + extra.current_time
+        + extra.current_time_str()
         + "]\n"
         + "Latest Scan Result\nGovernor "
         + str(extra.current_governor)
@@ -51,6 +51,8 @@ def print_gov_state(gov_data: GovernorData, extra: AdditionalGovernorData) -> No
     table.add_row("Governor Name", gov_data.name)
     table.add_row("Governor Power", gov_data.power)
     table.add_row("Governor Kill Points", gov_data.killpoints)
+    table.add_row("Governor Acclaim", gov_data.acclaim)
+    table.add_row("Governor Highest Acclaim", gov_data.acclaim_max)
     table.add_row("Governor Deads", gov_data.dead)
     table.add_row("Governor T1 Kills", gov_data.t1_kills)
     table.add_row("Governor T2 Kills", gov_data.t2_kills)
