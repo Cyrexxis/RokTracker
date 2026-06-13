@@ -39,7 +39,8 @@ jobs:
 
       - name: Prepare executable for upload
         run: |
-          cp "config.json" "dist/RoK Tracker/config.json"
+          mkdir "dist/RoK Tracker/config"
+          cp -r "config/" "dist/RoK Tracker/config/"
           mkdir "dist/RoK Tracker/deps"
           cp -r "deps/inputs/" "dist/RoK Tracker/deps/"
           tar.exe -a -c -f "RoK Tracker.zip" -C "dist/" "RoK Tracker"

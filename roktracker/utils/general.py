@@ -102,7 +102,7 @@ def format_timedelta_to_HHMMSS(td: datetime.timedelta) -> str:
     hours = int(hours)
     minutes = int(minutes)
     seconds = int(seconds)
-    return f"({hours:02d}, {minutes:02d}, {seconds:02d})"
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
 # This workaroud is needed because cv2 doesn't support UTF-8 paths
@@ -112,7 +112,7 @@ def load_cv2_img(path: str | PathLike[Any], flags: int) -> MatLike:
         flags,
     )
 
-    if image:
+    if image is not None:
         return image
     else:
         return np.zeros((10, 10, 3), np.uint8)

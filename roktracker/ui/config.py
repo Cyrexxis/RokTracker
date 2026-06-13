@@ -4,7 +4,6 @@ Global configuration module for the rok tracker application
 
 from typing import Literal
 
-from pydantic import BaseModel
 from pydantic_settings import (
     BaseSettings,
     JsonConfigSettingsSource,
@@ -14,40 +13,58 @@ from pydantic_settings import (
 
 from dummy_root import get_app_root
 
+AVAILABLE_THEMES: list[str] = [
+    "cosmo",
+    "flatly",
+    "litera",
+    "minty",
+    "lumen",
+    "sandstone",
+    "yeti",
+    "pulse",
+    "united",
+    "morph",
+    "journal",
+    "darkly",
+    "superhero",
+    "solar",
+    "cyborg",
+    "vapor",
+    "simplex",
+    "cerculean",
+]
 
-class ScanTimings(BaseModel):
-    gov_open: float = 2.0
-    copy_wait: float = 0.2
-    kills_open: float = 1.0
-    info_open: float = 1.0
-    info_close: float = 0.5
-    gov_close: float = 1.0
-    max_random: float = 0.5
 
-
-class BluestacksConfig(BaseModel):
-    name: str = "RoK Tracker"
-    config: str = "C:\\ProgramData\\Bluestacks_nxt\\bluestacks.conf"
-
-
-class GeneralConfig(BaseModel):
-    emulator: Literal["bluestacks", "ld"] = "bluestacks"
-    adb_port: int = 5555
-    bluestacks: BluestacksConfig = BluestacksConfig()
-
-
-class AppConfig(BaseSettings):
+class GUIConfig(BaseSettings):
     """
     This is the collection of all globally configured values.
     It uses default values or loads from the config.json file.
     """
 
     model_config = SettingsConfigDict(
-        json_file=get_app_root() / "config" / "config.json", extra="ignore"
+        json_file=get_app_root() / "config" / "gui_config.json", extra="ignore"
     )
 
-    timings: ScanTimings = ScanTimings()
-    general: GeneralConfig = GeneralConfig()
+    default_theme: Literal[
+        "cosmo",
+        "flatly",
+        "litera",
+        "minty",
+        "lumen",
+        "sandstone",
+        "yeti",
+        "pulse",
+        "united",
+        "morph",
+        "journal",
+        "darkly",
+        "superhero",
+        "solar",
+        "cyborg",
+        "vapor",
+        "simplex",
+        "cerculean",
+    ] = "darkly"
 
     @classmethod
     def settings_customise_sources(
