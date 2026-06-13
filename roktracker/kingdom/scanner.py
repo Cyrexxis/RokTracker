@@ -370,11 +370,7 @@ class KingdomScanner:
                 api.SetPageSegMode(PSM.SINGLE_LINE)
                 if self.stats_to_scan.id:
                     im_gov_id = cropToRegion(image, ui_positions.id)
-                    im_gov_id_gray = cv2.cvtColor(im_gov_id, cv2.COLOR_BGR2GRAY)
-                    im_gov_id_gray = cv2.bitwise_not(im_gov_id_gray)
-                    (_, im_gov_id_bw) = cv2.threshold(
-                        im_gov_id_gray, 120, 255, cv2.THRESH_BINARY
-                    )
+                    im_gov_id_bw = advancedProcessing(im_gov_id, 3, "dimmed white")
 
                     governor_data.id = ocr_number(api, im_gov_id_bw)
 
