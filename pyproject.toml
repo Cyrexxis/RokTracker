@@ -1,6 +1,6 @@
 [project]
 name = "rok-tracker"
-version = "5.0.9"
+version = "6.0.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
