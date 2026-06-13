@@ -1,0 +1,32 @@
+{
+  "description": "This is the collection of all globally configured values.\nIt uses default values or loads from the config.json file.",
+  "properties": {
+    "default_theme": {
+      "default": "darkly",
+      "enum": [
+        "cosmo",
+        "flatly",
+        "litera",
+        "minty",
+        "lumen",
+        "sandstone",
+        "yeti",
+        "pulse",
+        "united",
+        "morph",
+        "journal",
+        "darkly",
+        "superhero",
+        "solar",
+        "cyborg",
+        "vapor",
+        "simplex",
+        "cerculean"
+      ],
+      "title": "Default Theme",
+      "type": "string"
+    }
+  },
+  "title": "GUIConfig",
+  "type": "object"
+}
