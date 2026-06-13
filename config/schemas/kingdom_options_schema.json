@@ -43,6 +43,16 @@
           "title": "Killpoints",
           "type": "boolean"
         },
+        "acclaim": {
+          "default": true,
+          "title": "Acclaim",
+          "type": "boolean"
+        },
+        "acclaim_max": {
+          "default": true,
+          "title": "Acclaim Max",
+          "type": "boolean"
+        },
         "alliance": {
           "default": true,
           "title": "Alliance",
@@ -105,61 +115,81 @@
   },
   "properties": {
     "scan_name": {
+      "default": "",
       "title": "Scan Name",
       "type": "string"
     },
     "amount": {
+      "default": 300,
       "title": "Amount",
       "type": "integer"
     },
     "stats_to_scan": {
-      "$ref": "#/$defs/StatsToScan"
+      "$ref": "#/$defs/StatsToScan",
+      "default": {
+        "id": true,
+        "name": true,
+        "power": true,
+        "killpoints": true,
+        "acclaim": true,
+        "acclaim_max": true,
+        "alliance": true,
+        "t1_kills": true,
+        "t2_kills": true,
+        "t3_kills": true,
+        "t4_kills": true,
+        "t5_kills": true,
+        "ranged_points": true,
+        "deads": true,
+        "gathered": true,
+        "assisted": true,
+        "helps": true
+      }
     },
     "continued": {
+      "default": false,
       "title": "Continued",
       "type": "boolean"
     },
     "track_inactives": {
+      "default": false,
       "title": "Track Inactives",
       "type": "boolean"
     },
     "validate_kills": {
+      "default": true,
       "title": "Validate Kills",
       "type": "boolean"
     },
     "reconstruct_kills": {
+      "default": true,
       "title": "Reconstruct Kills",
       "type": "boolean"
     },
     "validate_power": {
+      "default": false,
       "title": "Validate Power",
       "type": "boolean"
     },
     "power_threshold": {
+      "default": 100000,
       "title": "Power Threshold",
       "type": "integer"
     },
     "advanced_scroll": {
+      "default": true,
       "title": "Advanced Scroll",
       "type": "boolean"
     },
     "formats": {
-      "$ref": "#/$defs/OutputFormats"
+      "$ref": "#/$defs/OutputFormats",
+      "default": {
+        "xlsx": true,
+        "csv": false,
+        "jsonl": false
+      }
     }
   },
-  "required": [
-    "scan_name",
-    "amount",
-    "stats_to_scan",
-    "continued",
-    "track_inactives",
-    "validate_kills",
-    "reconstruct_kills",
-    "validate_power",
-    "power_threshold",
-    "advanced_scroll",
-    "formats"
-  ],
   "title": "KingdomScanOptions",
   "type": "object"
 }

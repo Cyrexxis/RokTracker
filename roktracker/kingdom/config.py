@@ -9,6 +9,8 @@ class KingdomUIRegions(BaseModel):
     id: tuple[int, int, int, int] = (0, 0, 0, 0)
     power: tuple[int, int, int, int] = (0, 0, 0, 0)
     killpoints: tuple[int, int, int, int] = (0, 0, 0, 0)
+    acclaim: tuple[int, int, int, int] = (0, 0, 0, 0)
+    acclaim_max: tuple[int, int, int, int] = (0, 0, 0, 0)
     alliance: tuple[int, int, int, int] = (0, 0, 0, 0)
 
     # second screen

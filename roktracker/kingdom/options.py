@@ -9,6 +9,8 @@ STAT_LABELS: dict[str, str] = {
     "Name": "name",
     "Power": "power",
     "Killpoints": "killpoints",
+    "Acclaim": "acclaim",
+    "Highest Acclaim": "acclaim_max",
     "Alliance": "alliance",
     "T1 Kills": "t1_kills",
     "T2 Kills": "t2_kills",
@@ -29,6 +31,8 @@ class StatsToScan(BaseModel):
     name: bool = True
     power: bool = True
     killpoints: bool = True
+    acclaim: bool = True
+    acclaim_max: bool = True
     alliance: bool = True
 
     # second screen
@@ -52,6 +56,8 @@ class StatsToScan(BaseModel):
             name=False,
             power=False,
             killpoints=False,
+            acclaim=False,
+            acclaim_max=False,
             alliance=False,
             t1_kills=False,
             t2_kills=False,

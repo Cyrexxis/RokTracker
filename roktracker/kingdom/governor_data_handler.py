@@ -30,6 +30,8 @@ class GovernorDataHandler:
                 "Name": gov_data.name,
                 "Power": GovernorData.intify_value(gov_data.power),
                 "Killpoints": GovernorData.intify_value(gov_data.killpoints),
+                "Acclaim": GovernorData.intify_value(gov_data.acclaim),
+                "Highest Acclaim": GovernorData.intify_value(gov_data.acclaim_max),
                 "Deads": GovernorData.intify_value(gov_data.dead),
                 "T1 Kills": GovernorData.intify_value(gov_data.t1_kills),
                 "T2 Kills": GovernorData.intify_value(gov_data.t2_kills),

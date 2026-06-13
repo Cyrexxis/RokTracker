@@ -180,6 +180,8 @@ class KingdomScanner:
                     or self.stats_to_scan.name
                     or self.stats_to_scan.power
                     or self.stats_to_scan.killpoints
+                    or self.stats_to_scan.acclaim
+                    or self.stats_to_scan.acclaim_max
                     or self.stats_to_scan.alliance
                 )
             case 2:
@@ -335,7 +337,7 @@ class KingdomScanner:
 
             # 1st image data (ID, Power, Killpoints, Alliance)
             with PyTessBaseAPI(
-                path=str(self.tesseract_path), psm=PSM.SINGLE_WORD, oem=OEM.LSTM_ONLY
+                path=str(self.tesseract_path), psm=PSM.SINGLE_LINE, oem=OEM.LSTM_ONLY
             ) as api:
                 if self.stats_to_scan.power:
                     im_gov_power = cropToRegion(image, ui_positions.power)
@@ -350,6 +352,20 @@ class KingdomScanner:
                     )
 
                     governor_data.killpoints = ocr_number(api, im_gov_killpoints_bw)
+
+                if self.stats_to_scan.acclaim:
+                    im_gov_acclaim = cropToRegion(image, ui_positions.acclaim)
+                    im_gov_acclaim_bw = advancedProcessing(im_gov_acclaim, 3, "white")
+
+                    governor_data.acclaim = ocr_number(api, im_gov_acclaim_bw)
+
+                if self.stats_to_scan.acclaim_max:
+                    im_gov_acclaim_max = cropToRegion(image, ui_positions.acclaim_max)
+                    im_gov_acclaim_max_bw = advancedProcessing(
+                        im_gov_acclaim_max, 3, "white"
+                    )
+
+                    governor_data.acclaim_max = ocr_number(api, im_gov_acclaim_max_bw)
 
                 api.SetPageSegMode(PSM.SINGLE_LINE)
                 if self.stats_to_scan.id:

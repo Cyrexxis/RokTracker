@@ -87,9 +87,7 @@ class KingdomScannerUI(ttk.Frame):
             kingdom_stats_placeholder,
             additional_stats_placeholder,
         )
-        self.status_frame.grid(
-            row=0, column=3, padx=10, pady=(10, 10), sticky="ewsn", rowspan=2
-        )
+        self.status_frame.grid(row=0, column=3, padx=10, pady=(10, 0), sticky="ewsn")
 
         controll_frame = ttk.Frame(self)
         controll_frame.grid(row=1, column=0, columnspan=4, pady=(5, 0), sticky="ew")
@@ -98,15 +96,15 @@ class KingdomScannerUI(ttk.Frame):
         self.start_button = ttk.Button(
             controll_frame, text="Start scan", command=self.start_scan
         )
-        self.start_button.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        self.start_button.grid(row=0, column=0, padx=10, pady=(0, 10), sticky="ew")
 
         self.stop_button = ttk.Button(
             controll_frame, text="Stop scan", command=self.stop_scan, state="disabled"
         )
-        self.stop_button.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
+        self.stop_button.grid(row=0, column=1, padx=10, pady=(0, 10), sticky="ew")
 
         self.current_state = ttk.Label(controll_frame, text="Not started")
-        self.current_state.grid(row=0, column=3, padx=10, pady=(10, 0), sticky="ewns")
+        self.current_state.grid(row=0, column=3, padx=10, pady=(0, 10), sticky="ewns")
 
     def ask_confirm(self, msg: str) -> bool:
         return show_confirm(self, msg, "No Governor found")
