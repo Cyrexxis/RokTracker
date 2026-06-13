@@ -70,10 +70,17 @@ def advancedProcessing(
     return result
 
 
-def ocr_number(api: tesserocr.PyTessBaseAPI, image: MatLike):
+def ocr_number(api: tesserocr.PyTessBaseAPI, image: MatLike, empty_retry: bool = True):
     api.SetImage(Image.fromarray(image))  # type: ignore
-    score = api.GetUTF8Text()
-    score = re.sub("[^0-9]", "", score)
+    score_raw = api.GetUTF8Text()
+    score = re.sub("[^0-9]", "", score_raw)
+
+    if score == "" and empty_retry:
+        img_try_2 = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
+        api.SetImage(Image.fromarray(img_try_2))  # type: ignore
+        score_raw = api.GetUTF8Text()
+        score = re.sub("[^0-9]", "", score_raw)
+
     return score
 
 
