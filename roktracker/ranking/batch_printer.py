@@ -1,3 +1,8 @@
+"""Console output for ranking scan batches.
+
+Provides print_batch() for displaying a batch of governors as
+a formatted table with progress and timing information."""
+
 from typing import List
 
 from rich.markup import escape
@@ -9,6 +14,12 @@ from roktracker.utils.console import console
 
 
 def print_batch(govs: List[RankingData], extra: AdditionalScanData) -> None:
+    """Print governor batch to console via a nice looking table.
+
+    Args:
+        govs (List[RankingData]): The list of governors to print
+        extra (AdditionalScanData): Additional data to display
+    """
     # nice output for console
     table = Table(
         title="["

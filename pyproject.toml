@@ -1,7 +1,7 @@
 [project]
 name = "rok-tracker"
 version = "6.0.0"
-description = "Add your description here"
+description = "A python utility to scan kingdoms and ranking in Rise of Kingdoms"
 readme = "README.md"
 requires-python = ">=3.14"
 license = "MIT"
@@ -25,5 +25,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyinstaller>=6.20.0",
+    "pymend>=3.2.2",
     "ruff>=0.15.16",
 ]
+
+[tool.pymend]
+output-style = "google"

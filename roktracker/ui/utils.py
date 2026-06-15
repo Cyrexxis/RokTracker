@@ -1,3 +1,12 @@
+"""Shared utility functions for UI components.
+
+Provides converters between scanner data and GUI data models
+(additional_data_to_info, governor_to_info, batch_to_info,
+sts_to_checkbox, formats_to_checkbox, ko_to_options,
+ro_to_options). Also includes config update helpers
+(update_config_option, update_config_options) and dialog
+helpers (show_error, show_confirm, show_dialog)."""
+
 import threading
 from typing import Any
 
@@ -19,6 +28,20 @@ from roktracker.ui.status_frame import AdditionalInfoData, InfoValue
 def update_config_option(
     config: Any, update: OptionsElement | None, ignore_additional: bool = True
 ):
+    """Updates any object that has a matching key and type as the provided OptionsElement.
+
+    If ignore_additional is set to False and the key is missing in the object
+    a AttributeError will be raised.
+
+    Args:
+        config (Any): The object to update
+        update (OptionsElement | None): The OptionsElement to use for the update
+        ignore_additional (bool): Whether to ignore a missing key (Default value = True)
+
+    Raises:
+        AttributeError: When the key is missing and ignore_additional is False
+        AttributeError: When the type in the object does not match the type in the option
+    """
     if update is None:
         return
 
@@ -35,11 +58,33 @@ def update_config_option(
 def update_config_options(
     config: Any, update: dict[str, OptionsElement], ignore_additional: bool = True
 ):
+    """Updates any object that has matching keys and types as the provided OptionsElements.
+
+    If ignore_additional is set to False and a key is missing in the object
+    a AttributeError will be raised.
+
+    Args:
+        config (Any): The object to update
+        update (dict[str, OptionsElement]): The options to update
+        ignore_additional (bool): Whether to ignore a missing key (Default value = True)
+
+    Raises:
+        AttributeError: When a key is missing and ignore_additional is False
+        AttributeError: When the type in the object does not match the type in the option
+    """
     for updated_entry in update.values():
         update_config_option(config, updated_entry, ignore_additional)
 
 
 def additional_data_to_info(data: AdditionalGovernorData) -> AdditionalInfoData:
+    """Utility to convert the scanner AdditionalGovernorData to AdditionalInfoData used by the GUI.
+
+    Args:
+        data (AdditionalGovernorData): The original from the scanner
+
+    Returns:
+        AdditionalInfoData: The converted result for the GUI
+    """
     return AdditionalInfoData(
         current_time=data.current_time_str(),
         eta_remaining=data.eta(),
@@ -50,6 +95,14 @@ def additional_data_to_info(data: AdditionalGovernorData) -> AdditionalInfoData:
 
 
 def governor_to_info(governor: GovernorData) -> list[InfoValue]:
+    """Utility to convert GovernorData to a list of InfoValues.
+
+    Args:
+        governor (GovernorData): The original GovernorData
+
+    Returns:
+        list[InfoValue]: The list of InfoValues
+    """
     info_values: list[InfoValue] = []
     info_values.append(InfoValue("id", "ID", governor.id))
     info_values.append(InfoValue("name", "Name", governor.name))
@@ -85,6 +138,14 @@ def governor_to_info(governor: GovernorData) -> list[InfoValue]:
 
 
 def additional_batch_data_to_info(data: AdditionalScanData) -> AdditionalInfoData:
+    """Utility to convert AdditionalScanData to AdditionalInfoData.
+
+    Args:
+        data (AdditionalScanData): The original AdditionalScanData
+
+    Returns:
+        AdditionalInfoData: The converted AdditionalInfoData
+    """
     return AdditionalInfoData(
         current_time=data.current_time_str(),
         eta_remaining=data.eta(),
@@ -94,6 +155,14 @@ def additional_batch_data_to_info(data: AdditionalScanData) -> AdditionalInfoDat
 
 
 def batch_to_info(batch: list[RankingData]) -> list[InfoValue]:
+    """Utility to convert a list of RankingData to a list of InfoValues.
+
+    Args:
+        batch (list[RankingData]): The list of RankingData
+
+    Returns:
+        list[InfoValue]: The list of InfoValues
+    """
     info_values: list[InfoValue] = []
     for index, governor in enumerate(batch):
         info_values.append(
@@ -108,6 +177,14 @@ def batch_to_info(batch: list[RankingData]) -> list[InfoValue]:
 
 
 def sts_to_checkbox(stats: StatsToScan) -> list[CheckboxGroupValue]:
+    """Converts StatsToScan to a list of CheckboxGroupValue.
+
+    Args:
+        stats (StatsToScan): The original StatsToScan
+
+    Returns:
+        list[CheckboxGroupValue]: The list of CheckboxGroupValues
+    """
     info_values: list[CheckboxGroupValue] = []
     info_values.append(CheckboxGroupValue("id", "ID", "First Screen", stats.id))
     info_values.append(CheckboxGroupValue("name", "Name", "First Screen", stats.name))
@@ -164,6 +241,14 @@ def sts_to_checkbox(stats: StatsToScan) -> list[CheckboxGroupValue]:
 
 
 def formats_to_checkbox(formats: OutputFormats) -> list[CheckboxGroupValue]:
+    """Converts OutputFormats to  a list of CheckboxGroupValues.
+
+    Args:
+        formats (OutputFormats): The OutputFormats to convert
+
+    Returns:
+        list[CheckboxGroupValue]: The list of CheckboxGroupValues
+    """
     info_values: list[CheckboxGroupValue] = []
     info_values.append(
         CheckboxGroupValue("xlsx", "XLSX", "Output Format", formats.xlsx)
@@ -178,6 +263,15 @@ def formats_to_checkbox(formats: OutputFormats) -> list[CheckboxGroupValue]:
 def ko_to_options(
     app_config: AppConfig, options: KingdomScanOptions
 ) -> list[OptionsElement]:
+    """Converts the AppConfig and the KingdomScanOptions to a list of OptionElements.
+
+    Args:
+        app_config (AppConfig): The AppConfig to use
+        options (KingdomScanOptions): The KingdomScanOptions to use
+
+    Returns:
+        list[OptionsElement]: The list of OptionElements
+    """
     info_values: list[OptionsElement] = []
     info_values.append(OptionsElement("scan_uuid", "Scan UUID", "---", False))
     info_values.append(OptionsElement("scan_name", "Scan Name", options.scan_name))
@@ -221,6 +315,15 @@ def ko_to_options(
 def ro_to_options(
     app_config: AppConfig, options: RankingScanOptions
 ) -> list[OptionsElement]:
+    """Converts the AppConfig and the RankingScanOptions to a list of OptionElements.
+
+    Args:
+        app_config (AppConfig): The AppConfig to use
+        options (RankingScanOptions): The RankingScanOptions to use
+
+    Returns:
+        list[OptionsElement]: The list of OptionElements
+    """
     info_values: list[OptionsElement] = []
     info_values.append(OptionsElement("scan_uuid", "Scan UUID", "---", False))
     info_values.append(OptionsElement("scan_name", "Scan Name", options.scan_name))
@@ -241,6 +344,13 @@ def ro_to_options(
 
 
 def show_error(parent: ttk.Frame | ttk.Window, message: str, title: str):
+    """Shows an error popup on the thread of the parent.
+
+    Args:
+        parent (ttk.Frame | ttk.Window): The ttk widget to use as parent
+        message (str): The message to display
+        title (str): The title to use
+    """
     parent.after(
         0,
         lambda: Messagebox.show_error(
@@ -252,10 +362,21 @@ def show_error(parent: ttk.Frame | ttk.Window, message: str, title: str):
 
 
 def show_confirm(parent: ttk.Frame | ttk.Window, message: str, title: str) -> bool:
+    """Shows a confirm popup on the thread of the parent and returns the result.
+
+    Args:
+        parent (ttk.Frame | ttk.Window): The ttk widget to use as parent
+        message (str): The message to display
+        title (str): The title to use
+
+    Returns:
+        bool: True if the user selected Yes, False otherwise
+    """
     _result = {"value": False}
     _event = threading.Event()
 
     def show_dialog():
+        """Shows a yes or no dialog and notify result via an event."""
         response = Messagebox.yesno(message, title, True, parent=parent)
         _result["value"] = response == "Yes"
         _event.set()

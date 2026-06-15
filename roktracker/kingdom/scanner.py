@@ -1,10 +1,17 @@
+"""Kingdom scanner that scans governor data from a rankings screen.
+
+Exports the KingdomScanner class which orchestrates the full
+scan workflow: opening governors, reading OCR data, collecting
+stats, saving state after each governor, and managing callbacks
+for progress and output."""
+
 import datetime
 import logging
 import re
 import shutil
 import time
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Literal
 
 import copykitten
 import cv2
@@ -48,7 +55,22 @@ logger = logging.getLogger(__name__)
 
 
 class KingdomScanner:
+    """A Scanner for detailed per governor stats.
+
+    It expects a kingdom rankings screen like individual power or individual killpoints as starting point.
+    It does that by clicking on each governor until reaching the target amount of people to scan.
+    To be more time efficient it also only scans pages, that are needed for the relevant stats.
+
+    To prevent data loss the current state is always saved after completing a governor.
+    """
+
     def __init__(self, config: AppConfig, cfg: KingdomConfig):
+        """Creates a kingdom scanner.
+
+        Args:
+            config (AppConfig): The app config with general settings to use.
+            cfg (KingdomConfig): The kingdom scanner specific config
+        """
         self.run_id = generate_random_id(8)
         self.scan_times: list[float] = []
         self.start_date = datetime.date.today()
@@ -66,7 +88,6 @@ class KingdomScanner:
         self.abort = False
         self.inactive_players = 0
 
-        # TODO: Load paths from config
         self.root_dir = get_app_root()
         self.tesseract_path = Path(self.root_dir / "deps" / "tessdata")
         self.img_path = Path(self.root_dir / "temp_images")
@@ -100,23 +121,66 @@ class KingdomScanner:
     def set_governor_callback(
         self, cb: Callable[[GovernorData, AdditionalGovernorData], None]
     ) -> None:
+        """Sets the callback function that is called after a governor is scanned.
+
+        Args:
+            cb (Callable[[GovernorData, AdditionalGovernorData], None]): The function to call
+        """
         self.gov_callback = cb
 
     def set_state_callback(self, cb: Callable[[str], None]):
+        """Sets the callback function that is called after the state changes.
+
+        Args:
+            cb (Callable[[str], None]): The function to call
+        """
         self.state_callback = cb
 
     def set_continue_handler(self, cb: Callable[[str], bool]):
+        """Sets the callback function that is called when input is needed whether to continue the scan or not.
+
+        Args:
+            cb (Callable[[str], bool]): The function to call
+        """
         self.ask_continue = cb
 
     def set_output_handler(self, cb: Callable[[str], None]):
+        """Sets the callback function that is called when outputting information.
+
+        Args:
+            cb (Callable[[str], None]): The function to call
+        """
         self.output_handler = cb
 
     def get_remaining_time(self, remaining_govs: int) -> float:
+        """Estimates the remaining seconds until the scan is finished.
+
+        Args:
+            remaining_govs (int): How many more people to scan
+
+        Returns:
+            float: The amount of seconds needed to finish
+        """
         return (sum(self.scan_times, start=0) / len(self.scan_times)) * remaining_govs
 
     def _save_failed(
-        self, fail_type: str, gov_data: GovernorData, reconstructed: bool = False
+        self,
+        fail_type: Literal["kills", "power"],
+        gov_data: GovernorData,
+        reconstructed: bool = False,
     ):
+        """Save an image of the governor with a filename representing the kind of failure.
+
+        This function saves either the image of the profile or the killpoints in the review folder.
+
+        The filename is determined by the type of failure and if reconstruction was successful.
+        It is (R|F|P){gov_id}-(profile|kills).png
+
+        Args:
+            fail_type (Literal['kills', 'power']): What failed in the scan
+            gov_data (GovernorData): The GovernorData object with the failed data
+            reconstructed (bool): Should be set to true of killpoint reconstruction was successful. (Default value = False)
+        """
         pre = "Unset"
         if fail_type == "kills":
             if reconstructed:
@@ -153,6 +217,15 @@ class KingdomScanner:
             )
 
     def _get_gov_position(self, current_position: int, skips: int) -> int:
+        """Get Y position of governor tap coordinate.
+
+        Args:
+            current_position (int): Current position to scan
+            skips (int): How many governors were skipped already
+
+        Returns:
+            int: Y component of coordinate
+        """
         # Positions for next governor to check
         Y = [285, 390, 490, 590, 605, 705, 805]
 
@@ -173,6 +246,14 @@ class KingdomScanner:
                 return Y[6]
 
     def _is_page_needed(self, page: int) -> bool:
+        """Checks if a page is needed for the scan.
+
+        Args:
+            page (int): Page number to check
+
+        Returns:
+            bool: True if needed, False otherwise
+        """
         match page:
             case 1:
                 return (
@@ -208,6 +289,32 @@ class KingdomScanner:
         current_player: int,
         track_inactives: bool,
     ) -> GovernorData:
+        """Main scanning method to scan all stats of a governor.
+
+        This method has the following flow and calls the state callback multiple times:
+
+        Opening a governor:
+            Try to open a governor. To check if the operation was successful
+            it is checked if there is a more info text present at the expected position.
+            If the text is missing it retries with scrolling inputs between the attempts.
+
+        The actual scan:
+            It checks what stats should be scanned and only opens a page if it is actually needed.
+            To get the score or text it looks up the expected position in the kingdom scanner config.
+
+        After last screen:
+            Cleans up the data for display purpose and calculates additional stats, like eta.
+
+        Args:
+            current_player (int): The position of the current governor
+            track_inactives (bool): Should inactives be tracked
+
+        Returns:
+            GovernorData: The processed data for the governor
+
+        Raises:
+            GovernorNotFoundError: If no governor could be found after all retries
+        """
         start_time = time.time()
         governor_data = GovernorData()
 
@@ -507,6 +614,13 @@ class KingdomScanner:
         return governor_data
 
     def start_scan(self, options: KingdomScanOptions):
+        """Start a kingdom scan.
+
+        It is expected that the user has a kingdom ranking screen like individual power/killpoints open.
+
+        Args:
+            options (KingdomScanOptions): Scan options to use
+        """
         self.state_callback("Initializing")
         self.adb_client.start_adb()
 
@@ -673,4 +787,5 @@ class KingdomScanner:
         return
 
     def end_scan(self):
+        """Ends the scan after the current governor."""
         self.stop_scan = True

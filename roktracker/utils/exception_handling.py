@@ -1,3 +1,5 @@
+"""Exception handling utilities for console and GUI runtimes."""
+
 import logging
 import sys
 from threading import ExceptHookArgs
@@ -10,8 +12,15 @@ from com.dtmilano.android.adb.adbclient import (  # type: ignore no stub file is
 from roktracker.utils.console import console
 
 
-class ConsoleExceptionHander:
+class ConsoleExceptionHandler:
+    """Handle exceptions when run in a console."""
+
     def __init__(self, logger: logging.Logger):
+        """Creates an exception handler for a console application.
+
+        Args:
+            logger (logging.Logger): The logger to use
+        """
         self.logger = logger
 
     def handle_exception(
@@ -20,6 +29,13 @@ class ConsoleExceptionHander:
         exc_value: BaseException,
         exc_traceback: TracebackType | None,
     ):
+        """Handles an exception.
+
+        Args:
+            exc_type (type[BaseException]): The exception type
+            exc_value (BaseException): The exception value
+            exc_traceback (TracebackType | None): The traceback if available
+        """
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
@@ -34,19 +50,31 @@ class ConsoleExceptionHander:
         )
 
         console.print(
-            "A critical error occured and the program stopped. For more info view the log file."
+            "A critical error occurred and the program stopped. For more info view the log file."
         )
 
     def handle_thread_exception(self, exc: ExceptHookArgs):
-        caught_exeption = exc.exc_value
-        if caught_exeption is None:
-            caught_exeption = BaseException("Unknown Thread Exception")
+        """Handles exception that happened in another thread.
 
-        self.handle_exception(exc.exc_type, caught_exeption, exc.exc_traceback)
+        Args:
+            exc (ExceptHookArgs): The exception
+        """
+        caught_exception = exc.exc_value
+        if caught_exception is None:
+            caught_exception = BaseException("Unknown Thread Exception")
+
+        self.handle_exception(exc.exc_type, caught_exception, exc.exc_traceback)
 
 
 class GuiExceptionHandler:
+    """Handle exceptions when run in a GUI."""
+
     def __init__(self, logger: logging.Logger):
+        """Creates an exception handler for a console application.
+
+        Args:
+            logger (logging.Logger): The logger to use
+        """
         self.logger = logger
 
     def handle_exception(
@@ -55,6 +83,13 @@ class GuiExceptionHandler:
         exc_value: BaseException,
         exc_traceback: TracebackType | None,
     ):
+        """Handles an exception.
+
+        Args:
+            exc_type (type[BaseException]): The exception type
+            exc_value (BaseException): The exception value
+            exc_traceback (TracebackType | None): The traceback if available
+        """
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
@@ -67,12 +102,17 @@ class GuiExceptionHandler:
             "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
         )
         console.print(
-            "Error: An error occured, see the log file for more info.\nYou probably have to restart this application.",
+            "Error: An error occurred, see the log file for more info.\nYou probably have to restart this application.",
         )
 
     def handle_thread_exception(self, exc: ExceptHookArgs):
-        caught_exeption = exc.exc_value
-        if caught_exeption is None:
-            caught_exeption = BaseException("Unknown Thread Exception")
+        """Handles exception that happened in another thread.
 
-        self.handle_exception(exc.exc_type, caught_exeption, exc.exc_traceback)
+        Args:
+            exc (ExceptHookArgs): The exception
+        """
+        caught_exception = exc.exc_value
+        if caught_exception is None:
+            caught_exception = BaseException("Unknown Thread Exception")
+
+        self.handle_exception(exc.exc_type, caught_exception, exc.exc_traceback)

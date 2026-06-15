@@ -1,3 +1,9 @@
+"""Handler for collecting and saving governor scan data.
+
+Maintains an in-memory list of governor records and writes them
+to configured output formats when save() is called. Tracks
+duplicate entries to avoid redundant scans."""
+
 import pathlib
 from datetime import date
 from os import PathLike
@@ -10,6 +16,8 @@ from roktracker.kingdom.governor_data import GovernorData
 
 
 class GovernorDataHandler:
+    """Collects and saves governor scan data."""
+
     def __init__(
         self,
         path: str | PathLike[Any],
@@ -17,6 +25,14 @@ class GovernorDataHandler:
         formats: OutputFormats,
         title: str = str(date.today()),
     ):
+        """Creates a governor data handler.
+
+        Args:
+            path (str | PathLike[Any]): The folder to use for saving the data
+            filename (str): The name of the file to save without extension
+            formats (OutputFormats): The formats to use for saving the data
+            title (str): Only used for the xlsx file - the name of the sheet (Default value = str(date.today()))
+        """
         self.title = title
         self.path = pathlib.Path(path)
         self.name = filename
@@ -24,6 +40,11 @@ class GovernorDataHandler:
         self.data_list: list[dict[str, str | int]] = []
 
     def write_governor(self, gov_data: GovernorData) -> None:
+        """Add a governor record to the in-memory data list.
+
+        Args:
+            gov_data (GovernorData): The governor to add
+        """
         self.data_list.append(
             {
                 "ID": GovernorData.intify_value(gov_data.id),
@@ -49,6 +70,14 @@ class GovernorDataHandler:
         )
 
     def is_duplicate(self, gov_id: int) -> bool:
+        """Check if the given id is a duplicate of the last id.
+
+        Args:
+            gov_id (int): The id to check
+
+        Returns:
+            bool: True if the id is a duplicate
+        """
         if len(self.data_list) == 0:
             return False
         elif self.data_list[-1]["ID"] == gov_id:
@@ -56,7 +85,8 @@ class GovernorDataHandler:
         else:
             return False
 
-    def save(self):
+    def save(self) -> None:
+        """Save the collected data to the configured output format(s)."""
         frame = pd.DataFrame(self.data_list)
         # Drop cols that contain skipped values
         frame = frame.loc[:, ~(frame == -2).any()]

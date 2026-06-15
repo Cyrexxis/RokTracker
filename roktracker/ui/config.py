@@ -1,6 +1,8 @@
-"""
-Global configuration module for the rok tracker application
-"""
+"""Global GUI configuration for the rok tracker application.
+
+Provides the GUIConfig class with default values loaded from
+config.json. Ignores environment variables to enforce file-based
+configuration only."""
 
 from typing import Literal
 
@@ -33,11 +35,12 @@ AVAILABLE_THEMES: list[str] = [
     "simplex",
     "cerculean",
 ]
+"""The list of all supported themes."""
 
 
 class GUIConfig(BaseSettings):
-    """
-    This is the collection of all globally configured values.
+    """A collection of all globally configured values.
+
     It uses default values or loads from the config.json file.
     """
 
@@ -75,4 +78,16 @@ class GUIConfig(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Only load settings from the JSON config file, ignoring env vars.
+
+        Args:
+            settings_cls (type[BaseSettings]): pydantic internal
+            init_settings (PydanticBaseSettingsSource): pydantic internal
+            env_settings (PydanticBaseSettingsSource): pydantic internal
+            dotenv_settings (PydanticBaseSettingsSource): pydantic internal
+            file_secret_settings (PydanticBaseSettingsSource): pydantic internal
+
+        Returns:
+            tuple[PydanticBaseSettingsSource, ...]: pydantic internal
+        """
         return (JsonConfigSettingsSource(settings_cls),)

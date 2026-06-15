@@ -8,6 +8,7 @@ import questionary
 
 from dummy_root import get_app_root
 from roktracker.common.config import AppConfig
+from roktracker.common.output_formats import OutputFormats
 from roktracker.kingdom.config import KingdomConfig
 from roktracker.kingdom.governor_printer import print_gov_state
 from roktracker.kingdom.options import STAT_LABELS, KingdomScanOptions, StatsToScan
@@ -18,11 +19,11 @@ from roktracker.ranking.options import RankingScanOptions
 from roktracker.ranking.scanner import RankingScanner
 from roktracker.utils.adb import get_bluestacks_port
 from roktracker.utils.console import console
-from roktracker.utils.exception_handling import ConsoleExceptionHander
+from roktracker.utils.exception_handling import ConsoleExceptionHandler
 from roktracker.utils.exceptions import AdbError
 from roktracker.utils.general import is_string_float, is_string_int
 from roktracker.utils.ocr import get_supported_langs
-from roktracker.utils.validator import sanitize_scanname, validate_installation
+from roktracker.utils.validator import sanitize_scan_name, validate_installation
 
 logging.basicConfig(
     filename=str(get_app_root() / "scanner.log"),
@@ -33,7 +34,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-ex_handler = ConsoleExceptionHander(logger)
+ex_handler = ConsoleExceptionHandler(logger)
 
 
 sys.excepthook = ex_handler.handle_exception
@@ -80,13 +81,13 @@ def run_kingdom_scan(config: AppConfig):
             default=default_options.scan_name,
         ).unsafe_ask()
 
-        validated_name = sanitize_scanname(options.scan_name)
+        validated_name = sanitize_scan_name(options.scan_name)
         while not validated_name.valid:
             kingdom = questionary.text(
                 message="Kingdom name (Previous name was invalid):",
                 default=validated_name.result,
             ).unsafe_ask()
-            validated_name = sanitize_scanname(kingdom)
+            validated_name = sanitize_scan_name(kingdom)
 
         options.scan_name = validated_name.result
 
@@ -202,7 +203,7 @@ def run_kingdom_scan(config: AppConfig):
 
         if options.validate_kills:
             options.reconstruct_kills = questionary.confirm(
-                message="Try reconstructiong wrong kills values:",
+                message="Try reconstructing wrong kills values:",
                 auto_enter=False,
                 default=default_options.reconstruct_kills,
             ).unsafe_ask()
@@ -246,7 +247,7 @@ def run_kingdom_scan(config: AppConfig):
                     checked=default_options.formats.xlsx,
                 ),
                 questionary.Choice(
-                    "Comma seperated values (csv)",
+                    "Comma separated values (csv)",
                     value="csv",
                     checked=default_options.formats.csv,
                 ),
@@ -262,7 +263,7 @@ def run_kingdom_scan(config: AppConfig):
             console.print("Exiting, no formats selected.")
             return
         else:
-            options.formats.from_list(save_formats_tmp)
+            options.formats = OutputFormats.from_list(save_formats_tmp)
     except Exception as e:
         logger.error(e)
         sys.exit(-1)
@@ -288,11 +289,11 @@ def run_kingdom_scan(config: AppConfig):
         kingdom_scanner.start_scan(options)
     except AdbError as error:
         logger.error(
-            "An error with the adb connection occured (probably wrong port). Exact message: "
+            "An error with the adb connection occurred (probably wrong port). Exact message: "
             + str(error)
         )
         console.print(
-            "An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+            "An error with the adb connection occurred. Please verify that you use the correct port.\nExact message: "
             + str(error)
         )
 
@@ -326,13 +327,13 @@ def run_ranking_scan(
             default=default_options.scan_name,
         ).unsafe_ask()
 
-        validated_name = sanitize_scanname(options.scan_name)
+        validated_name = sanitize_scan_name(options.scan_name)
         while not validated_name.valid:
             kingdom = questionary.text(
                 message="Alliance name (Previous name was invalid):",
                 default=validated_name.result,
             ).unsafe_ask()
-            validated_name = sanitize_scanname(kingdom)
+            validated_name = sanitize_scan_name(kingdom)
         options.scan_name = validated_name.result
 
         options.amount = int(
@@ -352,7 +353,7 @@ def run_ranking_scan(
                     checked=default_options.formats.xlsx,
                 ),
                 questionary.Choice(
-                    "Comma seperated values (csv)",
+                    "Comma separated values (csv)",
                     value="csv",
                     checked=default_options.formats.csv,
                 ),
@@ -368,7 +369,7 @@ def run_ranking_scan(
             console.print("Exiting, no formats selected.")
             return
         else:
-            options.formats.from_list(save_formats_tmp)
+            options.formats = OutputFormats.from_list(save_formats_tmp)
     except Exception as e:
         logger.error(e)
         sys.exit(-1)
@@ -394,11 +395,11 @@ def run_ranking_scan(
         scanner.start_scan(options)
     except AdbError as error:
         logger.error(
-            "An error with the adb connection occured (probably wrong port). Exact message: "
+            "An error with the adb connection occurred (probably wrong port). Exact message: "
             + str(error)
         )
         console.print(
-            "An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+            "An error with the adb connection occurred. Please verify that you use the correct port.\nExact message: "
             + str(error)
         )
 

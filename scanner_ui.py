@@ -11,6 +11,7 @@ from roktracker.ui.header_frame import HeaderFrame
 from roktracker.ui.kingdom_scanner_ui import KingdomScannerUI
 from roktracker.ui.ranking_scanner_ui import RankingScannerUI
 from roktracker.utils.exception_handling import GuiExceptionHandler
+from roktracker.utils.validator import validate_installation
 
 logging.basicConfig(
     filename=str(get_app_root() / "scanner.log"),
@@ -25,6 +26,9 @@ ex_handler = GuiExceptionHandler(logger)
 
 sys.excepthook = ex_handler.handle_exception
 threading.excepthook = ex_handler.handle_thread_exception
+
+if not validate_installation().success:
+    sys.exit(2)
 
 ui_config = GUIConfig()
 

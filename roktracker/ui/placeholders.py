@@ -1,6 +1,8 @@
+"""Placeholder values for the GUI."""
+
 from roktracker.ui.status_frame import AdditionalInfoData, InfoValue
 
-kingdom_stats_placeholder = [
+KINGDOM_STATS_PLACEHOLDER = [
     InfoValue(name="id", display_name="ID", value="12345678"),
     InfoValue(name="name", display_name="Name", value="Super Governor"),
     InfoValue(name="power", display_name="Power", value="100000000"),
@@ -22,7 +24,7 @@ kingdom_stats_placeholder = [
     InfoValue(name="alliance", display_name="Alliance", value="Biggest Alliance ever!"),
 ]
 
-ranking_stats_placeholder = [
+RANKING_STATS_PLACEHOLDER = [
     InfoValue(name="governor_0", display_name="Super Governor 1", value="1000"),
     InfoValue(name="governor_1", display_name="Super Governor 2", value="500"),
     InfoValue(name="governor_2", display_name="Super Governor 3", value="250"),
@@ -31,7 +33,7 @@ ranking_stats_placeholder = [
     InfoValue(name="governor_5", display_name="Super Governor 6", value="32"),
 ]
 
-additional_stats_placeholder = AdditionalInfoData(
+ADDITIONAL_STATS_PLACEHOLDER = AdditionalInfoData(
     current_time="00:00:00",
     eta_remaining="00:00:00",
     current_amount=0,
@@ -39,7 +41,7 @@ additional_stats_placeholder = AdditionalInfoData(
     skipped=0,
 )
 
-additional_ranking_stats_placeholder = AdditionalInfoData(
+ADDITIONAL_RANKING_STATS_PLACEHOLDER = AdditionalInfoData(
     current_time="00:00:00",
     eta_remaining="00:00:00",
     current_amount=0,

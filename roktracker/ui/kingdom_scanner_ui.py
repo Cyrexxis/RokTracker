@@ -1,3 +1,10 @@
+"""GUI for the kingdom scanner workflow.
+
+Provides the KingdomScannerUI class that assembles all UI
+components (checkboxes, options, status display) and wires
+them to the KingdomScanner. Handles validation and launch
+in a background thread."""
+
 import logging
 from threading import Thread
 from typing import Any
@@ -15,8 +22,8 @@ from roktracker.ui.checkbox_frames import (
 )
 from roktracker.ui.options_frame import OptionsElement, OptionsFrame
 from roktracker.ui.placeholders import (
-    additional_stats_placeholder,
-    kingdom_stats_placeholder,
+    ADDITIONAL_STATS_PLACEHOLDER,
+    KINGDOM_STATS_PLACEHOLDER,
 )
 from roktracker.ui.stats_to_scan_frame import StatsToScanFrame
 from roktracker.ui.status_frame import StatusInfoFrame
@@ -32,12 +39,21 @@ from roktracker.ui.utils import (
     update_config_options,
 )
 from roktracker.utils.exceptions import AdbError
+from roktracker.utils.validator import sanitize_scan_name
 
 logger = logging.getLogger(__name__)
 
 
 class KingdomScannerUI(ttk.Frame):
+    """The complete GUI of the kingdom scanner."""
+
     def __init__(self, master: Any, app_config: AppConfig):
+        """Creates a kingdom scanner frame.
+
+        Args:
+            master (Any): The ttk widget to use as root
+            app_config (AppConfig): The AppConfig to use
+        """
         super().__init__(master)
 
         self.root_dir = get_app_root()
@@ -84,35 +100,65 @@ class KingdomScannerUI(ttk.Frame):
         self.status_frame = StatusInfoFrame(
             self,
             "kingdom_status",
-            kingdom_stats_placeholder,
-            additional_stats_placeholder,
+            KINGDOM_STATS_PLACEHOLDER,
+            ADDITIONAL_STATS_PLACEHOLDER,
         )
         self.status_frame.grid(row=0, column=3, padx=10, pady=(10, 0), sticky="ewsn")
 
-        controll_frame = ttk.Frame(self)
-        controll_frame.grid(row=1, column=0, columnspan=4, pady=(5, 0), sticky="ew")
-        controll_frame.grid_columnconfigure(2, weight=1)
+        control_frame = ttk.Frame(self)
+        control_frame.grid(row=1, column=0, columnspan=4, pady=(5, 0), sticky="ew")
+        control_frame.grid_columnconfigure(2, weight=1)
 
         self.start_button = ttk.Button(
-            controll_frame, text="Start scan", command=self.start_scan
+            control_frame, text="Start scan", command=self.start_scan
         )
         self.start_button.grid(row=0, column=0, padx=10, pady=(0, 10), sticky="ew")
 
         self.stop_button = ttk.Button(
-            controll_frame, text="Stop scan", command=self.stop_scan, state="disabled"
+            control_frame, text="Stop scan", command=self.stop_scan, state="disabled"
         )
         self.stop_button.grid(row=0, column=1, padx=10, pady=(0, 10), sticky="ew")
 
-        self.current_state = ttk.Label(controll_frame, text="Not started")
-        self.current_state.grid(row=0, column=3, padx=10, pady=(0, 10), sticky="ewns")
+        self.current_state = ttk.Label(control_frame, text="Not started")
+        self.current_state.grid(row=0, column=3, padx=10, pady=(0, 10), sticky="ewsn")
 
     def ask_confirm(self, msg: str) -> bool:
+        """Show a confirm dialog and return the result.
+
+        Args:
+            msg (str): The message to display in the dialog
+
+        Returns:
+            bool: True if the user clicked Yes, False otherwise
+        """
         return show_confirm(self, msg, "No Governor found")
 
     def start_scan(self):
+        """Validates the input and starts the scanner in a new thread."""
+        options = self.scan_options.get_options()
+        update_config_options(self.selected_options, options)
+        name_validation = sanitize_scan_name(self.selected_options.scan_name)
+        if not name_validation.valid:
+            show_error(
+                self,
+                f"Name is not valid and got changed to:\n{name_validation.result}\n"
+                + "Please check the new name and press start again.",
+                "Name is not valid",
+            )
+
+            self.scan_options.set_option(
+                OptionsElement(
+                    name="scan_name",
+                    display_name="Scan Name",
+                    value=name_validation.result,
+                )
+            )
+            return
+
         Thread(target=self.launch_scanner).start()
 
     def launch_scanner(self):
+        """Evaluates the selected options and starts the scan."""
         self.start_button.config(state="disabled")
 
         options = self.scan_options.get_options()
@@ -167,13 +213,13 @@ class KingdomScannerUI(ttk.Frame):
 
         except AdbError as error:
             logger.error(
-                "An error with the adb connection occured (probably wrong port). Exact message: "
+                "An error with the adb connection occurred (probably wrong port). Exact message: "
                 + str(error)
             )
 
             show_error(
                 parent=self,
-                message="An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+                message="An error with the adb connection occurred. Please verify that you use the correct port.\nExact message: "
                 + str(error),
                 title="ADB Error",
             )
@@ -186,15 +232,27 @@ class KingdomScannerUI(ttk.Frame):
             self.start_button.configure(state="normal")
 
     def stop_scan(self):
+        """Stops the scan after the current governor."""
         self.kingdom_scanner.end_scan()
         self.stop_button.configure(state="disabled", text="Abort after next governor")
 
     def governor_callback(
         self, governor: GovernorData, additional: AdditionalGovernorData
     ):
+        """Handles the display of the last scanned governor.
+
+        Args:
+            governor (GovernorData): Governor related data
+            additional (AdditionalGovernorData): Scan related data
+        """
         self.status_frame.update_status(
             governor_to_info(governor), additional_data_to_info(additional)
         )
 
     def state_callback(self, state: str):
+        """Updates the state text.
+
+        Args:
+            state (str): New state to display
+        """
         self.current_state.configure(text=state)

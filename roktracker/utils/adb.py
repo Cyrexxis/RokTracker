@@ -1,3 +1,9 @@
+"""ADB client utilities for managing emulator connections.
+
+Provides the AdvancedAdbClient wrapper with automatic crash
+recovery, secure tap (with jitter), screenshot, and shell
+command helpers. Each safe method retries up to 3 times."""
+
 import configparser
 import socket
 import subprocess
@@ -13,34 +19,21 @@ from PIL.Image import new as NewImage
 from roktracker.common.config import AppConfig
 from roktracker.utils.console import console
 from roktracker.utils.exceptions import AdbError
-from roktracker.utils.general import to_int_or
-
-
-def get_bluestacks_port_new(bluestacks_device_name: str, config: AppConfig) -> int:
-    default_port = to_int_or(config.general.adb_port, 5555)
-    # try to read port from bluestacks config
-    if config.general.emulator == "bluestacks":
-        try:
-            dummy = "AmazingDummy"
-            with open(config.general.bluestacks.config, "r") as config_file:
-                file_content = "[" + dummy + "]\n" + config_file.read()
-            bluestacks_config = configparser.RawConfigParser()
-            bluestacks_config.read_string(file_content)
-
-            for key, value in bluestacks_config.items(dummy):
-                if value == f'"{bluestacks_device_name}"':
-                    key_port = key.replace("display_name", "status.adb_port")
-                    port = bluestacks_config.get(dummy, key_port)
-                    return int(port.strip('"'))
-        except Exception:
-            console.print(
-                "[red]Could not parse or find bluestacks config. Defaulting to 5555.[/red]"
-            )
-    return default_port
 
 
 def get_bluestacks_port(config: AppConfig) -> int:
-    default_port = to_int_or(config.general.adb_port, 5555)
+    """Ready the adb port from the Bluestacks config file.
+
+    Tries to read the port from the Bluestacks config.
+    If that fails returns the adb port from the AppConfig instance.
+
+    Args:
+        config (AppConfig): The AppConfig containing the path to the Bluestacks config and the instance name
+
+    Returns:
+        int: The adb port
+    """
+    default_port = config.general.adb_port
     # try to read port from bluestacks config
     if config.general.emulator == "bluestacks":
         try:
@@ -63,6 +56,8 @@ def get_bluestacks_port(config: AppConfig) -> int:
 
 
 class AdvancedAdbClient:
+    """A wrapper around the normal adb client that handles crashes better."""
+
     def __init__(
         self,
         adb_path: str,
@@ -71,6 +66,15 @@ class AdvancedAdbClient:
         script_base: str | Path,
         start_immediately: bool = False,
     ):
+        """Creates a advanced adb client.
+
+        Args:
+            adb_path (str): The path to the adb executable
+            port (int): The port to use for the connection
+            player (str): The type of the targeted android emulator
+            script_base (str | Path): The folder where advanced adb scripts are stored
+            start_immediately (bool): If true immediately opens the adb connection (Default value = False)
+        """
         self.server_port = 0
         self.client_port = port
         self.adb_path = adb_path
@@ -82,6 +86,11 @@ class AdvancedAdbClient:
             self.start_adb()
 
     def get_free_port(self) -> int:
+        """Get a free port for the adb server.
+
+        Returns:
+            int: The free port
+        """
         s = socket.socket()
         s.bind(("", 0))
         port = s.getsockname()[1]
@@ -89,9 +98,15 @@ class AdvancedAdbClient:
         return port
 
     def set_adb_path(self, path: str) -> None:
+        """Sets the path to the adb executable.
+
+        Args:
+            path (str): New path to executable
+        """
         self.adb_path = path
 
     def kill_adb(self) -> None:
+        """Kills the currently running adb server."""
         console.print("Killing ADB server...")
         process = subprocess.run(
             [self.adb_path, "-P " + str(self.server_port), "kill-server"],
@@ -101,6 +116,11 @@ class AdvancedAdbClient:
         console.print(process.stdout)
 
     def start_adb(self) -> None:
+        """Starts the adb server and connect to the android instance.
+
+        Raises:
+            AdbError: If no device could be found
+        """
         self.server_port = self.get_free_port()
         console.print("Starting adb server and connecting to adb device...")
         process = subprocess.run(
@@ -125,6 +145,16 @@ class AdvancedAdbClient:
         self.device = adb_client
 
     def secure_adb_shell(self, command_to_execute: str) -> str:
+        """Safely executes a adb command on the connected device.
+
+        Retries a max of 3 times before returning the result
+
+        Args:
+            command_to_execute (str): The string to send to the device
+
+        Returns:
+            str: The response to the command
+        """
         result = ""
         for _ in range(3):
             try:
@@ -138,6 +168,15 @@ class AdvancedAdbClient:
         return result
 
     def secure_adb_tap(self, position: Tuple[int, int], jitter: int = 5):
+        """Safely taps the screen at the given location.
+
+        It uses a swipe command instead of a raw tap to look more like real player input
+        and prevent bot detection.
+
+        Args:
+            position (Tuple[int, int]): The position to tap in format (x, y)
+            jitter (int): The maximum jitter distance (Default value = 5)
+        """
         import random
 
         x = position[0] + random.randint(-jitter, jitter)
@@ -146,6 +185,11 @@ class AdvancedAdbClient:
         self.secure_adb_shell(f"input swipe {x} {y} {x} {y} {duration}")
 
     def secure_adb_screencap(self) -> Image:
+        """Safely captures the screen of the device.
+
+        Returns:
+            Image: The current screen content
+        """
         result = NewImage(mode="RGB", size=(1, 1))
         for _ in range(3):
             try:
@@ -159,6 +203,14 @@ class AdvancedAdbClient:
         return result
 
     def adb_send_events(self, input_device_name: str, event_file: str | Path) -> None:
+        """Sends multiple events to the device.
+
+        The events are read from the provided file.
+
+        Args:
+            input_device_name (str): The input device name to use
+            event_file (str | Path): The path to the event file
+        """
         if input_device_name == "Touch":
             if self.player == "ld":
                 input_device_name = "ABS_MT_POSITION_Y"

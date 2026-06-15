@@ -1,3 +1,9 @@
+"""Application setup validation utilities.
+
+Provides validate_installation() to check that all required
+files are present, and sanitize_scan_name() to produce valid
+filenames from user input."""
+
 import glob
 import logging
 import os
@@ -14,18 +20,38 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ValidationResult:
+    """A result of a validation.
+
+    Attributes:
+        success (bool): True if successful
+        messages (List[str]): The messages if validation failed
+    """
+
     success: bool
     messages: List[str]
 
 
 @dataclass
 class SanitizationResult:
+    """A result of a sanitization.
+
+    Attributes:
+        valid (bool): True if valid
+        messages (List[str]): The messages if validation failed
+        result (str): The resulting string
+    """
+
     valid: bool
     messages: List[str]
     result: str
 
 
 def validate_installation() -> ValidationResult:
+    """Validates if all necessary files are present.
+
+    Returns:
+        ValidationResult: Validation result
+    """
     result: List[str] = []
     root_dir = get_app_root()
 
@@ -89,7 +115,15 @@ def validate_installation() -> ValidationResult:
     return ValidationResult(tessdata_present and adb_present, result)
 
 
-def sanitize_scanname(filename: str) -> SanitizationResult:
+def sanitize_scan_name(filename: str) -> SanitizationResult:
+    """Sanitizes the scan name to a valid file name.
+
+    Args:
+        filename (str): String to validate
+
+    Returns:
+        SanitizationResult: The result of the validation
+    """
     if filename == "":
         return SanitizationResult(True, [], "")
 
@@ -101,7 +135,7 @@ def sanitize_scanname(filename: str) -> SanitizationResult:
         validate_filename(filename)
     except ValidationError as e:
         valid = False
-        message = f"Scan name validatation error: {e}"
+        message = f"Scan name validation error: {e}"
         errors.append(message)
         console.log(message)
         logger.info(message)
@@ -110,7 +144,7 @@ def sanitize_scanname(filename: str) -> SanitizationResult:
         result = str(sanitize_filename(filename))
     except ValidationError as e:
         valid = False
-        message = f"Scan name validatation error: {e}"
+        message = f"Scan name validation error: {e}"
         errors.append(message)
         console.log(message)
         logger.info(message)

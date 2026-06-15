@@ -1,3 +1,9 @@
+"""User-facing options for kingdom scan configuration.
+
+Defines the StatsToScan data class and KingdomScanOptions
+for controlling which stats to collect per scan. Supports
+loading options from JSON files."""
+
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -23,10 +29,13 @@ STAT_LABELS: dict[str, str] = {
     "Rss Gathered": "gathered",
     "Helps": "helps",
 }
+"""Mapping from column headers displayed in the UI to field names."""
 
 
 class StatsToScan(BaseModel):
-    # first screen
+    """Which stats to include during a kingdom scan."""
+
+    # fist screen
     id: bool = True
     name: bool = True
     power: bool = True
@@ -51,6 +60,11 @@ class StatsToScan(BaseModel):
 
     @staticmethod
     def nothing() -> StatsToScan:
+        """Create a StatsToScan object with all stats disabled.
+
+        Returns:
+            StatsToScan: StatsToScan with all stats disabled
+        """
         return StatsToScan(
             id=False,
             name=False,
@@ -73,6 +87,8 @@ class StatsToScan(BaseModel):
 
 
 class KingdomScanOptions(BaseModel):
+    """Configuration options for a kingdom scan."""
+
     scan_name: str = ""
     amount: int = 300
     stats_to_scan: StatsToScan = StatsToScan()
@@ -87,5 +103,13 @@ class KingdomScanOptions(BaseModel):
 
     @staticmethod
     def from_json(path: str | Path) -> KingdomScanOptions:
+        """Load and validate a KingdomScanOptions from a JSON file.
+
+        Args:
+            path (str | Path): A string or Path object to the json file
+
+        Returns:
+            KingdomScanOptions: The loaded and validated KingdomScanOptions
+        """
         data = Path(path).read_text(encoding="utf-8")
         return KingdomScanOptions.model_validate_json(data)

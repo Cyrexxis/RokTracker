@@ -1,3 +1,9 @@
+"""GUI for the ranking scanner workflow.
+
+Provides the RankingScannerUI class that assembles all UI
+components and wires them to the RankingScanner. Handles
+validation and launch in a background thread."""
+
 import logging
 from threading import Thread
 from typing import Any
@@ -16,8 +22,8 @@ from roktracker.ui.checkbox_frames import (
 )
 from roktracker.ui.options_frame import OptionsElement, OptionsFrame
 from roktracker.ui.placeholders import (
-    additional_ranking_stats_placeholder,
-    ranking_stats_placeholder,
+    ADDITIONAL_RANKING_STATS_PLACEHOLDER,
+    RANKING_STATS_PLACEHOLDER,
 )
 from roktracker.ui.status_frame import StatusInfoFrame
 from roktracker.ui.utils import (
@@ -25,22 +31,30 @@ from roktracker.ui.utils import (
     batch_to_info,
     formats_to_checkbox,
     ro_to_options,
-    show_confirm,
     show_error,
     update_config_option,
     update_config_options,
 )
 from roktracker.utils.exceptions import AdbError
+from roktracker.utils.validator import sanitize_scan_name
 
 logger = logging.getLogger(__name__)
 
 
 class RankingScannerUI(ttk.Frame):
+    """The complete GUI of the ranking scanner."""
+
     def __init__(
         self,
         master: Any,
         app_config: AppConfig,
     ):
+        """Creates a ranking scanner frame.
+
+        Args:
+            master (Any): The ttk widget to use as root
+            app_config (AppConfig): The AppConfig to use
+        """
         super().__init__(master)
 
         self.root_dir = get_app_root()
@@ -94,37 +108,56 @@ class RankingScannerUI(ttk.Frame):
         self.status_frame = StatusInfoFrame(
             self,
             "ranking_status",
-            ranking_stats_placeholder,
-            additional_ranking_stats_placeholder,
+            RANKING_STATS_PLACEHOLDER,
+            ADDITIONAL_RANKING_STATS_PLACEHOLDER,
         )
         self.status_frame.grid(
             row=0, column=1, padx=10, pady=(10, 10), sticky="ewsn", rowspan=4
         )
 
-        controll_frame = ttk.Frame(self)
-        controll_frame.grid(row=2, column=0, columnspan=2, pady=(5, 0), sticky="ew")
-        controll_frame.grid_columnconfigure(2, weight=1)
+        control_frame = ttk.Frame(self)
+        control_frame.grid(row=2, column=0, columnspan=2, pady=(5, 0), sticky="ew")
+        control_frame.grid_columnconfigure(2, weight=1)
 
         self.start_button = ttk.Button(
-            controll_frame, text="Start scan", command=self.start_scan
+            control_frame, text="Start scan", command=self.start_scan
         )
         self.start_button.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
 
         self.stop_button = ttk.Button(
-            controll_frame, text="Stop scan", command=self.stop_scan, state="disabled"
+            control_frame, text="Stop scan", command=self.stop_scan, state="disabled"
         )
         self.stop_button.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
 
-        self.current_state = ttk.Label(controll_frame, text="Not started")
-        self.current_state.grid(row=0, column=3, padx=10, pady=(10, 0), sticky="ewns")
-
-    def ask_confirm(self, msg: str) -> bool:
-        return show_confirm(self, msg, "No Governor found")
+        self.current_state = ttk.Label(control_frame, text="Not started")
+        self.current_state.grid(row=0, column=3, padx=10, pady=(10, 0), sticky="ewsn")
 
     def start_scan(self):
+        """Validates the input and starts the scanner in a new thread."""
+        options = self.scan_options.get_options()
+        update_config_options(self.selected_options, options)
+        name_validation = sanitize_scan_name(self.selected_options.scan_name)
+        if not name_validation.valid:
+            show_error(
+                self,
+                f"Name is not valid and got changed to:\n{name_validation.result}\n"
+                + "Please check the new name and press start again.",
+                "Name is not valid",
+            )
+
+            self.scan_options.set_option(
+                OptionsElement(
+                    name="scan_name",
+                    display_name="Scan Name",
+                    value=name_validation.result,
+                )
+            )
+            return
+
         Thread(target=self.launch_scanner).start()
 
     def launch_scanner(self):
+        """Evaluates the selected options and starts the scan."""
         self.start_button.config(state="disabled")
 
         self.scanner_type = self.selected_mode.get()
@@ -176,13 +209,13 @@ class RankingScannerUI(ttk.Frame):
 
         except AdbError as error:
             logger.error(
-                "An error with the adb connection occured (probably wrong port). Exact message: "
+                "An error with the adb connection occurred (probably wrong port). Exact message: "
                 + str(error)
             )
 
             show_error(
                 parent=self,
-                message="An error with the adb connection occured. Please verfiy that you use the correct port.\nExact message: "
+                message="An error with the adb connection occurred. Please verify that you use the correct port.\nExact message: "
                 + str(error),
                 title="ADB Error",
             )
@@ -195,15 +228,27 @@ class RankingScannerUI(ttk.Frame):
             self.start_button.configure(state="normal")
 
     def stop_scan(self):
+        """Stops the scan after the current batch."""
         self.ranking_scanner.end_scan()
         self.stop_button.configure(state="disabled", text="Abort after next batch")
 
     def batch_callback(
         self, ranking: list[RankingData], additional: AdditionalScanData
     ):
+        """Handles the display of the last scanned batch.
+
+        Args:
+            ranking (list[RankingData]): Batch related data
+            additional (AdditionalScanData): Scan related data
+        """
         self.status_frame.update_status(
             batch_to_info(ranking), additional_batch_data_to_info(additional)
         )
 
     def state_callback(self, state: str):
+        """Updates the state text.
+
+        Args:
+            state (str): New state to display
+        """
         self.current_state.configure(text=state)

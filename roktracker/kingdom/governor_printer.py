@@ -1,3 +1,8 @@
+"""Console output utilities for governor scan results.
+
+Provides print_gov_state() for formatting and displaying
+a single governor's OCR data with progress information."""
+
 from rich.markup import escape
 from rich.table import Table
 
@@ -6,14 +11,15 @@ from roktracker.utils.console import console
 
 
 def print_gov_state(gov_data: GovernorData, extra: AdditionalGovernorData) -> None:
+    """Print a governor scan result to the console.
+
+    Args:
+        gov_data (GovernorData): The main data of the governor
+        extra (AdditionalGovernorData): Additional data related to the scan
+    """
     table = Table(
-        title="["
-        + extra.current_time_str()
-        + "]\n"
-        + "Latest Scan Result\nGovernor "
-        + str(extra.current_governor)
-        + " of "
-        + str(extra.target_governor),
+        title=f"[{extra.current_time_str()}]\nLatest Scan Result\nGovernor "
+        f"{extra.current_governor} of {extra.target_governor}",
         show_header=True,
         show_footer=True,
     )

@@ -1,3 +1,9 @@
+"""Handler for collecting and saving ranking scan data.
+
+Maintains an in-memory list of ranking entries, checks batches
+for duplicates against the last 5 entries, and writes collected
+data to configured output formats with optional summary rows."""
+
 import logging
 import pathlib
 from datetime import date
@@ -14,24 +20,39 @@ logger = logging.getLogger(__name__)
 
 
 class RankingDataHandler:
+    """Collects and saves ranking scan data."""
+
     def __init__(
         self,
         path: str | PathLike[Any],
         filename: str,
         formats: OutputFormats,
         title: str = str(date.today()),
-        extra_data_fields: list[str] | None = None,
     ):
+        """Creates a ranking data handler.
+
+        Args:
+            path (str | PathLike[Any]): The folder to use for saving the data
+            filename (str): The name of the file to save without extension
+            formats (OutputFormats): The formats to use for saving the data
+            title (str): Only used for the xlsx file - the name of the sheet (Default value = str(date.today()))
+        """
         self.title = title
         self.path = pathlib.Path(path)
         self.name = filename
         self.formats = formats
-        self.extra_data_fields = extra_data_fields or []
         self.data_list: list[dict[str, str | int]] = []
         self.last_score: int = -2
 
     def write_governors(self, gov_data: list[RankingData]) -> bool:
-        """Write a batch of governor data. Returns True if the last screen is reached."""
+        """Adds a batch to the in-memory data list.
+
+        Args:
+            gov_data (list[RankingData]): The batch to add
+
+        Returns:
+            bool: True if there were duplicates in the list
+        """
         reached_bottom = False
 
         for gov in gov_data:
@@ -67,7 +88,14 @@ class RankingDataHandler:
         return reached_bottom
 
     def is_duplicate(self, governor: RankingData) -> bool:
-        """Check whether `governor` is a duplicate of a recently written entry."""
+        """Check if the given governor is a duplicate of one of the last 5.
+
+        Args:
+            governor (RankingData): The governor to check
+
+        Returns:
+            bool: True if the governor is a duplicate
+        """
         if len(self.data_list) == 0:
             return False
 
@@ -80,11 +108,17 @@ class RankingDataHandler:
 
         return False
 
-    def save(self, trimm_to: int = 0, sum_total: bool = False):
+    def save(self, trim_to: int = 0, sum_total: bool = False):
+        """Save the collected data to the configured output format(s).
+
+        Args:
+            trim_to (int): The amount of governors to save, 0 means all (Default value = 0)
+            sum_total (bool): Whether to add a sum at the end of the files (Default value = False)
+        """
         frame = pd.DataFrame(self.data_list)
         # do trimming
-        if trimm_to > 0:
-            frame = frame.head(trimm_to)
+        if trim_to > 0:
+            frame = frame.head(trim_to)
 
         # strip the image path
         frame_stripped = frame.drop("Image", axis=1)

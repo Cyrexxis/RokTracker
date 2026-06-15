@@ -1,3 +1,10 @@
+"""Status display components for the scanner GUI.
+
+Provides InfoValue and AdditionalInfoData for displaying scan
+progress, ETA, and skip counts. The StatusInfoFrame and
+AdditionalStatusInfo classes render this data in the UI with
+update_status() for live refreshes."""
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -6,6 +13,14 @@ import ttkbootstrap as ttk
 
 @dataclass
 class InfoValue:
+    """General info value.
+
+    Attributes:
+        name (str): The internal name
+        display_name (str): The displayed name
+        value (str): The displayed value
+    """
+
     name: str
     display_name: str
     value: str
@@ -13,12 +28,29 @@ class InfoValue:
 
 @dataclass
 class RawInfoValue:
+    """Raw version of an InfoValue.
+
+    Attributes:
+        display_name (ttk.StringVar): The ttk variable that holds the displayed name
+        value (ttk.StringVar): The ttk variable that holds the displayed value
+    """
+
     display_name: ttk.StringVar
     value: ttk.StringVar
 
 
 @dataclass
 class AdditionalInfoData:
+    """Additional info data.
+
+    Attributes:
+        current_time (str): The time of the update
+        eta_remaining (str): The estimated time needed to finish the scan
+        current_amount (int): The current position in the scan
+        target_amount (int): The final position to scan
+        skipped (int): How many governors were skipped
+    """
+
     current_time: str = "Now"
     eta_remaining: str = "Later"
     current_amount: int = 0
@@ -28,6 +60,15 @@ class AdditionalInfoData:
 
 @dataclass
 class AdditionalInfoRawData:
+    """Raw version of the additional info data.
+
+    Attributes:
+        current_time (ttk.StringVar): The ttk variable that holds the current time
+        eta_remaining (ttk.StringVar): The ttk variable that holds the eta
+        amount (ttk.StringVar): The ttk variable that holds computed value of current and total count
+        skipped (ttk.StringVar): The ttk variable that holds the skipped amount
+    """
+
     current_time: ttk.StringVar
     eta_remaining: ttk.StringVar
     amount: ttk.StringVar
@@ -35,7 +76,16 @@ class AdditionalInfoRawData:
 
 
 class AdditionalStatusInfo(ttk.Frame):
+    """Displays additional data for the current state of the scanner."""
+
     def __init__(self, master: Any, id: str, data: AdditionalInfoData):
+        """Creates a additional status info frame.
+
+        Args:
+            master (Any): The ttk widget to use as root
+            id (str): The id to use (should be unique in the app)
+            data (AdditionalInfoData): The additional status to display initially
+        """
         super().__init__(master)
         self.values: AdditionalInfoRawData
         self.grid_columnconfigure(0, weight=1, uniform=f"{id}-element-width")
@@ -70,6 +120,11 @@ class AdditionalStatusInfo(ttk.Frame):
         skipped_text.grid(row=1, column=1, pady=5)
 
     def update_status(self, new_status: AdditionalInfoData):
+        """Updates the displayed state.
+
+        Args:
+            new_status (AdditionalInfoData): The new state
+        """
         self.values.current_time.set(new_status.current_time)
         self.values.eta_remaining.set(new_status.eta_remaining)
         self.values.amount.set(
@@ -78,13 +133,38 @@ class AdditionalStatusInfo(ttk.Frame):
         self.values.skipped.set(self._process_skip_text(new_status))
 
     def _process_skip_text(self, status: AdditionalInfoData) -> str:
+        """Computes the value for the "skipped" text.
+
+        Args:
+            status (AdditionalInfoData): The additional data to use
+
+        Returns:
+            str: The computed value
+        """
         return f"Skipped: {status.skipped}" if status.skipped >= 0 else ""
 
 
 class StatusInfoFrame(ttk.Frame):
+    """Displays current state of the scanner."""
+
     def __init__(
         self, master: Any, id: str, values: list[InfoValue], extra: AdditionalInfoData
     ):
+        """Creates a status info frame.
+
+        It is important to have dummy values for all displayed values,
+        because the frame only sets up the display for the values that
+        are present during initialization.
+
+        If values that do not match those are provided during an update
+        they simply get discarded.
+
+        Args:
+            master (Any): The ttk widget to use as root
+            id (str): The id to use (should be unique in the app)
+            values (list[InfoValue]): The info values to display
+            extra (AdditionalInfoData): The additional info to display
+        """
         super().__init__(master)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -129,6 +209,12 @@ class StatusInfoFrame(ttk.Frame):
     def update_status(
         self, status: list[InfoValue], extra: AdditionalInfoData | None = None
     ):
+        """Updates the current state.
+
+        Args:
+            status (list[InfoValue]): List of updated values
+            extra (AdditionalInfoData | None): New additional info value (Default value = None)
+        """
         for info_value in status:
             data = self.status.get(info_value.name)
             if data is not None:

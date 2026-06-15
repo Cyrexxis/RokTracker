@@ -1,9 +1,17 @@
+"""Pydantic models for kingdom scanner configuration.
+
+Defines UI region coordinates, tap coordinates, and per-profile
+UI config. Supports loading configuration from JSON files via
+the from_json() class method."""
+
 from pathlib import Path
 
 from pydantic import BaseModel
 
 
 class KingdomUIRegions(BaseModel):
+    """OCR region coordinates for extracting governor data from screen sections."""
+
     # first screen
     more_info: tuple[int, int, int, int] = (0, 0, 0, 0)
     id: tuple[int, int, int, int] = (0, 0, 0, 0)
@@ -34,7 +42,8 @@ class KingdomUIRegions(BaseModel):
 
 
 class KingdomTapPositions(BaseModel):
-    # fist screen
+    """Tap coordinates for navigating the governor screens."""
+
     name: tuple[int, int] = (0, 0)
     kills: tuple[int, int] = (0, 0)
     info: tuple[int, int] = (0, 0)
@@ -45,6 +54,8 @@ class KingdomTapPositions(BaseModel):
 
 
 class UIConfig(BaseModel):
+    """UI configuration for a governor profile."""
+
     profile_version: tuple[int, int, int, int]
     regions: KingdomUIRegions
     taps: KingdomTapPositions
@@ -53,14 +64,22 @@ class UIConfig(BaseModel):
 
 
 class KingdomConfig(BaseModel):
-    """Kingdom scanner configuration. Each subclass provides this."""
+    """Config options related to a kingdom scan."""
 
-    scan_path: str  # e.g. "scans_kingdom"
-    filename_prefix_normal: str  # e.g. "TOP"
-    filename_prefix_continued: str  # e.g. "NEXT"
+    scan_path: str
+    filename_prefix_normal: str
+    filename_prefix_continued: str
     ui_config: UIConfig
 
     @staticmethod
     def from_json(path: str | Path) -> KingdomConfig:
+        """Load and validate a KingdomConfig from a JSON file.
+
+        Args:
+            path (str | Path): A string or Path object to the json file
+
+        Returns:
+            KingdomConfig: The loaded and validated KingdomConfig
+        """
         data = Path(path).read_text(encoding="utf-8")
         return KingdomConfig.model_validate_json(data)

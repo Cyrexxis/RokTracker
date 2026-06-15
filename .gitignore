@@ -624,3 +624,5 @@ deps/tessdata
 deps/*.whl
 .devcontainer
 .opencode
+cspell.json
+.cspell

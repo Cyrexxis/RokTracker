@@ -1,25 +1,57 @@
+"""Pydantic models for configuring scan export formats.
+
+Exports the OutputFormats class and convenience constructors
+from_list() and from_dict() for selecting Excel, CSV, and
+other output formats."""
+
 from pydantic import BaseModel
 
 
 class OutputFormats(BaseModel):
+    """Configurable set of output formats for scan results."""
+
     xlsx: bool = True
     csv: bool = False
     jsonl: bool = False
 
-    def from_list(self, list: list[str]):
-        for item in list:
-            if item == "xlsx":
-                self.xlsx = True
-            elif item == "csv":
-                self.csv = True
-            elif item == "jsonl":
-                self.jsonl = True
+    @staticmethod
+    def from_list(formats: list[str]) -> OutputFormats:
+        """Initializes a model by iteration over a list of supported formats.
 
-    def from_dict(self, dict: dict[str, bool]):
-        for key, value in dict.items():
+        Args:
+            formats (list[str]): List of format strings (e.g. ``["xlsx", "csv"]``).
+
+        Returns:
+            OutputFormats: The new model
+        """
+        output_formats = OutputFormats(xlsx=False, csv=False, jsonl=False)
+        for item in formats:
+            if item == "xlsx":
+                output_formats.xlsx = True
+            elif item == "csv":
+                output_formats.csv = True
+            elif item == "jsonl":
+                output_formats.jsonl = True
+
+        return output_formats
+
+    @staticmethod
+    def from_dict(mapping: dict[str, bool]) -> OutputFormats:
+        """Initializes a model by iterating over a key-value mapping.
+
+        Args:
+            mapping (dict[str, bool]): A dictionary mapping format names to booleans.
+
+        Returns:
+            OutputFormats: The new model
+        """
+        output_formats = OutputFormats(xlsx=False, csv=False, jsonl=False)
+        for key, value in mapping.items():
             if key == "xlsx":
-                self.xlsx = value
+                output_formats.xlsx = value
             elif key == "csv":
-                self.csv = value
+                output_formats.csv = value
             elif key == "jsonl":
-                self.jsonl = value
+                output_formats.jsonl = value
+
+        return output_formats
