@@ -22,7 +22,7 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Install the project
-        run: | 
+        run: |
           set PYINSTALLER_COMPILE_BOOTLOADER=TRUE
           uv sync --locked --all-extras --dev
 
@@ -39,14 +39,13 @@ jobs:
 
       - name: Prepare executable for upload
         run: |
-          mkdir "dist/RoK Tracker/config"
-          cp -r "config/" "dist/RoK Tracker/config/"
+          cp -r "config/" "dist/RoK Tracker/"
           mkdir "dist/RoK Tracker/deps"
           cp -r "deps/inputs/" "dist/RoK Tracker/deps/"
           tar.exe -a -c -f "RoK Tracker.zip" -C "dist/" "RoK Tracker"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: RoK Tracker
           path: "RoK Tracker.zip"
@@ -58,12 +57,12 @@ jobs:
 
     steps:
       - name: Get compiled executables
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: RoK Tracker
 
       - name: Release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             RoK Tracker.zip
