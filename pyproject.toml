@@ -18,7 +18,7 @@ dependencies = [
     "questionary>=2.1.1",
     "rich>=15.0.0",
     "tesserocr>=2.10.0; platform_system == 'Linux'",
-    "tesserocr @ https://github.com/simonflueckiger/tesserocr-windows_build/releases/download/tesserocr-v2.10.0-tesseract-5.5.2/tesserocr-2.10.0-cp314-cp314-win_amd64.whl; platform_system == 'Windows'",
+    "tesserocr @ https://github.com/simonflueckiger/tesserocr-windows_build/releases/download/tesserocr-v2.10.0-tesseract-5.5.2/tesserocr-2.10.0-cp314-cp314-win_amd64.whl ; platform_system == 'Windows'",
     "ttkbootstrap>=1.20.3",
 ]
 
