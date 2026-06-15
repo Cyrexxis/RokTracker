@@ -30,7 +30,21 @@ There are two ways of using the scanner:
 
 ---
 
-# Simple Installation
+## Screenshots
+
+<details>
+
+<summary>Click to expand</summary>
+
+| Light Theme | Dark Theme |
+|-------------|------------|
+| ![Kingdom Scanner (Light)](images/kingdom-scanner-gui-light.png) | ![Kingdom Scanner (Dark)](images/kingdom-scanner-gui-dark.png) |
+
+</details>
+
+---
+
+## Simple Installation
 
 Download the latest [RoK Tracker.zip release](https://github.com/Cyrexxis/RokTracker/releases/latest). Extract it and:
 
@@ -42,7 +56,7 @@ Download the latest [RoK Tracker.zip release](https://github.com/Cyrexxis/RokTra
 
 ---
 
-# Advanced Installation
+## Advanced Installation
 
 **Prerequisites:** Bluestacks 5, Python 3.14+ ([download](https://www.python.org/downloads/)) or uv ([instructions](https://docs.astral.sh/uv/)), [tessdata](https://github.com/tesseract-ocr/tessdata), [ADB Platform Tools](https://dl.google.com/android/repository/platform-tools_r31.0.3-windows.zip). On Windows, [Build Tools for C++](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/) may be required. Here is how to set it up with uv:
 
@@ -56,7 +70,7 @@ Download the latest [RoK Tracker.zip release](https://github.com/Cyrexxis/RokTra
 
 ---
 
-# Config Files
+## Config Files
 
 The `config/` folder contains these files:
 
@@ -71,7 +85,7 @@ The `config/` folder contains these files:
 
 ---
 
-# Folder Structure
+## Folder Structure
 
 Only two directories need manual attention:
 
@@ -85,9 +99,9 @@ Everything else (`config/`, `_internal/`, source scripts) is either downloaded f
 
 ---
 
-# Features
+## Features
 
-## Kingdom Scanner
+### Kingdom Scanner
 
 - Full kingdom ranking scan (all governors)
 - Wrong kill detection: validates that kills match kill points; suspicious items are saved to `manual_review/` with `F` prefix and a warning is logged
@@ -95,7 +109,7 @@ Everything else (`config/`, `_internal/`, source scripts) is either downloaded f
 - Inactive account detection: accounts that can't be clicked are skipped automatically; screenshots can optionally be saved to `inactives/`
 - Stats to scan can be selected (if only stats from 1st page are use 2nd and 3rd page will get skipped to make the scan faster)
 
-## Ranking Scanner
+### Ranking Scanner
 
 - Full alliance ranking scan
 - Full personal honor ranking scan
@@ -104,14 +118,14 @@ Everything else (`config/`, `_internal/`, source scripts) is either downloaded f
 
 ---
 
-# Bluestacks 5 Settings
+## Bluestacks 5 Settings
 
-## Main Configuration
+### Main Configuration
 
 - **Display tab:** Resolution 1600x900, DPI Custom (450) ([screenshot](images/bluestacks-display.png))
 - **Advanced tab:** Android Debug Bridge — Enabled ([screenshot](images/bluestacks-advanced.png))
 
-## ADB Configuration
+### ADB Configuration
 
 By default, the scanner assumes ADB port 5555. To configure automatic port detection:
 
@@ -123,9 +137,9 @@ Not every Bluestacks variant has a config, that is not a limitation of the scann
 
 ---
 
-# Important Notes
+## Important Notes
 
-## Scan Preparation
+### Scan Preparation
 
 - Your active character must be in **Home Kingdom** to scan only your kingdom (otherwise KvK players from other kingdoms are included)
 - Start the scanner from the **top** of the relevant ranking page — don't scroll during the scan
@@ -136,7 +150,7 @@ Not every Bluestacks variant has a config, that is not a limitation of the scann
 - You can do other things on your PC while scanning, but avoid copying text since the scanner uses the clipboard to read names
 - **Important:** Always copy the scan `.xlsx` file when finished — on the next scan there is a (small) chance it gets overwritten
 
-## Configuration
+### Configuration
 
 - Always use `\\` or forward slashes `/` in the Bluestacks path fields in config files (raw `\` will cause a `JSONDecodeError`)
 
