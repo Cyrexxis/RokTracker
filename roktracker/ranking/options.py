@@ -24,8 +24,8 @@ class RankingScanOptions(BaseModel):
     amount: int = 100
     formats: OutputFormats = OutputFormats()
 
-    @staticmethod
-    def from_json(path: str | Path) -> RankingScanOptions:
+    @classmethod
+    def from_json(cls, path: str | Path) -> RankingScanOptions:
         """Load and validate a RankingScanOptions from a JSON file.
 
         Args:
@@ -35,4 +35,4 @@ class RankingScanOptions(BaseModel):
             RankingScanOptions: The loaded and validated RankingScanOptions
         """
         data = Path(path).read_text(encoding="utf-8")
-        return RankingScanOptions.model_validate_json(data)
+        return cls.model_validate_json(data)

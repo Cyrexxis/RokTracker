@@ -58,14 +58,14 @@ class StatsToScan(BaseModel):
     assisted: bool = True
     helps: bool = True
 
-    @staticmethod
-    def nothing() -> StatsToScan:
+    @classmethod
+    def nothing(cls) -> StatsToScan:
         """Create a StatsToScan object with all stats disabled.
 
         Returns:
             StatsToScan: StatsToScan with all stats disabled
         """
-        return StatsToScan(
+        return cls(
             id=False,
             name=False,
             power=False,
@@ -101,8 +101,8 @@ class KingdomScanOptions(BaseModel):
     advanced_scroll: bool = True
     formats: OutputFormats = OutputFormats()
 
-    @staticmethod
-    def from_json(path: str | Path) -> KingdomScanOptions:
+    @classmethod
+    def from_json(cls, path: str | Path) -> KingdomScanOptions:
         """Load and validate a KingdomScanOptions from a JSON file.
 
         Args:
@@ -112,4 +112,4 @@ class KingdomScanOptions(BaseModel):
             KingdomScanOptions: The loaded and validated KingdomScanOptions
         """
         data = Path(path).read_text(encoding="utf-8")
-        return KingdomScanOptions.model_validate_json(data)
+        return cls.model_validate_json(data)

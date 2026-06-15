@@ -14,8 +14,8 @@ class OutputFormats(BaseModel):
     csv: bool = False
     jsonl: bool = False
 
-    @staticmethod
-    def from_list(formats: list[str]) -> OutputFormats:
+    @classmethod
+    def from_list(cls, formats: list[str]) -> OutputFormats:
         """Initializes a model by iteration over a list of supported formats.
 
         Args:
@@ -24,7 +24,7 @@ class OutputFormats(BaseModel):
         Returns:
             OutputFormats: The new model
         """
-        output_formats = OutputFormats(xlsx=False, csv=False, jsonl=False)
+        output_formats = cls(xlsx=False, csv=False, jsonl=False)
         for item in formats:
             if item == "xlsx":
                 output_formats.xlsx = True
@@ -35,8 +35,8 @@ class OutputFormats(BaseModel):
 
         return output_formats
 
-    @staticmethod
-    def from_dict(mapping: dict[str, bool]) -> OutputFormats:
+    @classmethod
+    def from_dict(cls, mapping: dict[str, bool]) -> OutputFormats:
         """Initializes a model by iterating over a key-value mapping.
 
         Args:
@@ -45,7 +45,7 @@ class OutputFormats(BaseModel):
         Returns:
             OutputFormats: The new model
         """
-        output_formats = OutputFormats(xlsx=False, csv=False, jsonl=False)
+        output_formats = cls(xlsx=False, csv=False, jsonl=False)
         for key, value in mapping.items():
             if key == "xlsx":
                 output_formats.xlsx = value

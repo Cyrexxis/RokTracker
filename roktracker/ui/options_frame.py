@@ -29,8 +29,8 @@ class OptionsElement:
     value: str | int | float | bool
     editable: bool = True
 
-    @staticmethod
-    def from_checkbox(input: CheckboxValue) -> OptionsElement:
+    @classmethod
+    def from_checkbox(cls, input: CheckboxValue) -> OptionsElement:
         """Creates an OptionsElement from a CheckboxValue.
 
         Everything from the CheckboxValue is used as is
@@ -42,12 +42,12 @@ class OptionsElement:
         Returns:
             OptionsElement: Converted OptionsElement
         """
-        return OptionsElement(
-            name=input.name, display_name=input.display_name, value=input.value
-        )
+        return cls(name=input.name, display_name=input.display_name, value=input.value)
 
-    @staticmethod
-    def from_checkboxes(input: dict[str, CheckboxValue]) -> dict[str, OptionsElement]:
+    @classmethod
+    def from_checkboxes(
+        cls, input: dict[str, CheckboxValue]
+    ) -> dict[str, OptionsElement]:
         """Creates a dict of OptionElements from a dict of CheckboxValues.
 
         The dict keys of the result and the input are the same.
@@ -60,7 +60,7 @@ class OptionsElement:
         """
         options: dict[str, OptionsElement] = {}
         for value in input.values():
-            options.update({value.name: OptionsElement.from_checkbox(value)})
+            options.update({value.name: cls.from_checkbox(value)})
         return options
 
 

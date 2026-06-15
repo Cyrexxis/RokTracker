@@ -50,8 +50,8 @@ class RankingConfig(BaseModel):
     ui_config: UIConfig  # Any UI class with .name, .score, .name_last, etc.
     misc: RankingMisc
 
-    @staticmethod
-    def from_json(path: str | Path) -> RankingConfig:
+    @classmethod
+    def from_json(cls, path: str | Path) -> RankingConfig:
         """Load and validate a RankingConfig from a JSON file.
 
         Args:
@@ -61,4 +61,4 @@ class RankingConfig(BaseModel):
             RankingConfig: The loaded and validated RankingConfig
         """
         data = Path(path).read_text(encoding="utf-8")
-        return RankingConfig.model_validate_json(data)
+        return cls.model_validate_json(data)
